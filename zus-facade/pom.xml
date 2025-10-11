@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.kitona</groupId>
+        <artifactId>zus</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>zus-facade</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>zus-facade</name>
+    <description>zus-facade: 防腐层/适配层,用于直接和其他服务进行交互,对数据进行适配后提供给内部服务使用</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.kitona</groupId>
+            <artifactId>zus-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
