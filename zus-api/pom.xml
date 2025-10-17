@@ -6,11 +6,10 @@
     <parent>
         <groupId>org.kitona</groupId>
         <artifactId>zus</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>zus-api</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>zus-api</name>
     <description>zus-api: 对外提供接口的模块</description>
 
@@ -18,13 +17,11 @@
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-business</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>

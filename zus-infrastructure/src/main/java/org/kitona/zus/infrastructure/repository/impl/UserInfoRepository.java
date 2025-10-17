@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class UserInfoRepository implements IUserInfoRepository {
+
     @Override
     public UserInfoDo findByUserId(String userId) {
         return null;

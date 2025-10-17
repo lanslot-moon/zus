@@ -6,14 +6,12 @@
     <parent>
         <groupId>org.kitona</groupId>
         <artifactId>zus</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>zus-infrastructure</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>zus-Infrastructure</name>
     <description>zus-Infrastructure:基础设施层,提供数据库,消息队列，订阅发布等能力</description>
-
 
     <dependencies>
         <dependency>
@@ -36,5 +34,4 @@
             <artifactId>zus-common</artifactId>
         </dependency>
     </dependencies>
-
 </project>

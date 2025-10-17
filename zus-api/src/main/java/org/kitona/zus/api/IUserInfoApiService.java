@@ -13,7 +13,7 @@ public interface IUserInfoApiService {
      * @param userId 用户id
      * @return 用户信息
      */
-    @GetMapping("v1.0/userinfo/{userId}")
+    @GetMapping(value = "v1.0/userinfo/{userId}")
     RestResult<UserInfoVO> getUserInfo(@PathVariable("userId") String userId);
 
     /**

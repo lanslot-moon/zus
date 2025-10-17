@@ -6,11 +6,10 @@
     <parent>
         <groupId>org.kitona</groupId>
         <artifactId>zus</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>zus-starter</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>zus-starter</name>
     <description>zus-starter: 项目的启动模块,项目配置等信息所在的地方</description>
 
@@ -18,7 +17,6 @@
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-api</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -28,4 +26,25 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <configuration>
+                    <mainClass>org.kitona.zus.starter.ZusStarterApplication</mainClass>
+                    <skip>true</skip>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

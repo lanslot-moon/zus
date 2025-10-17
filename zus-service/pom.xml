@@ -6,10 +6,10 @@
     <parent>
         <groupId>org.kitona</groupId>
         <artifactId>zus</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
+
     <artifactId>zus-service</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>zus-service</name>
     <description>zus-service: 对外提供的业务基础能力,不包含具体的业务逻辑,只提供简单业务能力</description>
 
@@ -17,7 +17,6 @@
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-infrastructure</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>

@@ -6,11 +6,10 @@
     <parent>
         <groupId>org.kitona</groupId>
         <artifactId>zus</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>zus-business</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>zus-business</name>
     <description>zus-business:业务所在的聚合层,基于Service提供的能力执行业务聚合</description>
 
@@ -18,25 +17,21 @@
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-service</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-facade</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-client</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

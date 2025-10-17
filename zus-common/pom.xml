@@ -6,11 +6,10 @@
     <parent>
         <groupId>org.kitona</groupId>
         <artifactId>zus</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>zus-common</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>zus-common</name>
     <description>zus-common:通用模块,用于提供通用的工具和枚举,常量相关的数据</description>
 

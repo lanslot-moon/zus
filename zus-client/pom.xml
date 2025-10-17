@@ -6,11 +6,10 @@
     <parent>
         <groupId>org.kitona</groupId>
         <artifactId>zus</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>zus-client</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
     <name>zus-client</name>
     <description>zus-client:用于提供其他服务所需要的二方包,不直接对外</description>
 

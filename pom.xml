@@ -3,29 +3,40 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!--多模块Pom管理:https://www.cnblogs.com/ElEGenT/p/12938773.html-->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.11</version>
+        <version>3.3.0</version>
     </parent>
 
     <groupId>org.kitona</groupId>
     <artifactId>zus</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>${revision}</version>
     <packaging>pom</packaging>
     <name>zus</name>
     <description>zus: Java项目的脚手架</description>
 
 
     <properties>
-        <java.version>1.8</java.version>
+        <revision>1.0.0-SNAPSHOT</revision>
+
+        <java.version>17</java.version>
+        <maven.version>3.8.1</maven.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring-boot.version>2.7.6</spring-boot.version>
-        <lombok.version>1.18.24</lombok.version>
+        <!--多模块pom管理插件-->
+        <flatten-maven-plugin.version>1.7.0</flatten-maven-plugin.version>
+        <!--脚手架插件-->
+        <maven-archetype-plugin.version>3.4.1</maven-archetype-plugin.version>
+
+        <spring-boot.version>3.3.0</spring-boot.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <lombok.version>1.18.40</lombok.version>
         <orika.version>1.5.4</orika.version>
+        <commons-lang3.version>3.19.0</commons-lang3.version>
         <fastjson.version>2.0.35</fastjson.version>
-        <hibernate-validator.version>6.2.5.Final</hibernate-validator.version>
+        <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
     </properties>
 
     <modules>
@@ -41,58 +52,63 @@
 
     <dependencyManagement>
         <dependencies>
-
             <!--====================== 项目内部模块 Start======================-->
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-starter</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-api</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-business</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-service</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-facade</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-client</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-infrastructure</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
                 <artifactId>zus-common</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
             <!--====================== 项目内部模块 End======================-->
 
-
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
 
             <!--Spring Boot Actuator 模块提供了生产级别的功能，比如健康检查，审计，指标收集，HTTP 跟踪等，帮助我们监控和管理Spring Boot 应用。-->
             <dependency>
@@ -145,6 +161,12 @@
                 <artifactId>orika-core</artifactId>
                 <version>${orika.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons-lang3.version}</version>
+            </dependency>
             <!--=============外部工具 End===============-->
 
             <!--============测试相关依赖 Start================-->
@@ -164,41 +186,51 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>${maven.version}</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
+            </plugin>
+
+            <!--多模块pom管理插件-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>${flatten-maven-plugin.version}</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <!--resolveCiFriendliesOnly 模式只解析特定的 CI 友好变量（如 ${revision}, ${sha1}, ${changelist}），但不会解析普通的 Maven 属性。-->
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>flatten</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>flatten-clean</id>
+                        <phase>clean</phase>
+                        <goals>
+                            <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!--脚手架生成插件-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-archetype-plugin</artifactId>
-                <version>3.4.1</version>
+                <version>${maven-archetype-plugin.version}</version>
                 <configuration>
                     <propertyFile>archetype.properties</propertyFile>
                     <encoding>UTF-8</encoding>
                 </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${spring-boot.version}</version>
-                <configuration>
-                    <mainClass>org.kitona.zus.ZusApplication</mainClass>
-                    <skip>true</skip>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>repackage</id>
-                        <goals>
-                            <goal>repackage</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

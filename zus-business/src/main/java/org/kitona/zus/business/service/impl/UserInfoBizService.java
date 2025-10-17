@@ -13,7 +13,7 @@ import org.kitona.zus.service.IUserInfoService;
 import org.kitona.zus.service.entity.bo.UserInfoBO;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 @Slf4j
 @Service

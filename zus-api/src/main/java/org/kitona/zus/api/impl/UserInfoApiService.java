@@ -13,7 +13,7 @@ import org.kitona.zus.common.utils.OrikaUtils;
 import org.kitona.zus.common.utils.ValidationUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 @Slf4j
 @Service

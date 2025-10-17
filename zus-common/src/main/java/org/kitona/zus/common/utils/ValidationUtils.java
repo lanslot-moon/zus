@@ -1,7 +1,7 @@
 package org.kitona.zus.common.utils;
 
-import javax.validation.*;
-import javax.validation.groups.Default;
+import jakarta.validation.*;
+import jakarta.validation.groups.Default;
 
 
 import java.util.Arrays;
