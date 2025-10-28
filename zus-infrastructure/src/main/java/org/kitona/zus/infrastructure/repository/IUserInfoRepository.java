@@ -11,6 +11,4 @@ public interface IUserInfoRepository extends IService<UserInfoDo> {
      * @return 用户信息
      */
     UserInfoDo findByUserId(String userId);
-
-//    UserInfoDo findByNameAndAge(String name, Integer age);
 }

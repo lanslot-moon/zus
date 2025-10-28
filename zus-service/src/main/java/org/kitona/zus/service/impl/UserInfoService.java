@@ -1,7 +1,7 @@
 package org.kitona.zus.service.impl;
 
 import jakarta.annotation.Resource;
-import org.kitona.zus.common.utils.OrikaUtils;
+import org.kitona.zus.common.utils.OrikaUtil;
 import org.kitona.zus.infrastructure.entity.po.UserInfoDo;
 import org.kitona.zus.infrastructure.repository.IUserInfoRepository;
 import org.kitona.zus.service.IUserInfoService;
@@ -18,6 +18,6 @@ public class UserInfoService implements IUserInfoService {
     @Override
     public UserInfoBO getUserInfo(String userId) {
         UserInfoDo userInfo = userInfoRepository.findByUserId(userId);
-        return OrikaUtils.convert(userInfo, UserInfoBO.class);
+        return OrikaUtil.convert(userInfo, UserInfoBO.class);
     }
 }

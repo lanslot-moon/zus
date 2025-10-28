@@ -17,5 +17,5 @@ import org.kitona.zus.infrastructure.entity.po.UserInfoDo;
 public interface IUserInfoMapper extends BaseMapper<UserInfoDo> {
 
 
-//    UserInfoDo findByNameAndAge(@Param("name") String name,@Param("age") Integer age);
+    UserInfoDo findByNameAndAge(@Param("name") String name,@Param("age") Integer age);
 }

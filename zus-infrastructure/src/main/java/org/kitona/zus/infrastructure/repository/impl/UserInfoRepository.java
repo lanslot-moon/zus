@@ -13,9 +13,4 @@ public class UserInfoRepository extends ServiceImpl<IUserInfoMapper, UserInfoDo>
     public UserInfoDo findByUserId(String userId) {
         return getById(userId);
     }
-
-//    @Override
-//    public UserInfoDo findByNameAndAge(String name, Integer age) {
-//        return this.baseMapper.findByNameAndAge(name, age);
-//    }
 }

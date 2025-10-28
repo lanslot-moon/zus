@@ -9,8 +9,8 @@ import org.kitona.zus.api.entity.vo.UserInfoVO;
 import org.kitona.zus.api.IUserInfoApiService;
 import org.kitona.zus.business.entity.dto.UserInfoDTO;
 import org.kitona.zus.business.service.IUserInfoBizService;
-import org.kitona.zus.common.utils.OrikaUtils;
-import org.kitona.zus.common.utils.ValidationUtils;
+import org.kitona.zus.common.utils.OrikaUtil;
+import org.kitona.zus.common.utils.ValidationUtil;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
@@ -26,7 +26,7 @@ public class UserInfoApiService implements IUserInfoApiService {
     public RestResult<UserInfoVO> getUserInfo(String userId) {
         log.info("UserInfoApiService getUserInfo,userId:{}", userId);
         UserInfoDTO userInfo = userInfoBizService.getUserInfo(userId);
-        UserInfoVO convert = OrikaUtils.convert(userInfo, UserInfoVO.class);
+        UserInfoVO convert = OrikaUtil.convert(userInfo, UserInfoVO.class);
         log.info("UserInfoApiService getUserInfo,userId:{}, userInfo:{}", userId, JSON.toJSONString(convert));
         return RestResult.success(convert);
     }
@@ -39,7 +39,7 @@ public class UserInfoApiService implements IUserInfoApiService {
     @Override
     public RestResult<Boolean> saveUserInfo(UserInfoRequest userInfoRequest) {
         log.info("UserInfoApiService saveUserInfo,userInfoRequest:{}", JSON.toJSONString(userInfoRequest));
-        ValidationUtils.validate(userInfoRequest, AddGroup.class);
+        ValidationUtil.validate(userInfoRequest, AddGroup.class);
         return RestResult.success(false);
     }
 }

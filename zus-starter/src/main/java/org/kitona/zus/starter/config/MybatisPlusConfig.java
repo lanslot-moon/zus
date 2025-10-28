@@ -10,7 +10,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MybatisPlusConfig {
 
-
     /**
      * 如果配置多个插件, 切记分页最后添加
      */
@@ -18,7 +17,7 @@ public class MybatisPlusConfig {
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
         TenantLineInnerInterceptor tenantInterceptor = new TenantLineInnerInterceptor();
-//        tenantInterceptor.setTenantLineHandler(new DefaultTenantLineInnerInterceptor());
+        tenantInterceptor.setTenantLineHandler(new DefaultTenantLineInnerInterceptor());
 
         interceptor.addInnerInterceptor(tenantInterceptor);
         interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));

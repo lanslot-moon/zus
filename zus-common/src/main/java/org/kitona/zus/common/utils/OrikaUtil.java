@@ -10,26 +10,26 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
- 
- 
-public class OrikaUtils {
- 
+
+
+public final class OrikaUtil {
+
     private static final MapperFactory FACTORY = new DefaultMapperFactory
             .Builder()
             .mapNulls(false)
             .build();
- 
+
     /**
      * 缓存实例集合
      */
     private static final Map<String, MapperFacade> CACHE_MAPPER = new ConcurrentHashMap<>();
- 
+
     private final MapperFacade mapper;
- 
-    public OrikaUtils(MapperFacade mapper) {
+
+    public OrikaUtil(MapperFacade mapper) {
         this.mapper = mapper;
     }
- 
+
     /**
      * 转换实体函数
      * @param sourceEntity 源实体
@@ -45,7 +45,7 @@ public class OrikaUtils {
         }
         return classMap(sourceEntity.getClass(), targetClass, refMap).map(sourceEntity, targetClass);
     }
- 
+
     /**
      * 转换实体函数
      * @param sourceEntity 源实体
@@ -61,7 +61,7 @@ public class OrikaUtils {
         }
         return classMap(sourceEntity.getClass(), targetEntity.getClass(), refMap).map(sourceEntity, targetEntity);
     }
- 
+
     /**
      * 转换实体函数
      *
@@ -74,7 +74,7 @@ public class OrikaUtils {
     public static <S, T> T convert(S sourceEntity, Class<T> targetClass) {
         return convert(sourceEntity, targetClass, null);
     }
- 
+
     /**
      * 转换实体函数
      *
@@ -87,7 +87,7 @@ public class OrikaUtils {
     public static <S, T> T convert(S sourceEntity, T targetEntity) {
         return convert(sourceEntity, targetEntity, null);
     }
- 
+
     /**
      * 转换实体集合函数
      *
@@ -107,7 +107,7 @@ public class OrikaUtils {
         }
         return classMap(sourceEntityList.get(0).getClass(), targetClass, refMap).mapAsList(sourceEntityList, targetClass);
     }
- 
+
     /**
      * 转换实体集合函数
      *
@@ -120,9 +120,9 @@ public class OrikaUtils {
     public static <S, T> List<T> convertList(List<S> sourceEntityList, Class<T> targetClass) {
         return convertList(sourceEntityList, targetClass, null);
     }
- 
- 
- 
+
+
+
     /**
      * 注册属性
      * @param source 源类
@@ -138,17 +138,17 @@ public class OrikaUtils {
             classMapBuilder.byDefault().register();
         }
     }
- 
+
     /**
      * 属性名称一致可用
      * @param source 源数据
      * @param target 目标对象
      * @return OrikaUtils
      */
-    private static <V, P> OrikaUtils classMap(Class<V> source, Class<P> target) {
+    private static <V, P> OrikaUtil classMap(Class<V> source, Class<P> target) {
         return classMap(source, target, null);
     }
- 
+
     /**
      * 属性名称不一致可用
      *
@@ -156,20 +156,20 @@ public class OrikaUtils {
      * @param target 目标对象
      * @return OrikaUtils
      */
-    private static synchronized <V, P> OrikaUtils classMap(Class<V> source, Class<P> target, Map<String, String> refMap) {
+    private static synchronized <V, P> OrikaUtil classMap(Class<V> source, Class<P> target, Map<String, String> refMap) {
         String key = source.getCanonicalName() + ":" + target.getCanonicalName();
         if (CACHE_MAPPER.containsKey(key)) {
-            return new OrikaUtils(CACHE_MAPPER.get(key));
+            return new OrikaUtil(CACHE_MAPPER.get(key));
         }
         register(source,target,refMap);
         MapperFacade mapperFacade = FACTORY.getMapperFacade();
         CACHE_MAPPER.put(key, mapperFacade);
- 
-        return new OrikaUtils(mapperFacade);
+
+        return new OrikaUtil(mapperFacade);
     }
- 
- 
- 
+
+
+
     /**
      * Orika复制对象
      * @param source 源数据
@@ -179,7 +179,7 @@ public class OrikaUtils {
     private <V, P> P map(V source, Class<P> target) {
         return mapper.map(source, target);
     }
- 
+
     /**
      * Orika复制对象
      * @param source 源数据
@@ -190,7 +190,7 @@ public class OrikaUtils {
         mapper.map(source, target);
         return target;
     }
- 
+
     /**
      * 复制List
      * @param source 源对象
@@ -203,5 +203,5 @@ public class OrikaUtils {
         }
         return mapper.mapAsList(source, target);
     }
- 
+
 }

@@ -7,7 +7,7 @@ import org.kitona.zus.business.entity.dto.UserInfoDTO;
 import org.kitona.zus.business.service.IUserInfoBizService;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.exception.RestException;
-import org.kitona.zus.common.utils.OrikaUtils;
+import org.kitona.zus.common.utils.OrikaUtil;
 import org.kitona.zus.facade.service.IUserInfoAdapterService;
 import org.kitona.zus.service.IUserInfoService;
 import org.kitona.zus.service.entity.bo.UserInfoBO;
@@ -39,7 +39,7 @@ public class UserInfoBizService implements IUserInfoBizService {
             throw new RestException(IError.USER_NOT_EXIST);
         }
 
-        UserInfoDTO convert = OrikaUtils.convert(userInfo, UserInfoDTO.class);
+        UserInfoDTO convert = OrikaUtil.convert(userInfo, UserInfoDTO.class);
         convert.setEmail(userAddress);
         log.info("UserInfoBizService getUserInfo success, userId:{}, userInfo:{}", userId, JSON.toJSONString(convert));
         return convert;

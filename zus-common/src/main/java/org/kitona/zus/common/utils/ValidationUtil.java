@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 /**
  * 参数校验工具类
  */
-public final class ValidationUtils {
+public final class ValidationUtil {
 
-    private ValidationUtils() {
+    private ValidationUtil() {
         throw new IllegalStateException("Utility class");
     }
 
