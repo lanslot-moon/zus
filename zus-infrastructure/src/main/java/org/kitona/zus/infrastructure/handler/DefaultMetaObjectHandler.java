@@ -4,20 +4,20 @@ import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.reflection.MetaObject;
 import org.kitona.zus.common.utils.BeanFieldUtil;
-import org.kitona.zus.infrastructure.entity.po.BaseDo;
+import org.kitona.zus.infrastructure.entity.BasePo;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
 public class DefaultMetaObjectHandler implements MetaObjectHandler {
 
-    private final String createTimeFieldName = BeanFieldUtil.getFieldName(BaseDo::getCreateTime);
+    private final String createTimeFieldName = BeanFieldUtil.getFieldName(BasePo::getCreateTime);
 
-    private final String updateTimeFieldName = BeanFieldUtil.getFieldName(BaseDo::getUpdateTime);
+    private final String updateTimeFieldName = BeanFieldUtil.getFieldName(BasePo::getUpdateTime);
 
-    private final String createdByFieldName = BeanFieldUtil.getFieldName(BaseDo::getCreatedBy);
+    private final String createdByFieldName = BeanFieldUtil.getFieldName(BasePo::getCreatedBy);
 
-    private final String updatedByFieldName = BeanFieldUtil.getFieldName(BaseDo::getUpdatedBy);
+    private final String updatedByFieldName = BeanFieldUtil.getFieldName(BasePo::getUpdatedBy);
 
     @Override
     public void insertFill(MetaObject metaObject) {

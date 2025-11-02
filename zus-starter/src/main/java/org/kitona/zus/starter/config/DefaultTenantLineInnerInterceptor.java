@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.kitona.zus.common.utils.BeanFieldUtil;
 import org.kitona.zus.infrastructure.context.UserContextHolder;
-import org.kitona.zus.infrastructure.entity.po.BaseDo;
+import org.kitona.zus.infrastructure.entity.po.BasePo;
 
 
 /**
@@ -26,7 +26,7 @@ public class DefaultTenantLineInnerInterceptor implements TenantLineHandler {
 
     @Override
     public String getTenantIdColumn() {
-        return BeanFieldUtil.getFieldName(BaseDo::getTenantId);
+        return BeanFieldUtil.getFieldName(BasePo::getTenantId);
     }
 
     @Override

@@ -34,6 +34,13 @@
             <artifactId>zus-common</artifactId>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/dev.openfga/openfga-sdk -->
+        <dependency>
+            <groupId>dev.openfga</groupId>
+            <artifactId>openfga-sdk</artifactId>
+            <version>0.9.0</version>
+        </dependency>
+
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>

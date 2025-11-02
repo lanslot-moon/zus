@@ -4,7 +4,7 @@ package org.kitona.zus.infrastructure.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.kitona.zus.infrastructure.entity.po.UserInfoDo;
+import org.kitona.zus.infrastructure.entity.po.UserInfoPo;
 
 /*
  * Title: IUserInfoMapperService
@@ -14,8 +14,8 @@ import org.kitona.zus.infrastructure.entity.po.UserInfoDo;
  * Description: xxx
  */
 @Mapper
-public interface IUserInfoMapper extends BaseMapper<UserInfoDo> {
+public interface IUserInfoMapper extends BaseMapper<UserInfoPo> {
 
 
-    UserInfoDo findByNameAndAge(@Param("name") String name,@Param("age") Integer age);
+    UserInfoPo findByNameAndAge(@Param("name") String name, @Param("age") Integer age);
 }

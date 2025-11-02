@@ -5,19 +5,24 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.kitona.zus.infrastructure.entity.BasePo;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 @EqualsAndHashCode(callSuper = true)
+@TableName("subject")
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-@TableName("user_info")
-public class UserInfoDo extends BaseDo implements Serializable  {
+public class SubjectEntity  extends BasePo implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 2341386199742049283L;
+    /**
+     * 主体类型 USER/ROLE/GROUP
+     */
+    private String type;
 
-    private Long id;
+    /**
+     * 名称
+     */
+    private String name;
 }

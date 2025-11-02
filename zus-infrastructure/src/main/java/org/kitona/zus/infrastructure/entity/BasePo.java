@@ -1,4 +1,4 @@
-package org.kitona.zus.infrastructure.entity.po;
+package org.kitona.zus.infrastructure.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @NoArgsConstructor
-public class BaseDo {
+public class BasePo {
 
     /**
      * 默认使用雪花算法进行插入
