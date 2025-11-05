@@ -5,10 +5,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +27,7 @@ public class FgaYamlModelImporter {
         }
 
         List<TypeDefinition> typeDefList = FgaYamlParser.parseModelText(modelText);
-        return AuthorizationModelGraph.fromModel(new AuthorizationModel(typeDefList));
+        return AuthorizationModelGraphV2.fromModel(new AuthorizationModel(typeDefList));
     }
 
 
