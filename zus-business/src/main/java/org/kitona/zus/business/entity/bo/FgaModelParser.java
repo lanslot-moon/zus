@@ -6,19 +6,24 @@ import java.util.regex.Pattern;
 import java.util.stream.Collector;
 
 /**
- * FgaYamlParser 类用于解析FGA (Fine-Grained Access) YAML格式的模型文本。
+ * FgaModelParser 类用于解析FGA (Fine-Grained Access) 格式的模型文本。
  * 该类提供了将模型文本解析为TypeDefinition列表的功能。
  */
-public class FgaYamlParser {
+public class FgaModelParser {
 
     /**
      * 私有构造函数，防止实例化工具类。
      *
      * @throws IllegalStateException 如果尝试实例化此工具类
      */
-    private FgaYamlParser() {
+    private FgaModelParser() {
         throw new IllegalStateException("Utility class");
     }
+
+    /**
+     * 用于匹配类型定义的正则表达式模式。
+     */
+    private static final String RELATION_NODE_NAME = "relations";
 
     /**
      * 用于匹配类型定义的正则表达式模式。
@@ -45,9 +50,9 @@ public class FgaYamlParser {
 
         // 将文本按行分割，处理每行并收集结果
         return Arrays.stream(modelText.split("\\r?\\n"))
-                .map(String::strip)  // 去除每行的前后空白
-                .filter(FgaYamlParser::isRelevantLine)  // 过滤掉无关行
-                .collect(ParserStateCollector.collect());  // 使用状态收集器处理
+                .map(String::strip)
+                .filter(FgaModelParser::isRelevantLine)
+                .collect(ParserStateCollector.collect());
     }
 
     /**
@@ -74,6 +79,10 @@ public class FgaYamlParser {
              * 当前正在处理的类型名称
              */
             String currentType;
+            /**
+             *
+             */
+            boolean inRelationsBlock = false;
             /**
              * 存储关系定义的映射表
              */
@@ -107,11 +116,18 @@ public class FgaYamlParser {
             if (typeMatcher.find()) {
                 completeCurrentType(state);
                 state.currentType = typeMatcher.group(1);
+                state.inRelationsBlock = false;
+                return;
+            }
+
+            // 遇到 relations 块
+            if (line.trim().equals(RELATION_NODE_NAME)) {
+                state.inRelationsBlock = true;
                 return;
             }
 
             // 如果找到关系定义且当前有活动类型，则添加关系到当前类型
-            if (relationMatcher.find() && state.currentType != null) {
+            if (state.inRelationsBlock && relationMatcher.find() && state.currentType != null) {
                 String relName = relationMatcher.group(1);
                 String expr = relationMatcher.group(2).trim();
                 state.relations.put(relName, new RelationDefinition(relName, expr));
@@ -149,9 +165,10 @@ public class FgaYamlParser {
          * @param state 当前的解析状态
          */
         private static void completeCurrentType(State state) {
-            if (state.currentType != null && !state.relations.isEmpty()) {
-                state.types.add(new TypeDefinition(state.currentType, state.relations));
-                state.relations = new LinkedHashMap<>();
+            if (state.currentType != null) {
+                state.types.add(new TypeDefinition(state.currentType, new LinkedHashMap<>(state.relations)));
+                state.relations.clear();
+                state.inRelationsBlock = false;
             }
         }
     }
