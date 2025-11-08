@@ -165,7 +165,7 @@ public class AuthorizationChecker {
         return null; // 未找到匹配的链接关系
     }
 
-    // ⚠️ 确保您的 AuthorizationModelGraph.java 中 parseRefRewriteExpression 逻辑是正确的，
+    // ⚠️ 确保您的 AuthorizationModelGraph-bak.java 中 parseRefRewriteExpression 逻辑是正确的，
     // 这里复用其功能来反推编译结果。
     private String parseRefRewriteExpression(Map<String, TypeDefinition> resTypeMapDef, String ref, String currentResourceType) {
         // ... (此处省略您提供的 parseRefRewriteExpression 完整代码，因为它就是查找 TTU 并返回编译后的目标 ID)
