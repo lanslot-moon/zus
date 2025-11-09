@@ -3,9 +3,7 @@ package org.kitona.zus.business.entity.antlr4;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.kitona.zus.business.entity.bo.*;
-import org.antlr.v4.runtime.tree.ParseTree;
 
-// ⚠️ 实际项目中，此类应继承自 OpenFGAModelBaseVisitor<Void>
 public class OpenFGAGraphCompiler extends OpenFGAModelBaseVisitor<Void> {
 
     private final AuthorizationModelGraphBuilder builder;
@@ -101,7 +99,6 @@ public class OpenFGAGraphCompiler extends OpenFGAModelBaseVisitor<Void> {
         String tupleKeyRelation = ctx.relationName(1).getText(); // 元组关系，e.g., "parentFolder"
 
         // 2. 使用 TtuHelper 推断目标类型 (e.g., document, parentFolder -> folder)
-        // ⚠️ TtuHelper 必须能根据模型上下文（Type Restrictions）推断目标类型
         String targetType = ttuHelper.extractTargetType(tupleKeyRelation, currentResourceType);
 
         if (targetType != null) {
@@ -110,8 +107,10 @@ public class OpenFGAGraphCompiler extends OpenFGAModelBaseVisitor<Void> {
 
             // 4. 确保节点存在，并添加依赖边
             GraphNode targetNode = builder.getOrAddNode(targetId, targetId, NodeType.SPECIFIC_TYPE_AND_RELATION);
+            // ** 关键：添加 TTU 依赖边，例如 document#writer -> folder#editor **
             builder.addEdge(currentParentNode, targetNode);
         }
+        // ⚠️ 如果 targetType 为 null，则不生成边，这是导致之前图缺失的原因
         return null;
     }
 

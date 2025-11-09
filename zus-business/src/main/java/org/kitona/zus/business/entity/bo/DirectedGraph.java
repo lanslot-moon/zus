@@ -1,13 +1,10 @@
 package org.kitona.zus.business.entity.bo;
 
-import lombok.Getter;
-
 import java.util.*;
 
 /**
  * 有向图
  */
-@Getter
 public class DirectedGraph {
 
     /**
@@ -26,6 +23,26 @@ public class DirectedGraph {
 
     public void addEdge(String fromId, String toId) {
         edges.computeIfAbsent(fromId, k -> new HashSet<>()).add(toId);
+    }
+
+    /**
+     * 获取给定图节点的所有相邻节点
+     *
+     * @param graphNode 需要查询相邻节点的图节点
+     * @return 返回一个包含所有相邻节点标识符的集合，如果没有相邻节点则返回空集合
+     */
+    public Set<String> getNeighbors(GraphNode graphNode) {
+        return edges.getOrDefault(graphNode.id(), Collections.emptySet());
+    }
+
+    /**
+     * 根据节点ID获取图中的节点
+     *
+     * @param nodeId 要查找的节点ID
+     * @return 对应ID的GraphNode对象，如果不存在则返回null
+     */
+    public GraphNode getGraphNode(String nodeId) {
+        return nodes.get(nodeId);
     }
 
     @Override

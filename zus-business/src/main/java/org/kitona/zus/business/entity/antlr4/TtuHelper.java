@@ -1,13 +1,15 @@
 package org.kitona.zus.business.entity.antlr4;
 
-import org.kitona.zus.business.entity.bo.*;
+import org.kitona.zus.business.entity.bo.AuthorizationModel;
+import org.kitona.zus.business.entity.bo.TypeDefinition;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * TTU (Tuple To Userset) 辅助类
- * 负责从原始授权模型中提取目标类型，用于编译跨对象依赖。
+ * 负责从授权模型中 Type Restrictions 提取 TTU 目标类型。
  */
 public class TtuHelper {
 
@@ -19,26 +21,33 @@ public class TtuHelper {
     }
 
     /**
-     * 根据编译后的别名（例如 "parentFolder#editor"）和当前资源类型，
-     * 提取出最终的目标资源类型（例如 "folder"）。
-     * * @param tupleKeyRelation 别名关系，例如 "parentFolder"
-     * @param currentResourceType 当前资源类型，例如 "document"
-     * @return 目标资源类型，例如 "folder"
+     * OpenFGA 标准逻辑：根据 Type Restrictions 规则，推断 TTU 依赖的目标资源类型。
+     *
+     * @param tupleKeyRelation    元组关系名 (e.g., parentFolder)。
+     * @param currentResourceType 当前资源类型 (e.g., document)。
+     * @return TTU 依赖的父级资源类型 (e.g., folder)。
      */
     public String extractTargetType(String tupleKeyRelation, String currentResourceType) {
         TypeDefinition currentTypeDefinition = typeMap.get(currentResourceType);
-        if (currentTypeDefinition == null) return null;
-
-        RelationDefinition relationDefinition = currentTypeDefinition.relations().get(tupleKeyRelation);
-        if (relationDefinition == null) return null;
-
-        String expr = relationDefinition.rewriteExpression();
-        if (expr.startsWith("tupleToUserset:") && expr.contains("to=")) {
-            int toIndex = expr.indexOf("to=");
-            String targetPart = expr.substring(toIndex + 3).trim();
-            // 目标格式为 folder#owner，我们只需要 folder
-            return targetPart.split("#")[0];
+        if (currentTypeDefinition == null) {
+            return null;
         }
+
+        // 1. 获取 tupleKeyRelation (parentFolder) 上的所有 Type Restrictions
+        Set<String> restrictions = currentTypeDefinition.getRestrictionsForRelation(tupleKeyRelation);
+
+        // 2. 遍历 Type Restrictions，提取 Type
+        for (String restriction : restrictions) {
+            // Restriction 可以是 "folder" 或 "group#member"
+            if (restriction.contains("#")) {
+                // 如果是 type#relation 格式 (e.g., group#member)，返回 type 部分
+                return restriction.split("#")[0];
+            } else {
+                // 如果是 type 格式 (e.g., folder)，直接返回
+                return restriction;
+            }
+        }
+
         return null;
     }
 }
