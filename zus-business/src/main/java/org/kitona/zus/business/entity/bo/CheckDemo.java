@@ -13,7 +13,7 @@ public class CheckDemo {
         folderRels.put("viewer", new RelationDefinition("viewer", "self or editor or owner"));
 
         AuthorizationModel model = new AuthorizationModel(List.of(
-                new TypeDefinition("folder", folderRels)
+                new TypeDefinition("folder", folderRels, Map.of())
         ));
 
         AuthorizationModelGraph graph = AuthorizationModelGraph.fromModel(model);
@@ -21,8 +21,8 @@ public class CheckDemo {
 
         // 2️⃣ 定义关系数据
         List<RelationTuple> tuples = List.of(
-                new RelationTuple("user:alice", "folder", "1", "viewer"),
-                new RelationTuple("user:bob", "folder", "1", "editor")
+                new RelationTuple("user", "alice", "folder", "1", "viewer"),
+                new RelationTuple("user", "bob", "folder", "1", "editor")
         );
 
         AuthorizationChecker engine = new AuthorizationChecker(graph, tuples);

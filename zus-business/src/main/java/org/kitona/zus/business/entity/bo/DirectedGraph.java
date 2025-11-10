@@ -17,10 +17,26 @@ public class DirectedGraph {
      */
     private final Map<String, Set<String>> edges = new HashMap<>();
 
+
+    /**
+     * 向图中添加一个节点的方法
+     * 如果指定ID的节点已存在，则返回已存在的节点；否则创建并返回一个新节点
+     *
+     * @param id    节点的唯一标识符
+     * @param label 节点的显示标签
+     * @param type  节点的类型枚举值
+     * @return 返回已存在或新创建的GraphNode对象
+     */
     public GraphNode addNode(String id, String label, NodeType type) {
         return nodes.computeIfAbsent(id, k -> new GraphNode(id, label, type));
     }
 
+    /**
+     * 添加一条从fromId到toId的有向边
+     *
+     * @param fromId 边的起始节点ID
+     * @param toId   边的目标节点ID
+     */
     public void addEdge(String fromId, String toId) {
         edges.computeIfAbsent(fromId, k -> new HashSet<>()).add(toId);
     }

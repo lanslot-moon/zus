@@ -166,7 +166,7 @@ public class FgaModelParser {
          */
         private static void completeCurrentType(State state) {
             if (state.currentType != null) {
-                state.types.add(new TypeDefinition(state.currentType, new LinkedHashMap<>(state.relations)));
+                state.types.add(new TypeDefinition(state.currentType, new LinkedHashMap<>(state.relations), Map.of()));
                 state.relations.clear();
                 state.inRelationsBlock = false;
             }

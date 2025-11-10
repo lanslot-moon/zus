@@ -5,12 +5,14 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 权限检查器，遵循 OpenFGA 的递归检查标准。
+ * 权限检查器（AuthorizationChecker），遵循 OpenFGA 的递归检查标准。
+ * * 关键修正：TTU 链接查找 (findTtuLinkRelation) 现在使用 Type Restrictions。
  */
 public class AuthorizationChecker {
 
     private final AuthorizationModelGraph graph;
     private final TupleStore tupleStore;
+    // 存储 TypeDefinition，用于快速查找类型定义和 Type Restrictions
     private final Map<String, TypeDefinition> typeMap;
 
     public AuthorizationChecker(AuthorizationModelGraph graph, List<RelationTuple> tuples) {
@@ -31,156 +33,150 @@ public class AuthorizationChecker {
     public boolean check(String user, String resource, String relation) {
         // 使用一个 Set 来追踪访问过的状态，防止递归循环
         Set<String> visited = new HashSet<>();
-        String resourceType = resource.split(":")[0];
+        String[] subjectObject = user.split(":");
+        String[] resourceObject = resource.split(":");
+        String subjectType = subjectObject[0];
+        String subjectId = subjectObject[1];
 
-        return resolve(user, resource, resourceType, relation, visited);
+        String resourceType = resourceObject[0];
+        String resourceId = resourceObject[1];
+
+        return resolve(subjectType, subjectId, resourceType, resourceId, relation, visited);
     }
 
     /**
-     * 递归核心方法
+     * 递归核心方法：尝试证明 (user, resource:resourceId, relation) 元组的存在性
      *
-     * @param user         用户/对象ID
+     * @param subjectType  用户/对象ID (e.g., "user:alice", "group:devs")
+     * @param subjectId    用户/对象ID (e.g., "alice", "devs")
      * @param resourceId   当前检查的资源实例ID (e.g., "document:99")
      * @param resourceType 当前检查的资源类型 (e.g., "document")
-     * @param relation     权限关系 (e.g., "writer")
-     * @param visited      递归访问记录 (防止循环)
+     * @param relationName     当前检查的权限关系 (e.g., "writer")
+     * @param visited      访问历史 Set，用于防止循环依赖
      * @return 是否有权限
      */
-    private boolean resolve(String user, String resourceId, String resourceType, String relation, Set<String> visited) {
-        String state = String.format("%s#%s#%s", user, resourceId, relation);
-        if (visited.contains(state)) {
-            return false; // 避免循环依赖
+    private boolean resolve(String subjectType, String subjectId, String resourceType, String resourceId, String relationName, Set<String> visited) {
+        String currentKey = String.format("%s:%s@%s:%s#%s", subjectType, subjectId, resourceType, resourceId, relationName);
+        if (visited.contains(currentKey)) {
+            return false; // 检测到循环依赖
         }
-        visited.add(state);
+        visited.add(currentKey);
 
-        String currentNodeId = resourceType + "#" + relation;
-        Set<String> dependencies = graph.graph().getEdges().getOrDefault(currentNodeId, Collections.emptySet());
+        String startNodeId = resourceType + "#" + relationName;
+        GraphNode startNode = graph.graph().getGraphNode(startNodeId);
+        if (startNode == null) {
+            return false; // 模型中没有定义此关系
+        }
 
-        // 1. 遍历图依赖 (Rewrite Logic)
-        for (String targetNodeId : dependencies) {
+        // 1. 检查 'self' (元组) 依赖
+        // 查找直接的元组 (user, resourceId, relation) 或 (userType:*, resourceId, relation)
+        if (tupleStore.hasTuple(subjectType, subjectId, resourceType, resourceId, relationName)) {
+            visited.remove(currentKey);
+            return true;
+        }
 
-            String[] targetParts = targetNodeId.split("#");
-            String targetType = targetParts[0];
-            String targetRelation = targetParts[1];
+        // 2. 检查 'computedUserset' 和 'tupleToUserset' 依赖 (图边)
+        for (String neighborId : graph.graph().getNeighbors(startNode)) {
+            GraphNode neighbor = graph.graph().getGraphNode(neighborId);
 
-            // 1.1. 统一处理自循环 (Self/TupleSet 关系: currentNodeId == targetNodeId)
-            if (currentNodeId.equals(targetNodeId)) {
-
-                // 检查当前关系 (relation) 的定义是 self 还是 TTU。
-                RelationDefinition relDef = typeMap.get(resourceType).relations().get(relation);
-                String expr = relDef.rewriteExpression();
-                if (expr.startsWith("tupleToUserset:")) {
-                    // 情况 1.1.1: 如果是 TTU 关系 (例如 document#parentFolder)
-                    // 此时，user 必须是 resourceId 的 parentFolder。
-                    // TTU 关系本质上是元组集，因此只需检查直连元组
-                    if (tupleStore.checkDirectTuple(user, resourceId, relation)) {
-                        return true;
-                    }
-                } else if (expr.contains("self")) {
-                    // 情况 1.1.2: 如果包含 self (例如 document#writer 的 self 部分)
-                    // 检查用户是否通过直连元组拥有权限
-                    if (tupleStore.checkDirectTuple(user, resourceId, relation)) {
-                        return true;
-                    }
-                }
-
-                continue; // 自循环检查完毕，继续下一条边
+            // 检查图节点类型，忽略 SPECIFIC_TYPE 等节点
+            if (neighbor.type() != NodeType.SPECIFIC_TYPE_AND_RELATION) {
+                continue;
             }
 
-            // 1.2. 内部依赖 (Internal Rewrite, e.g., folder#editor -> folder#owner)
-            if (targetType.equals(resourceType)) {
-                if (resolve(user, resourceId, targetType, targetRelation, visited)) {
+            // 2.1. Computed Userset (e.g., document#writer -> document#editor)
+            // 目标类型与当前资源类型相同
+            if (neighborId.startsWith(resourceType + "#")) {
+                // 递归检查当前资源上的目标关系
+                String targetRelation = neighborId.split("#")[1];
+                if (resolve(subjectType, subjectId, resourceType, resourceId, targetRelation, visited)) {
+                    visited.remove(currentKey);
                     return true;
                 }
+                continue;
             }
 
-            // 1.3. 跨对象依赖 (Computed Userset / TTU Jump, e.g., document#writer -> folder#editor)
-            else {
-                // 发现跨类型跳转，需要查找 TTU 规则来找到中间对象
+            // 2.2. Tuple To Userset (TTU) (e.g., document#writer -> folder#editor)
 
-                // 确定链接关系 (Linking Relation)
-                // 必须从原始模型中查找哪个关系定义指向了 targetNodeId (e.g., folder#editor)
-                String linkingRelation = findLinkingRelation(resourceType, relation, targetNodeId);
+            // 目标类型与当前资源类型不同 (TTU 依赖)
 
-                if (linkingRelation == null) {
-                    // 理论上不应该发生，除非模型编译有误
-                    continue;
-                }
+            // 🌟 OpenFGA 标准修正：查找 TTU 链接关系（例如 "parentFolder"）
+            String ttuLinkRel = findTtuLinkRelation(neighborId, resourceType);
 
-                // 查找中间对象 (Intermediate Resources)
-                // 这一步利用了 TTU 规则的 from=document#parentFolder 部分
-                List<String> linkedResources = tupleStore.findLinkedResources(resourceId, linkingRelation);
+            // 修正后的 TTU 递归检查逻辑
+            if (ttuLinkRel != null) {
+                // 目标关系名 (e.g., "editor")
+                String targetRelationName = neighborId.split("#")[1];
 
-                for (String linkedResourceId : linkedResources) {
-                    String linkedResourceType = linkedResourceId.split(":")[0];
+                // 1. 查找所有以当前资源为起点，以 ttuLinkRel 为关系名的元组
+                //    查询 (document, 99, parentFolder) -> 结果是 (document:99, parentFolder, folder:1)
+                // ⚠️ 假设您的 findTuples 方法签名是 findTuples(resourceType, resourceId, relation)
+                Set<RelationTuple> linkTuples = tupleStore.findTuples(resourceType, resourceId, ttuLinkRel);
 
-                    // 递归调用：检查用户对中间对象是否拥有目标权限
-                    if (resolve(user, linkedResourceId, linkedResourceType, targetRelation, visited)) {
+                // 2. 对每个父对象进行递归检查
+                for (RelationTuple linkTuple : linkTuples) {
+
+                    // **🌟 核心修正：父资源信息在 user 字段中！🌟**
+                    String parentResourceType = linkTuple.subjectType(); // e.g., "folder"
+                    String parentResourceId = linkTuple.subjectId();   // e.g., "1"
+
+                    // 递归检查：user 对 parentResource 是否拥有 targetRelation 权限
+                    // 例如：检查 alice 对 folder:1 是否拥有 'editor' 权限
+                    if (resolve(subjectType, subjectId, parentResourceType, parentResourceId, targetRelationName, visited)) {
+                        // 找到路径，返回成功
+                        visited.remove(currentKey);
                         return true;
                     }
                 }
             }
         }
 
-        visited.remove(state); // 回溯
+        visited.remove(currentKey);
         return false;
     }
 
+
     /**
-     * 辅助函数：根据编译后的图边，反推原始模型中的链接关系 (e.g., "parentFolder")
+     * 【OpenFGA 标准 TTU 链接查找】
+     * * 查找给定目标关系（targetNodeId，如 folder#editor）的 TTU 元组键关系（如 parentFolder）。
+     * 这通过查询 Type Restrictions 实现。
+     * * @param targetNodeId 目标权限节点 ID (e.g., "folder#editor")
      *
-     * @param currentType     当前类型 (document)
-     * @param currentRelation 当前关系 (writer)
-     * @param targetNodeId    目标节点ID (folder#editor)
-     * @return 链接关系名称 (parentFolder)
+     * @param currentResourceType 当前资源类型 (e.g., "document")
+     * @return TTU 链接关系名 (e.g., "parentFolder")，如果找不到则返回 null。
      */
-    private String findLinkingRelation(String currentType, String currentRelation, String targetNodeId) {
-        TypeDefinition typeDef = typeMap.get(currentType);
-        if (typeDef == null) return null;
+    private String findTtuLinkRelation(String targetNodeId, String currentResourceType) {
+        String[] parts = targetNodeId.split("#");
+        if (parts.length != 2) {
+            return null; // 目标 ID 格式错误
+        }
 
-        RelationDefinition relDef = typeDef.relations().get(currentRelation);
-        if (relDef == null || relDef.rewriteExpression() == null) return null;
+        String targetType = parts[0]; // e.g., "folder"
 
-        String expr = relDef.rewriteExpression();
-        String[] refs = expr.split("\\s+or\\s+");
+        TypeDefinition currentTypeDefinition = typeMap.get(currentResourceType);
+        if (currentTypeDefinition == null) {
+            return null;
+        }
 
-        for (String ref : refs) {
-            if (ref.contains("#")) { // 例如：parentFolder#editor
-                String[] parts = ref.split("#");
-                String alias = parts[0]; // parentFolder
-                String aliasTargetRel = parts[1]; // editor
+        // 遍历当前资源类型的所有关系，查找 Type Restrictions 匹配的元组键关系
+        for (var entry : currentTypeDefinition.relations().entrySet()) {
+            String relationName = entry.getKey(); // e.g., "parentFolder"
+            RelationDefinition relationDef = entry.getValue();
 
-                // 编译时我们知道：parentFolder 关系被编译到了 folder 类型
-                // 检查编译结果是否匹配：alias#aliasTargetRel 编译后是否等于 targetNodeId
-                try {
-                    String compiledTarget = parseRefRewriteExpression(typeMap, ref, currentType);
-                    if (targetNodeId.equals(compiledTarget)) {
-                        return alias; // 返回链接关系名称 "parentFolder"
+            // 1. 检查它是否是元组键关系 (OpenFGA 标准：表达式为 'self')
+            if ("self".equals(relationDef.rewriteExpression())) {
+
+                // 2. 检查 Type Restrictions 是否包含目标类型
+                Set<String> restrictions = currentTypeDefinition.getRestrictionsForRelation(relationName);
+
+                for (String restriction : restrictions) {
+                    // 限制可以是 "folder" 或 "folder#owner"。我们只需要匹配类型部分。
+                    if (restriction.equals(targetType) || restriction.startsWith(targetType + "#")) {
+                        return relationName; // 返回链接关系名 "parentFolder"
                     }
-                } catch (Exception e) {
-                    // 忽略解析错误
                 }
             }
         }
         return null; // 未找到匹配的链接关系
-    }
-
-    // ⚠️ 确保您的 AuthorizationModelGraph-bak.java 中 parseRefRewriteExpression 逻辑是正确的，
-    // 这里复用其功能来反推编译结果。
-    private String parseRefRewriteExpression(Map<String, TypeDefinition> resTypeMapDef, String ref, String currentResourceType) {
-        // ... (此处省略您提供的 parseRefRewriteExpression 完整代码，因为它就是查找 TTU 并返回编译后的目标 ID)
-        // 此处应将您提供的 parseRefRewriteExpression 逻辑粘贴进来
-        String[] parts = ref.split("#");
-        String tupleKeyRelation = parts[0];
-        String targetRelation = parts[1];
-        TypeDefinition currentTypeDefinition = resTypeMapDef.get(currentResourceType);
-        RelationDefinition relationDefinition = currentTypeDefinition.relations().get(tupleKeyRelation);
-        String expr = relationDefinition.rewriteExpression();
-        if (expr.startsWith("tupleToUserset:") && expr.contains("to=")) {
-            int toIndex = expr.indexOf("to=");
-            String targetType = expr.substring(toIndex + 3).trim().split("#")[0];
-            return targetType + "#" + targetRelation;
-        }
-        return null;
     }
 }
