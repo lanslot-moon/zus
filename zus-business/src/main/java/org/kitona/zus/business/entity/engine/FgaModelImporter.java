@@ -1,6 +1,9 @@
-package org.kitona.zus.business.entity.bo;
+package org.kitona.zus.business.entity.engine;
 
 import lombok.extern.slf4j.Slf4j;
+import org.kitona.zus.business.entity.bo.TypeDefinition;
+import org.kitona.zus.business.entity.graph.AuthorizationModelGraph;
+import org.kitona.zus.business.entity.model.AuthorizationModel;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,8 +13,6 @@ import java.util.List;
 
 @Slf4j
 public class FgaModelImporter {
-
-    private static final String MODEL_NODE_NAME = "model";
 
     private FgaModelImporter() {
         throw new IllegalStateException("Utility class");

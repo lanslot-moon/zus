@@ -1,7 +1,10 @@
-package org.kitona.zus.business.entity.bo;
+package org.kitona.zus.business.entity.graph;
 
 import lombok.extern.slf4j.Slf4j;
-import org.kitona.zus.business.entity.antlr4.OpenFGAGraphCompiler;
+import org.kitona.zus.business.entity.antlr4.OpenFGAModelCompiler;
+import org.kitona.zus.business.entity.model.AuthorizationModel;
+import org.kitona.zus.business.entity.bo.RelationDefinition;
+import org.kitona.zus.business.entity.bo.TypeDefinition;
 
 import java.util.*;
 import java.util.function.Function;
@@ -20,7 +23,7 @@ public record AuthorizationModelGraph(DirectedGraph graph, AuthorizationModel mo
         AuthorizationModelGraphBuilder builder = new AuthorizationModelGraphBuilder();
 
         // 1. 初始化辅助组件
-        OpenFGAGraphCompiler compiler = new OpenFGAGraphCompiler(builder, model); // 传入 builder 和 helper
+        OpenFGAModelCompiler compiler = new OpenFGAModelCompiler(builder, model); // 传入 builder 和 helper
 
         Map<String, TypeDefinition> resTypeMapDef = model.typeDefinitions().stream()
                 .collect(Collectors.toMap(TypeDefinition::resourceType, Function.identity()));

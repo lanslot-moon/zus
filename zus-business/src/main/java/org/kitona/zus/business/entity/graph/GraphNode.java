@@ -1,4 +1,4 @@
-package org.kitona.zus.business.entity.bo;
+package org.kitona.zus.business.entity.graph;
 
 
 /**

@@ -1,6 +1,6 @@
 package org.kitona.zus.business.entity.antlr4;
 
-import org.kitona.zus.business.entity.bo.AuthorizationModel;
+import org.kitona.zus.business.entity.model.AuthorizationModel;
 import org.kitona.zus.business.entity.bo.TypeDefinition;
 import java.util.Map;
 import java.util.Set;

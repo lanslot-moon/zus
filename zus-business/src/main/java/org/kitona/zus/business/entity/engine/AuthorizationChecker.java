@@ -1,4 +1,12 @@
-package org.kitona.zus.business.entity.bo;
+package org.kitona.zus.business.entity.engine;
+
+import org.kitona.zus.business.entity.bo.RelationDefinition;
+import org.kitona.zus.business.entity.bo.RelationTuple;
+import org.kitona.zus.business.entity.bo.TupleStore;
+import org.kitona.zus.business.entity.bo.TypeDefinition;
+import org.kitona.zus.business.entity.graph.AuthorizationModelGraph;
+import org.kitona.zus.business.entity.graph.GraphNode;
+import org.kitona.zus.business.entity.graph.NodeType;
 
 import java.util.*;
 import java.util.function.Function;

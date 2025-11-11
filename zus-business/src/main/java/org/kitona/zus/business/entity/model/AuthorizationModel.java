@@ -1,4 +1,6 @@
-package org.kitona.zus.business.entity.bo;
+package org.kitona.zus.business.entity.model;
+
+import org.kitona.zus.business.entity.bo.TypeDefinition;
 
 import java.util.*;
 

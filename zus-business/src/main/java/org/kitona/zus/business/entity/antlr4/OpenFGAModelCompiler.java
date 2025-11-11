@@ -2,9 +2,12 @@ package org.kitona.zus.business.entity.antlr4;
 
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
-import org.kitona.zus.business.entity.bo.*;
+import org.kitona.zus.business.entity.graph.AuthorizationModelGraphBuilder;
+import org.kitona.zus.business.entity.graph.GraphNode;
+import org.kitona.zus.business.entity.graph.NodeType;
+import org.kitona.zus.business.entity.model.AuthorizationModel;
 
-public class OpenFGAGraphCompiler extends OpenFGAModelBaseVisitor<Void> {
+public class OpenFGAModelCompiler extends OpenFGAModelBaseVisitor<Void> {
 
     private final AuthorizationModelGraphBuilder builder;
     private final TtuHelper ttuHelper;
@@ -13,7 +16,7 @@ public class OpenFGAGraphCompiler extends OpenFGAModelBaseVisitor<Void> {
     private String currentResourceType;
     private GraphNode currentParentNode; // 当前正在定义的关系节点 (e.g., document#writer)
 
-    public OpenFGAGraphCompiler(AuthorizationModelGraphBuilder builder, AuthorizationModel model) {
+    public OpenFGAModelCompiler(AuthorizationModelGraphBuilder builder, AuthorizationModel model) {
         this.builder = builder;
         this.ttuHelper = new TtuHelper(model);
     }
@@ -110,7 +113,7 @@ public class OpenFGAGraphCompiler extends OpenFGAModelBaseVisitor<Void> {
             // ** 关键：添加 TTU 依赖边，例如 document#writer -> folder#editor **
             builder.addEdge(currentParentNode, targetNode);
         }
-        // ⚠️ 如果 targetType 为 null，则不生成边，这是导致之前图缺失的原因
+        // ⚠️ 如果 targetType 为 null，则不生成边，这是导致图缺失的原因
         return null;
     }
 

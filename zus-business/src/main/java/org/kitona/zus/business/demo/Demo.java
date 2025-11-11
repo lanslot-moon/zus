@@ -1,4 +1,9 @@
-package org.kitona.zus.business.entity.bo;
+package org.kitona.zus.business.demo;
+
+import org.kitona.zus.business.entity.model.AuthorizationModel;
+import org.kitona.zus.business.entity.graph.AuthorizationModelGraph;
+import org.kitona.zus.business.entity.bo.RelationDefinition;
+import org.kitona.zus.business.entity.bo.TypeDefinition;
 
 import java.util.HashMap;
 import java.util.List;

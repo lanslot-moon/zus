@@ -1,4 +1,7 @@
-package org.kitona.zus.business.entity.bo;
+package org.kitona.zus.business.entity.engine;
+
+import org.kitona.zus.business.entity.bo.RelationDefinition;
+import org.kitona.zus.business.entity.bo.TypeDefinition;
 
 import java.util.*;
 import java.util.regex.Matcher;
