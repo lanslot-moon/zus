@@ -8,7 +8,6 @@ import org.kitona.zus.business.entity.model.AuthorizationModel;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 @Slf4j
@@ -38,9 +37,5 @@ public class FgaModelImporter {
             log.error("FgaYamlModelImporter Failed to load model from URI: {}", uri, e);
             return null;
         }
-    }
-
-    public static void main(String[] args) throws URISyntaxException {
-        System.out.println(FgaModelImporter.importFromFga(new URI("https://raw.githubusercontent.com/openfga/sample-stores/refs/heads/main/stores/iot/model.fga")));
     }
 }
