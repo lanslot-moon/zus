@@ -18,14 +18,4 @@ public enum NodeType {
      * 示例: folder#viewer, document#writer.
      */
     SPECIFIC_TYPE_AND_RELATION,
-
-
-    /**
-     * 用途: 表示权限直接来源于 tupleToUserset 规则，即权限通过元组数据的某个关系进行传递.
-     * <p>
-     * 必要性: 用于标记那些用户集是通过复杂计算（通过中间对象和目标关系计算）得出的关系。
-     * <p>
-     * 示例: 在规范的 OpenFGA 图中，这个节点通常只用于标记权限流经 TTU 规则的计算终点，或者简化为自循环关系.
-     */
-    TUPLE_TO_USER_SET;
 }

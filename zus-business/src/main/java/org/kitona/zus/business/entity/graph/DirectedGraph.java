@@ -64,11 +64,28 @@ public class DirectedGraph {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (var entry : edges.entrySet()) {
-            for (String target : entry.getValue()) {
-                sb.append(entry.getKey()).append(" -> ").append(target).append("\n");
+
+        // 打印节点信息
+        sb.append("=== Nodes ===\n");
+        for (Map.Entry<String, GraphNode> entry : nodes.entrySet()) {
+            GraphNode node = entry.getValue();
+            sb.append(String.format("ID: %s, Label: %s, Type: %s%n",
+                    node.id(),
+                    node.label(),
+                    node.type()));
+        }
+
+        // 打印边信息
+        sb.append("\n=== Edges ===\n");
+        for (Map.Entry<String, Set<String>> entry : edges.entrySet()) {
+            String fromNode = entry.getKey();
+            Set<String> toNodes = entry.getValue();
+            for (String toNode : toNodes) {
+                sb.append(String.format("%s -> %s%n", fromNode, toNode));
             }
         }
+
         return sb.toString();
     }
+
 }
