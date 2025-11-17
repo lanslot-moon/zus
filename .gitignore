@@ -34,5 +34,6 @@ build/
 ### VS Code ###
 .vscode/
 
+/node_modules/
 .vite/
 /.vite/
