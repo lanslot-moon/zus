@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.kitona.zus.common.utils.BeanFieldUtil;
 import org.kitona.zus.infrastructure.context.UserContextHolder;
-import org.kitona.zus.infrastructure.entity.po.BasePo;
+import org.kitona.zus.infrastructure.entity.BasePo;
 
 
 /**

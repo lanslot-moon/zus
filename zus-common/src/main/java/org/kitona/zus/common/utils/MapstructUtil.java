@@ -3,19 +3,15 @@ package org.kitona.zus.common.utils;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import io.github.linpeilie.Converter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
-/**
+import java.util.*;
+
+/*
  * Mapstruct 工具类
  * <p>参考文档：<a href="https://mapstruct.plus/introduction/quick-start.html">mapstruct-plus</a></p>
- *
- * @author Michelle.Chung
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class MapstructUtils {
+public class MapstructUtil {
 
     private static final Converter converter = new Converter();
 
@@ -84,5 +80,4 @@ public class MapstructUtils {
         }
         return converter.convert(map, beanClass);
     }
-
 }

@@ -1,7 +1,7 @@
 package org.kitona.zus.api;
 
 import org.kitona.zus.api.entity.RestResult;
-import org.kitona.zus.api.entity.params.UserInfoRequest;
+import org.kitona.zus.api.entity.request.UserInfoApiRequest;
 import org.kitona.zus.api.entity.vo.UserInfoVO;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,9 +26,9 @@ public interface IUserInfoApiService {
 
     /**
      * 保存用户信息
-     * @param userInfoRequest 用户信息
+     * @param userInfoApiRequest 用户信息
      * @return 保存结果
      */
     @PostMapping("v1.0/userinfo")
-    RestResult<Boolean> saveUserInfo(@RequestBody UserInfoRequest userInfoRequest);
+    RestResult<Boolean> saveUserInfo(@RequestBody UserInfoApiRequest userInfoApiRequest);
 }

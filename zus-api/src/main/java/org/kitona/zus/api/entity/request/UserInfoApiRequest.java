@@ -1,4 +1,4 @@
-package org.kitona.zus.api.entity.params;
+package org.kitona.zus.api.entity.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class UserInfoRequest implements Serializable {
+public class UserInfoApiRequest implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

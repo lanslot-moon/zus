@@ -2,8 +2,13 @@ package org.kitona.zus.common.exception;
 
 import lombok.Getter;
 
+import java.io.Serial;
+
 @Getter
 public class RestException extends RuntimeException {
+
+    @Serial
+    private static final long serialVersionUID = -6844221534316308750L;
 
     private final int code;
 

@@ -25,6 +25,8 @@
         <maven.version>3.8.1</maven.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <!--   解决maven命令执行时控制台出现中文乱码     -->
+        <argLine>-Dfile.encoding=UTF-8</argLine>
         <!--多模块pom管理插件-->
         <flatten-maven-plugin.version>1.7.0</flatten-maven-plugin.version>
         <!--脚手架插件-->
@@ -39,6 +41,8 @@
         <commons-lang3.version>3.19.0</commons-lang3.version>
         <fastjson.version>2.0.35</fastjson.version>
         <guava.version>32.0.1-jre</guava.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <mapstruct-plus.version>1.4.3</mapstruct-plus.version>
         <transmittable.version>2.14.5</transmittable.version>
         <!--AST语法树-->
         <antlr4.version>4.13.2</antlr4.version>
@@ -183,6 +187,30 @@
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>io.github.linpeilie</groupId>
+                <artifactId>mapstruct-plus-pom</artifactId>
+                <version>${mapstruct-plus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-bom</artifactId>
+                <version>${slf4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!--=============外部工具 End===============-->
 
             <!--============测试相关依赖 Start================-->
@@ -207,6 +235,19 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <encoding>UTF-8</encoding>
+                    <!--mapstruct-processor 用于在 build 期间生成映射器具体实现代码。-->
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>io.github.linpeilie</groupId>
+                            <artifactId>mapstruct-plus-processor</artifactId>
+                            <version>${mapstruct-plus.version}</version>
+                        </path>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 

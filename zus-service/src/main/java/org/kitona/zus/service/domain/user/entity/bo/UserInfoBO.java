@@ -1,4 +1,4 @@
-package org.kitona.zus.service.entity.bo;
+package org.kitona.zus.service.domain.user.entity.bo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
