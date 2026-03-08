@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.ITupleMapper">
+
+    <!-- 通用结果映射（与 fga_relation_tuple 表一致） -->
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="object_type" property="objectType"/>
+        <result column="object_id" property="objectId"/>
+        <result column="relation" property="relation"/>
+        <result column="subject_type" property="subjectType"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="subject_relation" property="subjectRelation"/>
+        <result column="zookie" property="zookie"/>
+        <result column="condition_expression" property="conditionExpression"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <!-- 根据资源和关系查询元组列表（用于 TTU） -->
+    <select id="selectByObjectAndRelation" resultMap="BaseResultMap">
+        SELECT id, store_id, object_type, object_id, relation,
+               subject_type, subject_id, subject_relation,
+               zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_relation_tuple
+        WHERE store_id = #{storeId}
+          AND object_type = #{objectType}
+          AND object_id = #{objectId}
+          AND relation = #{relation}
+          <if test="maxZookie != null">
+              AND zookie &lt;= #{maxZookie}
+          </if>
+          AND is_deleted = 0
+    </select>
+
+    <!-- 根据主体查询元组列表（用于 ListObjects） -->
+    <select id="selectBySubject" resultMap="BaseResultMap">
+        SELECT id, store_id, object_type, object_id, relation,
+               subject_type, subject_id, subject_relation,
+               zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_relation_tuple
+        WHERE store_id = #{storeId}
+          AND subject_type = #{subjectType}
+          AND subject_id = #{subjectId}
+          <if test="subjectRelation != null and subjectRelation != ''">
+              AND subject_relation = #{subjectRelation}
+          </if>
+          <if test="subjectRelation == null or subjectRelation == ''">
+              AND (subject_relation IS NULL OR subject_relation = '')
+          </if>
+          <if test="objectType != null and objectType != ''">
+              AND object_type = #{objectType}
+          </if>
+          <if test="relation != null and relation != ''">
+              AND relation = #{relation}
+          </if>
+          <if test="maxZookie != null">
+              AND zookie &lt;= #{maxZookie}
+          </if>
+          AND is_deleted = 0
+    </select>
+
+    <!-- 根据资源查询元组列表（用于 ListUsers） -->
+    <select id="selectByObject" resultMap="BaseResultMap">
+        SELECT id, store_id, object_type, object_id, relation,
+               subject_type, subject_id, subject_relation,
+               zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_relation_tuple
+        WHERE store_id = #{storeId}
+          AND object_type = #{objectType}
+          AND object_id = #{objectId}
+          <if test="relation != null and relation != ''">
+              AND relation = #{relation}
+          </if>
+          <if test="maxZookie != null">
+              AND zookie &lt;= #{maxZookie}
+          </if>
+          AND is_deleted = 0
+    </select>
+
+    <!-- 批量插入元组 -->
+    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO fga_relation_tuple
+            (store_id, object_type, object_id, relation, subject_type, subject_id,
+             subject_relation, zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.storeId}, #{item.objectType}, #{item.objectId}, #{item.relation},
+             #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation},
+             #{item.zookie}, #{item.conditionExpression}, #{item.tenantId},
+             #{item.createTime}, #{item.createdBy}, #{item.updateTime}, #{item.updatedBy}, 0)
+        </foreach>
+    </insert>
+
+    <!-- 批量逻辑删除元组 -->
+    <update id="batchLogicDelete">
+        UPDATE fga_relation_tuple
+        SET is_deleted = 1,
+            update_time = #{updateTime}
+        WHERE store_id = #{storeId}
+          AND id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+          AND is_deleted = 0
+    </update>
+
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IRelationRestrictionMapper">
+
+    <!-- 通用结果映射（与 fga_relation_restriction 表一致） -->
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictionPO">
+        <id column="id" property="id"/>
+        <result column="relation_definition_id" property="relationDefinitionId"/>
+        <result column="allowed_type" property="allowedType"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <!-- 
+        所有查询和更新操作均在 Repository 层使用 MyBatis Plus LambdaQueryWrapper/LambdaUpdateWrapper 实现，
+        无需在此定义 SQL 映射。
+    -->
+
+</mapper>

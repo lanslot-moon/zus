@@ -1,0 +1,154 @@
+package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.kitona.zus.infrastructure.cache.FgaCacheManager;
+import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
+import org.kitona.zus.infrastructure.enums.StoreStatusEnum;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
+import org.kitona.zus.infrastructure.persistence.mysql.mapper.IStoreMapper;
+import org.kitona.zus.infrastructure.persistence.mysql.repository.IStorePersistenceRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 存储空间持久化仓储实现（基础设施层）
+ *
+ * <p>简单查询使用 MyBatis Plus LambdaQueryWrapper，
+ * 复杂查询（如原子递增、特定状态过滤等）使用 XML 映射。
+ *
+ * @author kitona
+ * @version 1.0.0
+ * @since 2025-02-06
+ */
+@Slf4j
+@Repository
+public class StorePersistenceRepository extends BaseRepository<StorePO> implements IStorePersistenceRepository {
+
+    @Resource
+    private IStoreMapper storeMapper;
+
+    @Resource
+    private FgaCacheManager cacheManager;
+
+    @Override
+    public Optional<StorePO> findByStoreId(String storeId) {
+        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
+                .eq(StorePO::getStoreId, storeId);
+
+        StorePO store = super.getOne(wrapper);
+        return Optional.ofNullable(store);
+    }
+
+    @Override
+    public List<StorePO> findByStatus(Integer status) {
+        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
+                .eq(StorePO::getStatus, status)
+                .orderByDesc(StorePO::getCreateTime);
+
+        return this.list(wrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean createStore(StorePO store) {
+        boolean success = this.save(store);
+        if (!success) {
+            return false;
+        }
+        cacheManager.initZookieIfAbsent(store.getStoreId(), store.getCurrentZookie());
+        log.info("创建存储空间: storeId={}, name={}", store.getStoreId(), store.getName());
+        return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateCurrentModelId(String storeId, String modelId) {
+        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
+                .eq(StorePO::getStoreId, storeId)
+                .eq(StorePO::getStatus, StoreStatusEnum.NORMAL.getCode());
+
+        StorePO storePO = new StorePO();
+        storePO.setCurrentModelId(modelId);
+        boolean result = super.update(storePO, wrapper);
+
+        if (!result) {
+            return false;
+        }
+        cacheManager.invalidateModel(storeId, modelId);
+        log.info("更新存储空间当前模型: storeId={}, modelId={}", storeId, modelId);
+        return true;
+    }
+
+    @Override
+    public Long nextZookie(String storeId) {
+        // 先从缓存递增
+        Long newZookie = cacheManager.incrementZookie(storeId);
+        // 原子递增走 XML
+        storeMapper.incrementZookie(storeId, System.currentTimeMillis());
+        return newZookie;
+    }
+
+    @Override
+    public Long getCurrentZookie(String storeId) {
+        // 先查缓存
+        Long zookie = cacheManager.getCurrentZookie(storeId);
+        if (zookie > 0) {
+            return zookie;
+        }
+
+        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
+                .eq(StorePO::getStoreId, storeId)
+                .eq(StorePO::getStatus, StoreStatusEnum.NORMAL.getCode());
+
+        StorePO result = super.getOne(wrapper);
+        if (result == null || result.getCurrentZookie() == null) {
+            return 0L;
+        }
+
+        cacheManager.initZookieIfAbsent(storeId, result.getCurrentZookie());
+        return result.getCurrentZookie();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean deleteByStoreId(String storeId) {
+        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper().eq(StorePO::getStoreId, storeId);
+
+        StorePO storePO = new StorePO();
+        storePO.setIsDeleted(DeletedStatusEnum.DELETED.getCode());
+
+        boolean success = this.update(storePO, wrapper);
+        if (!success) {
+            return false;
+        }
+        cacheManager.invalidateCheckCache(storeId);
+        return true;
+    }
+
+    @Override
+    public boolean existsByStoreId(String storeId) {
+        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
+                .eq(StorePO::getStoreId, storeId);
+
+        return this.count(wrapper) > 0;
+    }
+
+    /**
+     * 更新存储空间
+     *
+     * @param store 存储空间 PO
+     * @return 更新成功返回 true
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateStore(StorePO store) {
+        LambdaUpdateWrapper<StorePO> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(StorePO::getStoreId, store.getStoreId());
+        return this.update(store, wrapper);
+    }
+}

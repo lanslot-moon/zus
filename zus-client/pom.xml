@@ -11,7 +11,7 @@
 
     <artifactId>zus-client</artifactId>
     <name>zus-client</name>
-    <description>zus-client:用于提供其他服务所需要的二方包,不直接对外</description>
+    <description>zus-client: 二方包(SDK) - 对外发布的 RPC 接口定义和 DTO，供其他微服务依赖调用，独立版本管理</description>
 
     <dependencies>
         <dependency>

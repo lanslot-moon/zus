@@ -11,7 +11,7 @@
 
     <artifactId>zus-common</artifactId>
     <name>zus-common</name>
-    <description>zus-common:通用模块,用于提供通用的工具和枚举,常量相关的数据</description>
+    <description>zus-common: 通用层 - 提供工具类、异常定义、枚举常量，被所有模块依赖，不包含业务逻辑</description>
 
     <dependencies>
         <dependency>
@@ -35,6 +35,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
@@ -45,8 +50,14 @@
         </dependency>
 
         <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+        </dependency>
+
+        <!-- SLF4J API - Spring Boot 3.x 自带 Logback 实现，不需要额外引入 -->
+        <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <artifactId>slf4j-api</artifactId>
         </dependency>
     </dependencies>
 

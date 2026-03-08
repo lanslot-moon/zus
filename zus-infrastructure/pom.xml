@@ -11,9 +11,14 @@
 
     <artifactId>zus-infrastructure</artifactId>
     <name>zus-Infrastructure</name>
-    <description>zus-Infrastructure:基础设施层,提供数据库,消息队列，订阅发布等能力</description>
+    <description>zus-infrastructure: 基础设施层 - Repository/Port 实现、持久化(PO/Mapper)、缓存、外部服务适配器，实现领域层定义的接口</description>
 
     <dependencies>
+        <dependency>
+            <groupId>org.kitona</groupId>
+            <artifactId>zus-domain</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
@@ -34,21 +39,10 @@
             <artifactId>zus-common</artifactId>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/dev.openfga/openfga-sdk -->
-        <dependency>
-            <groupId>dev.openfga</groupId>
-            <artifactId>openfga-sdk</artifactId>
-            <version>0.9.0</version>
-        </dependency>
-
+        <!-- MyBatis Plus for Spring Boot 3.x - 已包含所需的依赖 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>transmittable-thread-local</artifactId>
         </dependency>
 
         <!-- jdk 11+ 引入可选模块 -->
@@ -58,19 +52,33 @@
         </dependency>
 
         <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-spring</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-extension</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Redis 缓存支持 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- Caffeine 本地缓存 -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- Jackson JSON 序列化 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- ANTLR4 运行时 - 用于 OpenFGA 模型解析 -->
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
         </dependency>
     </dependencies>
 </project>

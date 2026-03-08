@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IChangelogMapper">
+
+    <!-- 通用结果映射（与 fga_changelog 表一致） -->
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="zookie" property="zookie"/>
+        <result column="operation" property="operation"/>
+        <result column="object_type" property="objectType"/>
+        <result column="object_id" property="objectId"/>
+        <result column="relation" property="relation"/>
+        <result column="subject_type" property="subjectType"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="subject_relation" property="subjectRelation"/>
+        <result column="operation_time" property="operationTime"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="trace_id" property="traceId"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <!-- 根据 Zookie 范围查询变更日志 -->
+    <select id="selectByZookieRange" resultMap="BaseResultMap">
+        SELECT id, store_id, zookie, operation, object_type, object_id, relation,
+               subject_type, subject_id, subject_relation, operation_time, operator_id, trace_id,
+               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_changelog
+        WHERE store_id = #{storeId}
+          AND zookie &gt; #{startZookie}
+          <if test="endZookie != null">
+              AND zookie &lt;= #{endZookie}
+          </if>
+          AND is_deleted = 0
+        ORDER BY zookie ASC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 查询指定 Zookie 之后的所有变更 -->
+    <select id="selectAfterZookie" resultMap="BaseResultMap">
+        SELECT id, store_id, zookie, operation, object_type, object_id, relation,
+               subject_type, subject_id, subject_relation, operation_time, operator_id, trace_id,
+               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_changelog
+        WHERE store_id = #{storeId}
+          AND zookie &gt; #{afterZookie}
+          AND is_deleted = 0
+        ORDER BY zookie ASC
+        <if test="limit != null">
+            LIMIT #{limit}
+        </if>
+    </select>
+
+    <!-- 查询存储空间的最新 Zookie -->
+    <select id="selectMaxZookie" resultType="java.lang.Long">
+        SELECT MAX(zookie)
+        FROM fga_changelog
+        WHERE store_id = #{storeId}
+          AND is_deleted = 0
+    </select>
+
+
+
+    <!-- 清理过期的变更日志 -->
+    <delete id="cleanupBeforeZookie">
+        DELETE FROM fga_changelog
+        WHERE store_id = #{storeId}
+          AND zookie &lt; #{beforeZookie}
+    </delete>
+
+</mapper>

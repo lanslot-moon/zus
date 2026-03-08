@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IAuthorizationModelMapper">
+
+    <!-- 通用结果映射（与 fga_authorization_model 表一致，类型定义由 3～5 表组装） -->
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="model_id" property="modelId"/>
+        <result column="schema_version" property="schemaVersion"/>
+        <result column="dsl_text" property="dslText"/>
+        <result column="status" property="status"/>
+        <result column="description" property="description"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <!-- 根据存储空间和模型ID查询（仅本表） -->
+    <select id="selectByModelId" resultMap="BaseResultMap">
+        SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
+               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_authorization_model
+        WHERE store_id = #{storeId}
+          AND model_id = #{modelId}
+          AND is_deleted = 0
+    </select>
+
+    <!-- 查询存储空间的所有模型（仅本表） -->
+    <select id="selectByStoreId" resultMap="BaseResultMap">
+        SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
+               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_authorization_model
+        WHERE store_id = #{storeId}
+          AND is_deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询存储空间的最新已发布模型（仅本表） -->
+    <select id="selectLatestByStoreId" resultMap="BaseResultMap">
+        SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
+               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_authorization_model
+        WHERE store_id = #{storeId}
+          AND status = 1
+          AND is_deleted = 0
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 查询存储空间已发布的模型数量 -->
+    <select id="countPublishedByStoreId" resultType="int">
+        SELECT COUNT(1)
+        FROM fga_authorization_model
+        WHERE store_id = #{storeId}
+          AND status = 1
+          AND is_deleted = 0
+    </select>
+
+    <!-- 游标分页查询授权模型 -->
+    <select id="selectPageByCursor" resultMap="BaseResultMap">
+        SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
+               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_authorization_model
+        WHERE store_id = #{storeId}
+          AND is_deleted = 0
+        <if test="status != null">
+          AND status = #{status}
+        </if>
+        <if test="pageToken != null and pageToken != ''">
+          AND model_id = #{pageToken}
+        </if>
+        ORDER BY create_time DESC
+        LIMIT #{pageSize}
+    </select>
+
+</mapper>

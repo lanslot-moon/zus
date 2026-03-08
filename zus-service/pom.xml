@@ -11,18 +11,41 @@
 
     <artifactId>zus-service</artifactId>
     <name>zus-service</name>
-    <description>zus-service: 对外提供的业务基础能力,不包含具体的业务逻辑,只提供简单业务能力</description>
+    <description>zus-service: 应用层 - 应用服务、用例编排、事务管理、DTO/Command/Query、Assembler、事件监听，协调领域层完成业务流程</description>
 
     <dependencies>
         <dependency>
             <groupId>org.kitona</groupId>
-            <artifactId>zus-infrastructure</artifactId>
+            <artifactId>zus-domain</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-common</artifactId>
         </dependency>
-    </dependencies>
 
+        <!-- Spring Context: @Service, @Component 等 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- Spring TX: @Transactional, TransactionalEventListener 等 -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+        </dependency>
+
+        <!-- Jakarta Annotation: @Resource 等 -->
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+        </dependency>
+
+        <!-- Jakarta Validation: JSR-380 参数校验 -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+    </dependencies>
 </project>

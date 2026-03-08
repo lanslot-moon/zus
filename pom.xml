@@ -39,8 +39,9 @@
         <mybatis-plus.version>3.5.14</mybatis-plus.version>
         <spring-mybatis.version>3.0.3</spring-mybatis.version>
         <commons-lang3.version>3.19.0</commons-lang3.version>
+        <commons-collections.version>4.4</commons-collections.version>
         <fastjson.version>2.0.35</fastjson.version>
-        <guava.version>32.0.1-jre</guava.version>
+        <guava.version>33.5.0-jre</guava.version>
         <slf4j.version>2.0.17</slf4j.version>
         <mapstruct-plus.version>1.4.3</mapstruct-plus.version>
         <transmittable.version>2.14.5</transmittable.version>
@@ -50,18 +51,50 @@
     </properties>
 
     <modules>
-        <module>zus-starter</module>
-        <module>zus-api</module>
-        <module>zus-business</module>
-        <module>zus-service</module>
-        <module>zus-facade</module>
-        <module>zus-client</module>
         <module>zus-common</module>
+        <module>zus-domain</module>
         <module>zus-infrastructure</module>
+        <module>zus-client</module>
+        <module>zus-service</module>
+        <module>zus-api</module>
+        <module>zus-starter</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
+            <!--====================== BOM - 强制锁定版本 ======================-->
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-framework-bom</artifactId>
+                <version>6.1.8</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.baomidou</groupId>
+                <artifactId>mybatis-plus-bom</artifactId>
+                <version>${mybatis-plus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-bom</artifactId>
+                <version>${slf4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!--====================== 项目内部模块 Start======================-->
             <dependency>
                 <groupId>org.kitona</groupId>
@@ -77,19 +110,13 @@
 
             <dependency>
                 <groupId>org.kitona</groupId>
-                <artifactId>zus-business</artifactId>
-                <version>${revision}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.kitona</groupId>
                 <artifactId>zus-service</artifactId>
                 <version>${revision}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.kitona</groupId>
-                <artifactId>zus-facade</artifactId>
+                <artifactId>zus-domain</artifactId>
                 <version>${revision}</version>
             </dependency>
 
@@ -124,15 +151,6 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-web</artifactId>
                 <version>${spring-boot.version}</version>
-            </dependency>
-
-
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-bom</artifactId>
-                <version>${mybatis-plus.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
             </dependency>
 
             <!--=============外部工具 Start===============-->
@@ -189,25 +207,15 @@
             </dependency>
 
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
-                <artifactId>jackson-bom</artifactId>
-                <version>${jackson-bom.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-collections4</artifactId>
+                <version>${commons-collections.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>io.github.linpeilie</groupId>
                 <artifactId>mapstruct-plus-pom</artifactId>
                 <version>${mapstruct-plus.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-bom</artifactId>
-                <version>${slf4j.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

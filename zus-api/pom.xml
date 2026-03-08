@@ -11,7 +11,7 @@
 
     <artifactId>zus-api</artifactId>
     <name>zus-api</name>
-    <description>zus-api: 对外提供接口的模块</description>
+    <description>zus-api: 用户接口层 - REST Controller、RPC Facade 实现、Request/Response VO、参数校验，处理外部请求并调用应用服务</description>
 
     <dependencies>
         <dependency>
@@ -21,7 +21,13 @@
 
         <dependency>
             <groupId>org.kitona</groupId>
-            <artifactId>zus-business</artifactId>
+            <artifactId>zus-service</artifactId>
+        </dependency>
+
+        <!-- Facade 接口定义（二方包） -->
+        <dependency>
+            <groupId>org.kitona</groupId>
+            <artifactId>zus-client</artifactId>
         </dependency>
 
         <dependency>

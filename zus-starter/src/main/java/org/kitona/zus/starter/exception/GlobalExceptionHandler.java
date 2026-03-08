@@ -1,7 +1,8 @@
 package org.kitona.zus.starter.exception;
 
-import org.kitona.zus.api.entity.RestResult;
+import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.exception.RestException;
+import org.kitona.zus.service.exception.ApplicationException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -37,5 +38,9 @@ public class GlobalExceptionHandler {
         return RestResult.error(ex.getCode(), ex.getMessage());
     }
 
-    // 可以添加更多自定义异常处理...
+    // 捕获应用层异常（DDD 规范：应用层异常统一转换为 REST 响应）
+    @ExceptionHandler(ApplicationException.class)
+    public RestResult<String> handleApplicationException(ApplicationException ex) {
+        return RestResult.error(ex.getCode(), ex.getMessage());
+    }
 }

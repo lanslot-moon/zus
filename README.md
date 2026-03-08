@@ -1,289 +1,198 @@
-- 启动当前项目前请先查看当前文档
+# ZUS - 细粒度权限控制服务
 
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
-  <rect width="1000" height="800" fill="#ffffff" />
-  <text x="500"
-        y="40"
-        font-size="24"
-        font-weight="bold"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">代码分层架构图</text>
-  <rect x="425"
-        y="80"
-        width="150"
-        height="50"
-        rx="8"
-        ry="8"
-        fill="#4a90e2"
-        stroke="#357abd"
-        stroke-width="2" />
-  <text x="500"
-        y="110"
-        font-size="14"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">zus-starter</text>
-  <text x="500"
-        y="125"
-        font-size="10"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">启动模块</text>
-  <rect x="350"
-        y="160"
-        width="300"
-        height="50"
-        rx="8"
-        ry="8"
-        fill="#50e3c2"
-        stroke="#36b8a0"
-        stroke-width="2" />
-  <text x="500"
-        y="190"
-        font-size="14"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">zus-api</text>
-  <text x="500"
-        y="205"
-        font-size="10"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">对外接口模块</text>
-  <rect x="250"
-        y="240"
-        width="500"
-        height="60"
-        rx="8"
-        ry="8"
-        fill="#f5a623"
-        stroke="#d8901a"
-        stroke-width="2" />
-  <text x="500"
-        y="275"
-        font-size="14"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">zus-business</text>
-  <text x="500"
-        y="295"
-        font-size="10"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">业务聚合层</text>
-  <rect x="100"
-        y="330"
-        width="200"
-        height="60"
-        rx="8"
-        ry="8"
-        fill="#7ed321"
-        stroke="#66b31a"
-        stroke-width="2" />
-  <text x="200"
-        y="365"
-        font-size="14"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">zus-client</text>
-  <text x="200"
-        y="385"
-        font-size="10"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">二方包模块</text>
-  <rect x="700"
-        y="330"
-        width="200"
-        height="60"
-        rx="8"
-        ry="8"
-        fill="#bd10e0"
-        stroke="#9e0caa"
-        stroke-width="2" />
-  <text x="800"
-        y="365"
-        font-size="14"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">zus-facade</text>
-  <text x="800"
-        y="385"
-        font-size="10"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">防腐/适配层</text>
-  <rect x="400"
-        y="330"
-        width="200"
-        height="60"
-        rx="8"
-        ry="8"
-        fill="#d0021b"
-        stroke="#a80216"
-        stroke-width="2" />
-  <text x="500"
-        y="365"
-        font-size="14"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">zus-service</text>
-  <text x="500"
-        y="385"
-        font-size="10"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">业务基础能力</text>
-  <rect x="300"
-        y="430"
-        width="220"
-        height="60"
-        rx="8"
-        ry="8"
-        fill="#9013fe"
-        stroke="#760ed6"
-        stroke-width="2" />
-  <text x="410"
-        y="465"
-        font-size="14"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">zus-Infrastructure</text>
-  <text x="410"
-        y="485"
-        font-size="10"
-        text-anchor="middle"
-        fill="white"
-        font-family="Arial, sans-serif">基础设施层</text>
-  <rect x="580"
-        y="430"
-        width="220"
-        height="60"
-        rx="8"
-        ry="8"
-        fill="#50e3c2"
-        stroke="#36b8a0"
-        stroke-width="2" />
-  <text x="690"
-        y="465"
-        font-size="14"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">zus-common</text>
-  <text x="690"
-        y="485"
-        font-size="10"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">通用模块</text>
-  <path d="M 500 130 L 500 160"
-        stroke="#333333"
-        stroke-width="2"
-        fill="none" />
-  <path d="M 500 210 L 500 240"
-        stroke="#333333"
-        stroke-width="2"
-        fill="none" />
-  <path d="M 250 270 C 250 260, 200 330, 200 330"
-        stroke="#333333"
-        stroke-width="2"
-        fill="none" />
-  <path d="M 500 300 L 500 330"
-        stroke="#333333"
-        stroke-width="2"
-        fill="none" />
-  <path d="M 750 270 C 750 270, 820 330, 800 330"
-        stroke="#333333"
-        stroke-width="2"
-        fill="none" />
-  <path d="M 500 390 C 500 400, 400 430, 400 430"
-        stroke="#333333"
-        stroke-width="2"
-        fill="none" />
-  <rect x="100"
-        y="530"
-        width="800"
-        height="250"
-        rx="8"
-        ry="8"
-        fill="white"
-        stroke="#e0e0e0"
-        stroke-width="1" />
-  <text x="500"
-        y="555"
-        font-size="16"
-        font-weight="bold"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">模块功能说明</text>
-  <text x="120"
-        y="585"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">• zus-starter: 项目的启动模块，项目配置等信息所在的地方</text>
-  <text x="120"
-        y="610"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">• zus-api: 对外提供接口的模块</text>
-  <text x="120"
-        y="635"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">• zus-business: 业务所在的聚合层，基于Service提供的能力执行业务聚合</text>
-  <text x="120"
-        y="660"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">• zus-service: 对外提供的业务基础能力，不包含具体的业务逻辑，只提供简单业务能力</text>
-  <text x="120"
-        y="685"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">
-    • zus-facade: 防腐层/适配层，用于直接和其他三方平台进行交互，对数据进行适配后提供给内部服务使用
-  </text>
-  <text x="120"
-        y="710"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">• zus-client: 用于提供其他内部服务所需要的二方包，不直接对外</text>
-  <text x="120"
-        y="735"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">• zus-Infrastructure: 基础设施层，提供数据库，消息队列，订阅发布等能力</text>
-  <text x="120"
-        y="760"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">• zus-common: 通用模块，用于提供通用的工具和枚举，常量相关的数据</text>
-  <rect x="750"
-        y="80"
-        width="180"
-        height="80"
-        rx="8"
-        ry="8"
-        fill="white"
-        stroke="#e0e0e0"
-        stroke-width="1" />
-  <text x="840"
-        y="105"
-        font-size="14"
-        font-weight="bold"
-        text-anchor="middle"
-        fill="#333333"
-        font-family="Arial, sans-serif">图例</text>
-  <line x1="770"
-        y1="130"
-        x2="820"
-        y2="130"
-        stroke="#333333"
-        stroke-width="2" />
-  <text x="850"
-        y="135"
-        font-size="12"
-        fill="#333333"
-        font-family="Arial, sans-serif">模块间关系</text>
-</svg>
+> 启动当前项目前请先查看当前文档
+
+## DDD 分层架构图
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    zus-starter (启动层/组合根)                   │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ Spring Boot 启动入口 | 配置文件 | 模块组装 | Bean 注入     │  │
+│  └───────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                    zus-api (用户接口层)                          │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │ REST API    │  │ RPC 实现    │  │ Request/Response VO     │  │
+│  │ Controller  │  │ FacadeImpl  │  │ 参数校验                │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                    zus-service (应用层)                          │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ ApplicationService | DTO/Command/Query | Assembler        │  │
+│  │ 事务管理 | 用例编排 | 事件监听                             │  │
+│  └───────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                    zus-domain (领域层) ★核心                     │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ Aggregate | Entity | ValueObject | DomainService          │  │
+│  │ Repository接口 | Port接口 | DomainEvent | Factory         │  │
+│  │ ★ 不依赖任何技术框架，纯业务逻辑                           │  │
+│  └───────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                    zus-infrastructure (基础设施层)               │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ Repository实现 | PO/Mapper | 缓存 | 外部服务适配器         │  │
+│  │ ★ 实现领域层定义的接口（依赖倒置）                         │  │
+│  └───────────────────────────────────────────────────────────┘  │
+├─────────────────────────────────────────────────────────────────┤
+│                    zus-common (通用层)                           │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ 工具类 | 异常定义 | 枚举常量 (被所有模块依赖)              │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+
+独立发布的二方包（供其他微服务依赖）：
+┌─────────────────────────────────────────────────────────────────┐
+│  zus-client (独立模块，不属于四层中的任何一层)                   │
+│  ├── IXxxFacade.java        ← RPC 接口定义                      │
+│  ├── XxxDTO.java            ← 数据传输对象                      │
+│  └── Result.java            ← 通用返回包装                      │
+│  ★ 只包含接口定义，不包含实现，独立版本管理                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 依赖关系图
+
+```
+                      ┌─────────────┐
+                      │ zus-starter │
+                      └──────┬──────┘
+                             │
+             ┌───────────────┴───────────────┐
+             ▼                               ▼
+      ┌─────────────┐               ┌──────────────────┐
+      │   zus-api   │               │zus-infrastructure│
+      └──────┬──────┘               └────────┬─────────┘
+             │                               │
+             ▼                               │
+      ┌─────────────┐                        │
+      │ zus-service │                        │
+      └──────┬──────┘                        │
+             │                               │
+             ▼                               ▼
+      ┌─────────────────────────────────────────┐
+      │              zus-domain                  │ ◀── 核心
+      └─────────────────┬───────────────────────┘
+                        │
+                        ▼
+      ┌─────────────────────────────────────────┐
+      │              zus-common                  │ ◀── 被所有模块依赖
+      └─────────────────────────────────────────┘
+
+      ┌─────────────┐
+      │ zus-client  │ ───▶ zus-common (独立发布)
+      └─────────────┘
+```
+
+> **说明**: `zus-starter` 直接依赖 `zus-api` 和 `zus-infrastructure`，
+> `zus-service` 是通过 `zus-api` 传递依赖进来的。
+
+## 模块功能说明
+
+| 模块 | DDD 层级 | 职责 |
+|------|---------|------|
+| **zus-starter** | 启动层(组合根) | Spring Boot 启动入口，配置组装，显式依赖 infrastructure 确保 Bean 注入 |
+| **zus-api** | 用户接口层 | REST Controller、RPC Facade 实现、Request/Response VO、参数校验 |
+| **zus-service** | 应用层 | 应用服务、用例编排、事务管理、DTO/Command/Query、事件监听 |
+| **zus-domain** | 领域层 | 聚合根、实体、值对象、领域服务、领域事件、Repository/Port 接口定义 |
+| **zus-infrastructure** | 基础设施层 | Repository/Port 实现、PO/Mapper、缓存、外部服务适配器 |
+| **zus-client** | 二方包(SDK) | 对外发布的 RPC 接口定义和 DTO，供其他微服务依赖 |
+| **zus-common** | 通用层 | 工具类、异常定义、枚举常量，被所有模块依赖 |
+
+## 依赖方向说明
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              依赖规则                                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  • 实线箭头 ──▶ : 编译期依赖（A ──▶ B 表示 A 依赖 B）                        │
+│  • 虚线箭头 ··▶ : 运行时依赖或实现关系                                       │
+│  • 核心原则: 依赖指向稳定，外层依赖内层，infrastructure 实现 domain 接口     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+依赖链路:
+
+zus-api → zus-service → zus-domain → zus-common
+    ↓                       ↑
+zus-client            zus-infrastructure
+```
+
+## 各层职责详解
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  zus-api (用户接口层)                                            │
+│  ├── controller/     # REST API 控制器                          │
+│  ├── facade/         # RPC Facade 实现                          │
+│  ├── request/        # 请求 VO                                  │
+│  ├── response/       # 响应 VO                                  │
+│  └── permission/     # 权限切面                                 │
+│                                                                  │
+│  职责: 处理请求 | 参数校验 | VO转换 | 调用应用服务 | 异常包装    │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  zus-service (应用层)                                            │
+│  ├── application/    # 应用服务接口和实现                        │
+│  ├── dto/                                                        │
+│  │   ├── command/    # 命令对象 (CQRS)                          │
+│  │   ├── query/      # 查询对象 (CQRS)                          │
+│  │   └── response/   # 响应 DTO                                 │
+│  ├── assembler/      # 对象转换器                               │
+│  └── listener/       # 事件监听器                               │
+│                                                                  │
+│  职责: 用例编排 | 事务管理 | 事件发布 | 不包含业务规则           │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  zus-domain (领域层) ★核心                                       │
+│  ├── aggregate/      # 聚合根 (封装业务行为，维护不变量)         │
+│  ├── entity/         # 领域实体 (有唯一标识)                     │
+│  ├── valueobject/    # 值对象 (不可变，基于值相等)               │
+│  ├── service/        # 领域服务 (纯业务逻辑)                     │
+│  ├── repository/     # Repository 接口定义                       │
+│  ├── port/           # 端口接口 (外部服务抽象)                   │
+│  ├── event/          # 领域事件 (跨聚合最终一致性)               │
+│  └── factory/        # 工厂                                      │
+│                                                                  │
+│  ★ 不依赖任何技术框架，可独立测试                                │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  zus-infrastructure (基础设施层)                                 │
+│  ├── persistence/mysql/                                          │
+│  │   ├── repository/adapter/  # 领域 Repository 适配器          │
+│  │   ├── repository/impl/     # 持久化 Repository               │
+│  │   ├── entity/              # PO (持久化对象)                  │
+│  │   ├── mapper/              # MyBatis Mapper                   │
+│  │   └── converter/           # PO ↔ 领域实体转换               │
+│  ├── cache/                   # 缓存实现                         │
+│  └── external/                # 外部服务适配器                   │
+│                                                                  │
+│  ★ 实现领域层定义的接口 (依赖倒置原则)                           │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  zus-client (二方包/SDK)                                         │
+│  ├── service/        # RPC 接口定义 (IXxxFacade)                 │
+│  └── entity/dto/     # 数据传输对象                              │
+│                                                                  │
+│  ★ 只包含接口定义，不包含实现，独立版本发布                      │
+│  ★ 供其他微服务依赖调用                                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## 核心设计原则
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       DDD 核心原则                               │
+├─────────────────────────────────────────────────────────────────┤
+│  1. 依赖倒置: 领域层定义接口，基础设施层实现接口                 │
+│  2. 聚合边界: 通过聚合根访问聚合内实体，保证一致性               │
+│  3. 领域纯粹: 领域层不依赖技术框架，可独立测试                   │
+│  4. 分层解耦: 各层职责明确，通过接口通信                         │
+│  5. 最终一致: 跨聚合操作通过领域事件实现最终一致性               │
+└─────────────────────────────────────────────────────────────────┘
+```

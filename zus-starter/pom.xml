@@ -11,12 +11,18 @@
 
     <artifactId>zus-starter</artifactId>
     <name>zus-starter</name>
-    <description>zus-starter: 项目的启动模块,项目配置等信息所在的地方</description>
+    <description>zus-starter: 启动层(组合根) - Spring Boot 启动入口、配置文件、模块组装，显式依赖 infrastructure 确保 Bean 注入</description>
 
     <dependencies>
         <dependency>
             <groupId>org.kitona</groupId>
             <artifactId>zus-api</artifactId>
+        </dependency>
+
+        <!-- 显式依赖 infrastructure，确保 Repository/Facade 实现被 Spring 扫描 -->
+        <dependency>
+            <groupId>org.kitona</groupId>
+            <artifactId>zus-infrastructure</artifactId>
         </dependency>
 
         <dependency>

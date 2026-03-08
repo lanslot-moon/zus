@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IStoreMapper">
+
+    <!-- 通用结果映射（与 fga_store 表结构一致） -->
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO">
+        <id column="id" property="id"/>
+        <result column="store_id" property="storeId"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="current_model_id" property="currentModelId"/>
+        <result column="current_zookie" property="currentZookie"/>
+        <result column="status" property="status"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="is_deleted" property="isDeleted"/>
+    </resultMap>
+
+    <!-- 根据存储空间ID查询 -->
+    <select id="selectByStoreId" resultMap="BaseResultMap">
+        SELECT id, store_id, name, description, current_model_id, current_zookie, status,
+               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+        FROM fga_store
+        WHERE store_id = #{storeId}
+          AND is_deleted = 0
+          AND status != 2
+    </select>
+
+    <!-- 更新当前授权模型ID -->
+    <update id="updateCurrentModelId">
+        UPDATE fga_store
+        SET current_model_id = #{modelId},
+            update_time = #{updateTime}
+        WHERE store_id = #{storeId}
+          AND is_deleted = 0
+          AND status = 0
+    </update>
+
+    <!-- 原子递增 Zookie -->
+    <update id="incrementZookie">
+        UPDATE fga_store
+        SET current_zookie = current_zookie + 1,
+            update_time = #{updateTime}
+        WHERE store_id = #{storeId}
+          AND is_deleted = 0
+          AND status = 0
+    </update>
+
+    <!-- 获取当前 Zookie -->
+    <select id="selectCurrentZookie" resultType="java.lang.Long">
+        SELECT current_zookie
+        FROM fga_store
+        WHERE store_id = #{storeId}
+          AND is_deleted = 0
+          AND status = 0
+    </select>
+
+</mapper>
