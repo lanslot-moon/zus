@@ -1,9 +1,11 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
 import jakarta.annotation.Resource;
+import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.domain.aggregate.StoreAggregate;
 import org.kitona.zus.domain.enums.StoreStatus;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
+import org.kitona.zus.domain.valueobject.CursorPageResult;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.StoreConverter;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.impl.StorePersistenceRepository;
@@ -71,5 +73,19 @@ public class StoreRepositoryDomainAdapter implements IStoreDomainRepository {
     @Override
     public boolean existsByStoreId(String storeId) {
         return storeRepository.existsByStoreId(storeId);
+    }
+
+    @Override
+    public CursorPageResult<StoreAggregate> findPageByCursor(String pageToken, int pageSize) {
+        List<StorePO> storePOS = storeRepository.findPageByCursor(pageToken, pageSize);
+        if (CollectionUtils.isEmpty(storePOS)) {
+            return CursorPageResult.empty();
+        }
+        List<StoreAggregate> aggregates = storePOS.stream()
+                .map(StoreConverter::toAggregate)
+                .toList();
+        // 以最后一条记录的 storeId 作为下一页游标
+        String lastStoreId = storePOS.get(storePOS.size() - 1).getStoreId();
+        return CursorPageResult.of(aggregates, pageSize, lastStoreId);
     }
 }

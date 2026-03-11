@@ -2,6 +2,7 @@ package org.kitona.zus.domain.repository;
 
 import org.kitona.zus.domain.aggregate.StoreAggregate;
 import org.kitona.zus.domain.enums.StoreStatus;
+import org.kitona.zus.domain.valueobject.CursorPageResult;
 
 import java.util.List;
 import java.util.Optional;
@@ -9,10 +10,12 @@ import java.util.Optional;
 /**
  * 存储空间仓储接口（领域层）
  * 
- * <p>Store 是 FGA 系统的顶层聚合根，代表一个权限数据的逻辑隔离单元。
+ * <p>
+ * Store 是 FGA 系统的顶层聚合根，代表一个权限数据的逻辑隔离单元。
  * 每个 Store 包含独立的授权模型、关系元组和变更日志。
  * 
- * <p>按照 DDD 严格规范，Repository 操作聚合根 {@link StoreAggregate}。
+ * <p>
+ * 按照 DDD 严格规范，Repository 操作聚合根 {@link StoreAggregate}。
  * 只定义不实现，实现在基础设施层。
  *
  * @author kitona
@@ -57,7 +60,8 @@ public interface IStoreDomainRepository {
     /**
      * 获取下一个 Zookie 版本号（原子递增）
      * 
-     * <p>Zookie 是一致性令牌，用于实现快照读取。
+     * <p>
+     * Zookie 是一致性令牌，用于实现快照读取。
      * 每次写入操作后递增，确保读取操作能看到指定版本之前的所有变更。
      *
      * @param storeId 存储空间ID
@@ -88,4 +92,13 @@ public interface IStoreDomainRepository {
      * @return 存在返回 true
      */
     boolean existsByStoreId(String storeId);
+
+    /**
+     * 游标分页查询存储空间列表
+     *
+     * @param pageToken 分页游标（上一页最后一条记录的 storeId），首页传 null
+     * @param pageSize  每页大小
+     * @return 游标分页结果
+     */
+    CursorPageResult<StoreAggregate> findPageByCursor(String pageToken, int pageSize);
 }

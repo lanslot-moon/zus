@@ -2,26 +2,29 @@ package org.kitona.zus.service.application.impl;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.domain.aggregate.StoreAggregate;
-import org.kitona.zus.domain.enums.StoreStatus;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
+import org.kitona.zus.domain.valueobject.CursorPageResult;
 import org.kitona.zus.service.application.IStoreApplicationService;
 import org.kitona.zus.service.assembler.StoreAssembler;
+import org.kitona.zus.service.dto.query.ListStoresQuery;
+import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.StoreResultDTO;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Store 应用服务
  *
- * <p>提供存储空间的完整生命周期管理：创建、查询、禁用、启用、删除。
+ * <p>
+ * 提供存储空间的完整生命周期管理：创建、查询、禁用、启用、删除。
  *
- * <p>状态流转：
+ * <p>
+ * 状态流转：
+ * 
  * <pre>
  *     NORMAL ←──enable()/disable()──→ DISABLE ──delete()──→ (删除)
  * </pre>
@@ -106,11 +109,18 @@ public class StoreApplicationService implements IStoreApplicationService {
     }
 
     @Override
-    public List<StoreResultDTO> listStores() {
-        List<StoreAggregate> stores = storeRepository.findByStatus(StoreStatus.NORMAL);
-        if (CollectionUtils.isEmpty(stores)) {
-            return Collections.emptyList();
+    public PageResultDTO<StoreResultDTO> listStores(ListStoresQuery query) {
+        if (query == null) {
+            query = ListStoresQuery.builder().build();
         }
-        return StoreAssembler.toDTOList(stores);
+        CursorPageResult<StoreAggregate> pageResult = storeRepository.findPageByCursor(
+                query.getPageToken(),
+                query.getEffectivePageSize());
+        if (pageResult.isEmpty()) {
+            log.info("StoreApplicationService.listStores 查询存储空间列表为空");
+            return PageResultDTO.empty();
+        }
+        List<StoreResultDTO> list = StoreAssembler.toDTOList(pageResult.data());
+        return PageResultDTO.of(list, pageResult.nextPageToken());
     }
 }

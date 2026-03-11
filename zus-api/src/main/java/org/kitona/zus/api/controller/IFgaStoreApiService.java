@@ -4,9 +4,8 @@ import jakarta.validation.Valid;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.api.request.FgaCreateStoreRequest;
 import org.kitona.zus.api.response.FgaStoreVO;
+import org.kitona.zus.api.response.PageResponseVO;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 /**
  * FGA 存储空间 API
@@ -20,7 +19,7 @@ import java.util.List;
 public interface IFgaStoreApiService {
 
     /**
-     * 创建存储空间，响应中返回 storeId，供后续 Check/Write/Read 等接口在路径中使用
+     * 创建存储空间
      */
     @PostMapping
     RestResult<FgaStoreVO> createStore(@Valid @RequestBody FgaCreateStoreRequest request);
@@ -36,8 +35,10 @@ public interface IFgaStoreApiService {
     /**
      * 禁用存储空间
      *
-     * <p>状态流转：NORMAL → DISABLE
-     * <p>禁用后 Store 不可用于权限检查，但数据保留，可随时恢复。
+     * <p>
+     * 状态流转：NORMAL → DISABLE
+     * <p>
+     * 禁用后 Store 不可用于权限检查，但数据保留，可随时恢复。
      *
      * @param storeId 存储空间ID，由调用方传入
      */
@@ -47,8 +48,10 @@ public interface IFgaStoreApiService {
     /**
      * 启用存储空间
      *
-     * <p>状态流转：DISABLE → NORMAL
-     * <p>启用后 Store 恢复正常使用。
+     * <p>
+     * 状态流转：DISABLE → NORMAL
+     * <p>
+     * 启用后 Store 恢复正常使用。
      *
      * @param storeId 存储空间ID，由调用方传入
      */
@@ -58,8 +61,10 @@ public interface IFgaStoreApiService {
     /**
      * 删除存储空间
      *
-     * <p>前置条件：Store 必须是 DISABLE 状态
-     * <p>必须先禁用再删除，删除后不可恢复。
+     * <p>
+     * 前置条件：Store 必须是 DISABLE 状态
+     * <p>
+     * 必须先禁用再删除，删除后不可恢复。
      *
      * @param storeId 存储空间ID，由调用方传入
      */
@@ -67,8 +72,14 @@ public interface IFgaStoreApiService {
     RestResult<Void> deleteStore(@PathVariable String storeId);
 
     /**
-     * 列出存储空间，返回的列表中包含各 Store 的 storeId，供调用方在其他 API 路径中使用
+     * 游标分页列出存储空间
+     *
+     * @param pageSize  每页大小，默认20
+     * @param pageToken 分页游标（首页不传）
+     * @return 分页结果
      */
     @GetMapping
-    RestResult<List<FgaStoreVO>> listStores();
+    RestResult<PageResponseVO<FgaStoreVO>> listStores(
+            @RequestParam(value = "page_size", defaultValue = "20") Integer pageSize,
+            @RequestParam(value = "page_token", required = false) String pageToken);
 }

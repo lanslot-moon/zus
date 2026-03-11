@@ -1,8 +1,8 @@
 package org.kitona.zus.service.application;
 
+import org.kitona.zus.service.dto.query.ListStoresQuery;
+import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.StoreResultDTO;
-
-import java.util.List;
 
 /**
  * Store 应用服务接口
@@ -35,8 +35,10 @@ public interface IStoreApplicationService {
     /**
      * 禁用存储空间
      *
-     * <p>状态流转：NORMAL → DISABLE
-     * <p>禁用后 Store 不可用于权限检查，但数据保留，可随时恢复。
+     * <p>
+     * 状态流转：NORMAL → DISABLE
+     * <p>
+     * 禁用后 Store 不可用于权限检查，但数据保留，可随时恢复。
      *
      * @param storeId 存储空间ID
      * @return 禁用成功返回 true
@@ -46,8 +48,10 @@ public interface IStoreApplicationService {
     /**
      * 启用存储空间
      *
-     * <p>状态流转：DISABLE → NORMAL
-     * <p>启用后 Store 恢复正常使用。
+     * <p>
+     * 状态流转：DISABLE → NORMAL
+     * <p>
+     * 启用后 Store 恢复正常使用。
      *
      * @param storeId 存储空间ID
      * @return 启用成功返回 true
@@ -57,8 +61,10 @@ public interface IStoreApplicationService {
     /**
      * 删除存储空间（逻辑删除）
      *
-     * <p>前置条件：Store 必须是 DISABLE 状态
-     * <p>必须先禁用再删除，删除后不可恢复。
+     * <p>
+     * 前置条件：Store 必须是 DISABLE 状态
+     * <p>
+     * 必须先禁用再删除，删除后不可恢复。
      *
      * @param storeId 存储空间ID
      * @return 删除成功返回 true
@@ -66,9 +72,10 @@ public interface IStoreApplicationService {
     boolean deleteStore(String storeId);
 
     /**
-     * 列出所有有效存储空间
+     * 游标分页列出存储空间
      *
-     * @return 存储空间列表（仅 NORMAL 状态）
+     * @param query 分页查询条件
+     * @return 分页结果
      */
-    List<StoreResultDTO> listStores();
+    PageResultDTO<StoreResultDTO> listStores(ListStoresQuery query);
 }

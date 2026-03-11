@@ -5,6 +5,8 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
 
+import java.util.List;
+
 /**
  * 存储空间 Mapper 接口
  * 
@@ -29,4 +31,13 @@ public interface IStoreMapper extends BaseMapper<StorePO> {
      * @return 影响行数
      */
     int incrementZookie(@Param("storeId") String storeId, @Param("updateTime") Long updateTime);
+
+    /**
+     * 游标分页查询存储空间列表
+     *
+     * @param pageToken 分页游标（上一页最后一条记录的 storeId），首页传 null
+     * @param pageSize  每页大小
+     * @return 存储空间列表
+     */
+    List<StorePO> selectPageByCursor(@Param("pageToken") String pageToken, @Param("pageSize") int pageSize);
 }

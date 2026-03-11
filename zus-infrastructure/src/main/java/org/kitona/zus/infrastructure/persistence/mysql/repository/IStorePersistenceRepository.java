@@ -10,10 +10,11 @@ import java.util.Optional;
 /**
  * 存储空间持久化仓储接口（基础设施层）
  *
- * <p>定义基于 PO 的持久化契约，与领域层 {@link IStoreDomainRepository} 职责不同：
+ * <p>
+ * 定义基于 PO 的持久化契约，与领域层 {@link IStoreDomainRepository} 职责不同：
  * <ul>
- *   <li>领域层接口：操作聚合根（StoreAggregate），定义业务契约</li>
- *   <li>本接口：操作持久化对象（StorePO），定义技术契约</li>
+ * <li>领域层接口：操作聚合根（StoreAggregate），定义业务契约</li>
+ * <li>本接口：操作持久化对象（StorePO），定义技术契约</li>
  * </ul>
  *
  * @author kitona
@@ -86,4 +87,13 @@ public interface IStorePersistenceRepository extends IService<StorePO> {
      * @return 存在且未删除返回 true
      */
     boolean existsByStoreId(String storeId);
+
+    /**
+     * 游标分页查询存储空间列表（仅 NORMAL 状态）
+     *
+     * @param pageToken 分页游标（上一页最后一条记录的 storeId），首页传 null
+     * @param pageSize  每页大小
+     * @return 存储空间列表
+     */
+    List<StorePO> findPageByCursor(String pageToken, int pageSize);
 }

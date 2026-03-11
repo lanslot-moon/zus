@@ -19,7 +19,8 @@ import java.util.Optional;
 /**
  * 存储空间持久化仓储实现（基础设施层）
  *
- * <p>简单查询使用 MyBatis Plus LambdaQueryWrapper，
+ * <p>
+ * 简单查询使用 MyBatis Plus LambdaQueryWrapper，
  * 复杂查询（如原子递增、特定状态过滤等）使用 XML 映射。
  *
  * @author kitona
@@ -150,5 +151,10 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         LambdaUpdateWrapper<StorePO> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(StorePO::getStoreId, store.getStoreId());
         return this.update(store, wrapper);
+    }
+
+    @Override
+    public List<StorePO> findPageByCursor(String pageToken, int pageSize) {
+        return storeMapper.selectPageByCursor(pageToken, pageSize);
     }
 }

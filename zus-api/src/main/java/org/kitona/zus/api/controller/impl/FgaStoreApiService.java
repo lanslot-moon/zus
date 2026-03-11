@@ -5,9 +5,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.api.controller.IFgaStoreApiService;
 import org.kitona.zus.api.request.FgaCreateStoreRequest;
 import org.kitona.zus.api.response.FgaStoreVO;
+import org.kitona.zus.api.response.PageResponseVO;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.service.application.IStoreApplicationService;
+import org.kitona.zus.service.dto.query.ListStoresQuery;
+import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.StoreResultDTO;
 import org.springframework.stereotype.Service;
 
@@ -68,10 +71,14 @@ public class FgaStoreApiService implements IFgaStoreApiService {
     }
 
     @Override
-    public RestResult<List<FgaStoreVO>> listStores() {
-        log.debug("FgaStoreApiService listStores");
-        List<StoreResultDTO> listedStores = storeApplicationService.listStores();
-        List<FgaStoreVO> convert = MapstructUtil.convert(listedStores, FgaStoreVO.class);
-        return RestResult.success(convert);
+    public RestResult<PageResponseVO<FgaStoreVO>> listStores(Integer pageSize, String pageToken) {
+        log.debug("FgaStoreApiService listStores, pageSize:{}, pageToken:{}", pageSize, pageToken);
+        ListStoresQuery query = ListStoresQuery.builder()
+                .pageSize(pageSize)
+                .pageToken(pageToken)
+                .build();
+        PageResultDTO<StoreResultDTO> result = storeApplicationService.listStores(query);
+        List<FgaStoreVO> voList = MapstructUtil.convert(result.getData(), FgaStoreVO.class);
+        return RestResult.success(PageResponseVO.of(voList, result.getContinuationToken(), result.isHasMore()));
     }
 }
