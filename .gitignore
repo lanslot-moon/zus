@@ -37,3 +37,6 @@ build/
 node_modules/
 .vite/
 /.vite/
+
+### Cursor
+.cursor/
