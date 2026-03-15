@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.BasePoMinimal;
-import org.springframework.stereotype.Repository;
 
 /*
  * Title: BaseRepository
@@ -14,9 +13,7 @@ import org.springframework.stereotype.Repository;
  * Date  2025/10/22 17:44
  * Description: xxx
  */
-@Repository
 public class BaseRepository<T extends BasePoMinimal> extends ServiceImpl<BaseMapper<T>, T> {
-
 
      LambdaQueryWrapper<T> getLambdaQueryWrapper() {
         return new LambdaQueryWrapper<T>().eq(T::getIsDeleted, DeletedStatusEnum.NOT_DELETED.getCode());

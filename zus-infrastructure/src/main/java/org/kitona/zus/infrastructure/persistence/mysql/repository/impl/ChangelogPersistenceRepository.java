@@ -14,7 +14,8 @@ import java.util.List;
 /**
  * 变更日志持久化仓储实现（基础设施层）
  *
- * <p>简单查询使用 MyBatis Plus，
+ * <p>
+ * 简单查询使用 MyBatis Plus，
  * 复杂查询（如 Zookie 范围查询、批量插入、聚合查询等）使用 XML 映射。
  *
  * @author kitona
@@ -23,7 +24,8 @@ import java.util.List;
  */
 @Slf4j
 @Repository
-public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO> implements IChangelogPersistenceRepository {
+public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
+        implements IChangelogPersistenceRepository {
 
     private static final int DEFAULT_LIMIT = 100;
 
@@ -32,7 +34,7 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO> 
 
     @Override
     public List<ChangelogPO> findByZookieRange(String storeId, Long startZookie,
-                                               Long endZookie, Integer limit) {
+            Long endZookie, Integer limit) {
         if (limit == null || limit <= 0) {
             limit = DEFAULT_LIMIT;
         }
@@ -56,7 +58,6 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO> 
         Long maxZookie = changelogMapper.selectMaxZookie(storeId);
         return maxZookie != null ? maxZookie : 0L;
     }
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)

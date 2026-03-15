@@ -32,14 +32,14 @@ import org.springframework.stereotype.Service;
 public class UserInfoApplicationService implements IUserInfoApplicationService {
 
     @Resource
-    private IUserInfoDomainRepository userInfoRepository;
+    private IUserInfoDomainRepository userInfoDomainRepository;
 
     @Resource
     private IUserInfoAdapter userInfoAdapter;
 
     @Override
     public UserInfoDTO getUserInfo(String userId) {
-        UserInfoEntity userInfo = userInfoRepository.findByUserId(userId).orElse(null);
+        UserInfoEntity userInfo = userInfoDomainRepository.findByUserId(userId).orElse(null);
         if (userInfo == null) {
             log.error("用户不存在, userId: {}", userId);
             throw new ApplicationException(IError.USER_NOT_EXIST);

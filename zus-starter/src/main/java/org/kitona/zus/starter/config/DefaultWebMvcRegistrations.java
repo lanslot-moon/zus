@@ -2,8 +2,6 @@ package org.kitona.zus.starter.config;
 
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 /**
@@ -21,7 +19,8 @@ public class DefaultWebMvcRegistrations implements WebMvcRegistrations {
     private static class FeignRequestMappingHandlerMapping extends RequestMappingHandlerMapping {
         @Override
         protected boolean isHandler(Class<?> beanType) {
-            return super.isHandler(beanType) && !AnnotatedElementUtils.hasAnnotation(beanType, FeignClient.class);
+//            return super.isHandler(beanType) && !AnnotatedElementUtils.hasAnnotation(beanType, FeignClient.class);
+            return super.isHandler(beanType);
         }
     }
 }

@@ -11,8 +11,6 @@
     <!-- 组件扫描配置：扫描所有模块的包路径（DDD 重构后：无 zus-facade，domain 与 infrastructure 均需扫描） -->
     <context:component-scan base-package="org.kitona.zus.api"/>
     <context:component-scan base-package="org.kitona.zus.service"/>
-    <context:component-scan base-package="org.kitona.zus.domain"/>
-    <context:component-scan base-package="org.kitona.zus.infrastructure"/>
-    <context:component-scan base-package="org.kitona.zus.starter"/>
 
+    <context:component-scan base-package="org.kitona.zus.infrastructure"/>
 </beans>

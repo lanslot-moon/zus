@@ -1,5 +1,4 @@
-package org.kitona.zus.starter.config;
-
+package org.kitona.zus.infrastructure.persistence.mysql.config;
 
 import com.baomidou.mybatisplus.extension.plugins.handler.TenantLineHandler;
 import net.sf.jsqlparser.expression.Expression;
@@ -10,7 +9,6 @@ import org.kitona.zus.common.utils.BeanFieldUtil;
 import org.kitona.zus.common.context.UserContextHolder;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.BasePoMinimal;
 
-
 /**
  * 多租户分页插件
  */
@@ -19,9 +17,9 @@ public class DefaultTenantLineInnerInterceptor implements TenantLineHandler {
     @Override
     public Expression getTenantId() {
         // 假设有一个租户上下文，能够从中获取当前用户的租户
-         String tenantId = UserContextHolder.getTenantId();
+        String tenantId = UserContextHolder.getTenantId();
         // 返回租户ID的表达式，LongValue 是 JSQLParser 中表示 bigint 类型的 class
-        return StringUtils.isBlank(tenantId)? null: new StringValue(tenantId);
+        return StringUtils.isBlank(tenantId) ? null : new StringValue(tenantId);
     }
 
     @Override

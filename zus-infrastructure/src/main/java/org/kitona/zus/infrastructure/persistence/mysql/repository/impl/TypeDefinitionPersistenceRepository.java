@@ -3,8 +3,8 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.micrometer.common.util.StringUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.mapper.ITypeDefinitionMapper;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.ISubjectDefinitionPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
@@ -20,9 +20,9 @@ import java.util.Set;
  * @version 1.0.0
  * @since 2025-02-06
  */
-@Slf4j
 @Repository
-public class TypeDefinitionPersistenceRepository extends BaseRepository<SubjectDefinitionPO> implements ISubjectDefinitionPersistenceRepository {
+public class TypeDefinitionPersistenceRepository extends BaseRepository<SubjectDefinitionPO>
+        implements ISubjectDefinitionPersistenceRepository {
 
     @Override
     public List<SubjectDefinitionPO> selectByModelId(String storeId, String modelId) {

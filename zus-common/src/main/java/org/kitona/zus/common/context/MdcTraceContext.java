@@ -1,4 +1,4 @@
-package org.kitona.zus.starter.entity;
+package org.kitona.zus.common.context;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.MDC;
@@ -12,7 +12,7 @@ public class MdcTraceContext {
     }
 
     /**
-     *  日志文件中全链路标识的占位符
+     * 日志文件中全链路标识的占位符
      */
     public static final String TRACE_ID_PATTERN = "traceId";
 
@@ -20,7 +20,6 @@ public class MdcTraceContext {
      * 请求头的链路Key
      */
     public static final String TRACE_HEADER_KEY = "X-Requested-Id";
-
 
     /**
      * 初始化TraceId

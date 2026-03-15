@@ -8,12 +8,12 @@ import java.util.List;
 /**
  * 变更日志持久化仓储接口（基础设施层）
  *
- * <p>定义基于 PO 的持久化契约，供 {@link org.kitona.zus.domain.service.IChangelogService} 的适配器内部使用。
- *
- * <p>Changelog 不是聚合根，而是事件日志记录，因此领域层定义的是 Service 而非 Repository。
+ * <p>
+ * 定义基于 PO 的持久化契约，供
+ * {@link org.kitona.zus.domain.repository.IChangelogDomainRepository} 的适配器内部使用。
  *
  * @author kitona
- * @version 1.0.0
+ * @version 1.1.0
  * @since 2025-02-06
  */
 public interface IChangelogPersistenceRepository extends IService<ChangelogPO> {

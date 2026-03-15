@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.infrastructure.cache.FgaCacheManager;
 import org.kitona.zus.infrastructure.cache.query.TupleExistsCacheQuery;
@@ -25,14 +24,14 @@ import java.util.*;
 /**
  * 关系元组持久化仓储实现（基础设施层）
  *
- * <p>简单查询使用 MyBatis Plus LambdaQueryWrapper，
+ * <p>
+ * 简单查询使用 MyBatis Plus LambdaQueryWrapper，
  * 复杂查询（如带条件过滤、批量操作等）使用 XML 映射。
  *
  * @author kitona
  * @version 1.0.0
  * @since 2025-02-06
  */
-@Slf4j
 @Repository
 public class TuplePersistenceRepository extends BaseRepository<TuplePO> implements ITuplePersistenceRepository {
 
@@ -71,7 +70,8 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation, query.getSubjectRelation())
+                .eq(StringUtils.isBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation,
+                        query.getSubjectRelation())
                 .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
         return wrapper;
     }
@@ -89,7 +89,7 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
 
     @Override
     public List<TuplePO> findByObjectAndRelation(String storeId, String objectType,
-                                                 String objectId, String relation, Long maxZookie) {
+            String objectId, String relation, Long maxZookie) {
         List<TuplePO> tuples;
         if (maxZookie != null) {
             tuples = tupleMapper.selectByObjectAndRelation(storeId, objectType, objectId, relation, maxZookie);
@@ -125,13 +125,14 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation, query.getSubjectRelation())
+                .eq(StringUtils.isBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation,
+                        query.getSubjectRelation())
                 .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
     }
 
     @Override
     public List<TuplePO> findByObject(String storeId, String objectType, String objectId,
-                                      String relation, Long maxZookie) {
+            String relation, Long maxZookie) {
 
         LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
                 .eq(StringUtils.isNotBlank(storeId), TuplePO::getStoreId, storeId)
@@ -158,7 +159,8 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isNotBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation, query.getSubjectRelation());
+                .eq(StringUtils.isNotBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation,
+                        query.getSubjectRelation());
 
         return Optional.ofNullable(this.getOne(wrapper));
     }
@@ -175,7 +177,8 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
             return false;
         }
 
-        tuples.forEach(tuple -> cacheManager.invalidateTupleCache(tuple.getStoreId(), tuple.getObjectType(), tuple.getObjectId()));
+        tuples.forEach(tuple -> cacheManager.invalidateTupleCache(tuple.getStoreId(), tuple.getObjectType(),
+                tuple.getObjectId()));
         cacheManager.invalidateCheckCache(tuples.get(0).getStoreId());
         return true;
     }
@@ -202,7 +205,7 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
 
     @Override
     public List<TuplePO> listTuples(String storeId, String objectType, String relation,
-                                    int pageSize, Long pageToken) {
+            int pageSize, Long pageToken) {
         // 分页查询使用 MyBatis Plus
         LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
                 .eq(TuplePO::getStoreId, storeId)
@@ -245,14 +248,14 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isNotBlank(query.getSubjectRelation()), 
-                    TuplePO::getSubjectRelation, query.getSubjectRelation());
+                .eq(StringUtils.isNotBlank(query.getSubjectRelation()),
+                        TuplePO::getSubjectRelation, query.getSubjectRelation());
     }
 
     @Override
     public List<TuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
-                                              String relation, String subjectType, String subjectId,
-                                              String subjectRelation, int pageSize, Long pageToken) {
+            String relation, String subjectType, String subjectId,
+            String subjectRelation, int pageSize, Long pageToken) {
         LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
                 .eq(TuplePO::getStoreId, storeId)
                 .eq(StringUtils.isNotBlank(objectType), TuplePO::getObjectType, objectType)

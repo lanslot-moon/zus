@@ -25,7 +25,8 @@ import java.util.Optional;
  */
 @Slf4j
 @Repository
-public class AuthorizationModelPersistenceRepository extends BaseRepository<AuthorizationModelPO> implements IAuthorizationModelPersistenceRepository {
+public class AuthorizationModelPersistenceRepository extends BaseRepository<AuthorizationModelPO>
+        implements IAuthorizationModelPersistenceRepository {
 
     @Resource
     private FgaCacheManager cacheManager;

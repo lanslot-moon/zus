@@ -1,4 +1,4 @@
-package org.kitona.zus.starter.config;
+package org.kitona.zus.infrastructure.persistence.mysql.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.executor.parameter.ParameterHandler;
@@ -23,20 +23,24 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 
 /**
- * 这里没有使用拦截 {@link org.apache.ibatis.executor.Executor 主要是因为PageHelp处理的时候，直接调用Executor的方法进行处理，没有调用invocation.proceed() 下一个拦截器处理，直接处理SQL
+ * 这里没有使用拦截 {@link org.apache.ibatis.executor.Executor
+ * 主要是因为PageHelp处理的时候，直接调用Executor的方法进行处理，没有调用invocation.proceed()
+ * 下一个拦截器处理，直接处理SQL
  * 的修改，因此，将这个拦截设置到最后的查询阶段去处理}
  * <p>
- * 因此拦截StatementHandler 肯定不会错误【StatementHandler，语句处理器负责和JDBC层具体交互，包括prepare语句，执行语句，以及调用ParameterHandler.parameterize()设置参数】
+ * 因此拦截StatementHandler
+ * 肯定不会错误【StatementHandler，语句处理器负责和JDBC层具体交互，包括prepare语句，执行语句，以及调用ParameterHandler.parameterize()设置参数】
  */
-@Intercepts({@Signature(type = StatementHandler.class, method = "query", args = {Statement.class, ResultHandler.class}),
-        @Signature(type = StatementHandler.class, method = "update", args = {Statement.class}),
-        @Signature(type = StatementHandler.class, method = "batch", args = {Statement.class})})
+@Intercepts({
+        @Signature(type = StatementHandler.class, method = "query", args = { Statement.class, ResultHandler.class }),
+        @Signature(type = StatementHandler.class, method = "update", args = { Statement.class }),
+        @Signature(type = StatementHandler.class, method = "batch", args = { Statement.class }) })
 @Slf4j
 public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
 
     private Configuration configuration = null;
-    private static final ThreadLocal<SimpleDateFormat> dateFormatThreadLocal =
-            ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
+    private static final ThreadLocal<SimpleDateFormat> dateFormatThreadLocal = ThreadLocal
+            .withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
 
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
@@ -68,7 +72,7 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
                     this.configuration = (Configuration) configurationField.get(parameterHandler);
                 }
             }
-            //替换参数格式化Sql语句，去除换行符
+            // 替换参数格式化Sql语句，去除换行符
             return formatSql(boundSql, configuration);
         } catch (Exception e) {
             log.warn("get sql error {}", target, e);
@@ -104,7 +108,8 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
         if (parameterMappings != null) {
             for (ParameterMapping parameterMapping : parameterMappings) {
                 if (parameterMapping.getMode() != ParameterMode.OUT) {
-                    Object value = getParameterValue(boundSql, parameterMapping, parameterObject, typeHandlerRegistry, configuration);
+                    Object value = getParameterValue(boundSql, parameterMapping, parameterObject, typeHandlerRegistry,
+                            configuration);
                     String paramValueStr = formatParameterValue(value, parameterMapping.getProperty());
                     sql = sql.replaceFirst("\\?", Matcher.quoteReplacement(paramValueStr));
                 }
@@ -118,7 +123,7 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
     }
 
     private Object getParameterValue(BoundSql boundSql, ParameterMapping parameterMapping, Object parameterObject,
-                                     TypeHandlerRegistry typeHandlerRegistry, Configuration configuration) {
+            TypeHandlerRegistry typeHandlerRegistry, Configuration configuration) {
         String propertyName = parameterMapping.getProperty();
         if (boundSql.hasAdditionalParameter(propertyName)) {
             return boundSql.getAdditionalParameter(propertyName);
@@ -147,7 +152,6 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
         return paramValueStr;
     }
 
-
     /**
      * 美化Sql
      */
@@ -155,7 +159,6 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
         sql = sql.replaceAll("\\s+", " ");
         return sql;
     }
-
 
     @Override
     public int getOrder() {

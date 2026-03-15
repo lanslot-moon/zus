@@ -9,7 +9,7 @@ import org.kitona.zus.domain.event.TupleDeletedEvent;
 import org.kitona.zus.domain.event.TupleWrittenEvent;
 import org.kitona.zus.domain.valueobject.TupleKey;
 import org.kitona.zus.domain.valueobject.Zookie;
-import org.kitona.zus.domain.service.IChangelogService;
+import org.kitona.zus.domain.repository.IChangelogDomainRepository;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.domain.repository.ITupleDomainRepository;
 import org.kitona.zus.service.dto.command.WriteTupleCommand;
@@ -19,24 +19,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Write 应用服务
  *
- * <p>提供元组写入用例的应用层实现，编排写入、Zookie 与 Changelog。
+ * <p>
+ * 提供元组写入用例的应用层实现，编排写入、Zookie 与 Changelog。
  *
  * <h3>聚合根设计说明</h3>
- * <p>{@link RelationTupleEntity} 是一个<b>独立聚合根</b>，不属于其他聚合的内部实体。
+ * <p>
+ * {@link RelationTupleEntity} 是一个<b>独立聚合根</b>，不属于其他聚合的内部实体。
  * 因此本服务直接通过 {@link ITupleDomainRepository} 操作 RelationTupleEntity，
  * 这符合 DDD 的聚合根操作原则。
  *
  * <h3>DDD 规范</h3>
  * <ul>
- *   <li>通过聚合根的工厂方法 {@link RelationTupleEntity#create} 创建实体，而非直接 new</li>
- *   <li>通过 {@link ChangelogEntity#createWriteLog} 等工厂方法创建变更日志</li>
- *   <li>不使用 MapStruct 直接映射到领域实体，保持领域对象的封装性</li>
- *   <li>发布领域事件 {@link TupleWrittenEvent}、{@link TupleDeletedEvent} 通知其他限界上下文</li>
+ * <li>通过聚合根的工厂方法 {@link RelationTupleEntity#create} 创建实体，而非直接 new</li>
+ * <li>通过 {@link ChangelogEntity#createWriteLog} 等工厂方法创建变更日志</li>
+ * <li>不使用 MapStruct 直接映射到领域实体，保持领域对象的封装性</li>
+ * <li>发布领域事件 {@link TupleWrittenEvent}、{@link TupleDeletedEvent} 通知其他限界上下文</li>
  * </ul>
  *
  * @author kitona
@@ -59,7 +60,7 @@ public class WriteApplicationService implements IWriteApplicationService {
     private IStoreDomainRepository storeRepository;
 
     @Resource
-    private IChangelogService changelogService;
+    private IChangelogDomainRepository changelogRepository;
 
     @Resource
     private ApplicationEventPublisher eventPublisher;
@@ -94,7 +95,7 @@ public class WriteApplicationService implements IWriteApplicationService {
         List<ChangelogEntity> changelogs = writtenKeys.stream()
                 .map(key -> buildChangelogEntity(storeId, key, newZookie, OPERATION_WRITE))
                 .toList();
-        changelogService.recordChanges(changelogs);
+        changelogRepository.saveBatch(changelogs);
 
         log.debug("WriteApplicationService.write 写入变更日志(WRITE): storeId={}, count={}", storeId, writtenKeys.size());
         eventPublisher.publishEvent(new TupleWrittenEvent(storeId, writtenKeys, newZookie));
@@ -134,7 +135,7 @@ public class WriteApplicationService implements IWriteApplicationService {
         List<ChangelogEntity> changelogs = deletedKeys.stream()
                 .map(key -> buildChangelogEntity(storeId, key, newZookie, OPERATION_DELETE))
                 .toList();
-        changelogService.recordChanges(changelogs);
+        changelogRepository.saveBatch(changelogs);
 
         log.debug("WriteApplicationService.deleted 写入变更日志(DELETE): storeId={}, count={}", storeId, deletedKeys.size());
         eventPublisher.publishEvent(new TupleDeletedEvent(storeId, deletedKeys, newZookie));
@@ -158,8 +159,7 @@ public class WriteApplicationService implements IWriteApplicationService {
                 cmd.getRelation(),
                 cmd.getSubjectType(),
                 cmd.getSubjectId(),
-                cmd.getSubjectRelation()
-        );
+                cmd.getSubjectRelation());
     }
 
     /**

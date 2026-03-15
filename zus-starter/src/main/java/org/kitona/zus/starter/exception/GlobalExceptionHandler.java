@@ -1,5 +1,7 @@
 package org.kitona.zus.starter.exception;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.exception.RestException;
 import org.kitona.zus.service.exception.ApplicationException;
@@ -27,6 +29,17 @@ public class GlobalExceptionHandler {
                 .stream()
                 .map(ObjectError::getDefaultMessage)
                 .filter(Objects::nonNull)
+                .findFirst()
+                .orElse("参数校验失败");
+        return RestResult.error(400, errorMessage);
+    }
+
+    // 捕获 JSR303 校验异常（如 Service 层 @Validated 校验失败）
+    @ExceptionHandler(ConstraintViolationException.class)
+    public RestResult<String> handleConstraintViolationException(ConstraintViolationException ex) {
+        String errorMessage = ex.getConstraintViolations()
+                .stream()
+                .map(ConstraintViolation::getMessage)
                 .findFirst()
                 .orElse("参数校验失败");
         return RestResult.error(400, errorMessage);

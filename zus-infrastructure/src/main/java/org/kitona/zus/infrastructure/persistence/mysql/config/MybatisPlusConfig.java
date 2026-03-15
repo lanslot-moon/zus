@@ -1,4 +1,4 @@
-package org.kitona.zus.starter.config;
+package org.kitona.zus.infrastructure.persistence.mysql.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
@@ -28,7 +28,7 @@ public class MybatisPlusConfig {
      * SQL语句拦截器，用于打印SQL
      */
     @Bean
-    public MybatisSqlPrintInterceptor mybatisSqlPrintInterceptor(){
+    public MybatisSqlPrintInterceptor mybatisSqlPrintInterceptor() {
         return new MybatisSqlPrintInterceptor();
     }
 }

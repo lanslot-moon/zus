@@ -37,10 +37,8 @@ public final class StoreAssembler {
                 .name(aggregate.getName())
                 .description(aggregate.getDescription())
                 .currentModelId(aggregate.getCurrentModelId())
-                .currentZookie(aggregate.getCurrentZookie() != null
-                        ? aggregate.getCurrentZookie().getVersion() : null)
+                .currentZookie(aggregate.getCurrentZookie() != null ? aggregate.getCurrentZookie().getVersion() : null)
                 .status(aggregate.getStatusCode())
-                .statusDesc(aggregate.getStatus() != null ? aggregate.getStatus().getDesc() : null)
                 .createTime(aggregate.getCreateTime())
                 .build();
     }
