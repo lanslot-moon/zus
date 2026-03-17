@@ -24,7 +24,8 @@ public class ProjectStartupRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        log.info(">>>>>>-------------------- Zus Application started successfully!!! ({} mode) --------------------<<<<<<",
+        log.info("---------------------------------------------------------------------------------------------------");
+        log.info(">>>>>>---------------- Zus Application started successfully!!! ({} mode) ---------------------<<<<<<",
                 env.getProperty("spring.profiles.active", "default"));
     }
 }
