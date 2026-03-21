@@ -16,6 +16,9 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.BasePoMinimal;
 public class BaseRepository<T extends BasePoMinimal> extends ServiceImpl<BaseMapper<T>, T> {
 
      LambdaQueryWrapper<T> getLambdaQueryWrapper() {
-        return new LambdaQueryWrapper<T>().eq(T::getIsDeleted, DeletedStatusEnum.NOT_DELETED.getCode());
-    }
+         // 关键点：构造函数传入 getEntityClass()
+         // 这样 MP 就会去解析具体子类（如 UserPo）的缓存，而不是 BasePoMinimal 的缓存
+         return new LambdaQueryWrapper<>(getEntityClass())
+                 .eq(BasePoMinimal::getIsDeleted, DeletedStatusEnum.NOT_DELETED.getCode());
+     }
 }

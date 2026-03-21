@@ -4,6 +4,8 @@ import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.kitona.zus.common.exception.IError;
+import org.kitona.zus.common.exception.SystemException;
 import org.kitona.zus.domain.entity.TypeDefinitionEntity;
 import org.kitona.zus.domain.enums.ModelPublishStatus;
 import org.kitona.zus.domain.valueobject.RelationDefinition;
@@ -299,7 +301,7 @@ public class AuthorizationModelAggregate {
         boolean exists = typeDefinitions.stream()
                 .anyMatch(t -> t.getSubjectType().equals(typeDefinition.getSubjectType()));
         if (exists) {
-            throw new IllegalArgumentException("类型已存在: " + typeDefinition.getSubjectType());
+            throw new SystemException("类型已存在: " + typeDefinition.getSubjectType(), IError.DATA_EXIST_ERROR.getCode());
         }
 
         // 设置排序序号
@@ -400,7 +402,7 @@ public class AuthorizationModelAggregate {
     public void addRelationToType(String type, RelationDefinition definition) {
         assertEditable();
         TypeDefinitionEntity typeEntity = getTypeDefinition(type)
-                .orElseThrow(() -> new IllegalArgumentException("类型不存在: " + type));
+                .orElseThrow(() -> new SystemException("类型不存在: " + type, IError.DATA_NOT_EXIST.getCode()));
         typeEntity.addRelation(definition);
     }
 
@@ -440,7 +442,7 @@ public class AuthorizationModelAggregate {
     public void updateRelationInType(String type, RelationDefinition definition) {
         assertEditable();
         TypeDefinitionEntity typeEntity = getTypeDefinition(type)
-                .orElseThrow(() -> new IllegalArgumentException("类型不存在: " + type));
+                .orElseThrow(() -> new SystemException("类型不存在: " + type, IError.DATA_NOT_EXIST.getCode()));
         typeEntity.putRelation(definition);
     }
 
@@ -474,10 +476,10 @@ public class AuthorizationModelAggregate {
      */
     public void publish() {
         if (!isDraft()) {
-            throw new IllegalStateException("只有草稿状态的模型可以发布，当前状态: " + status);
+            throw new SystemException("只有草稿状态的模型可以发布，当前状态: " + status, IError.DATA_STATUS_ERROR.getCode());
         }
         if (typeDefinitions.isEmpty()) {
-            throw new IllegalStateException("模型至少需要一个类型定义才能发布");
+            throw new SystemException("模型至少需要一个类型定义才能发布", IError.PARAMS_EXIST_ERROR.getCode());
         }
         this.status = ModelPublishStatus.PUBLISHED;
     }
@@ -492,7 +494,7 @@ public class AuthorizationModelAggregate {
      */
     public void deprecate() {
         if (!isPublished()) {
-            throw new IllegalStateException("只有已发布的模型可以废弃，当前状态: " + status);
+            throw new SystemException("只有已发布的模型可以废弃，当前状态: " + status, IError.DATA_STATUS_ERROR.getCode());
         }
         this.status = ModelPublishStatus.ABANDONED;
     }
@@ -544,7 +546,7 @@ public class AuthorizationModelAggregate {
      */
     private void assertEditable() {
         if (!isEditable()) {
-            throw new IllegalStateException("模型不可编辑，只有草稿状态可以修改，当前状态: " + status);
+            throw new SystemException("模型不可编辑，只有草稿状态可以修改，当前状态: " + status, IError.DATA_STATUS_ERROR.getCode());
         }
     }
 

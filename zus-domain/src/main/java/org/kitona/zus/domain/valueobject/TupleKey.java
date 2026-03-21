@@ -3,6 +3,8 @@ package org.kitona.zus.domain.valueobject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.kitona.zus.common.exception.IError;
+import org.kitona.zus.common.exception.SystemException;
 
 import java.util.Objects;
 
@@ -30,7 +32,7 @@ public final class TupleKey {
         this.subject = Objects.requireNonNull(subject, "subject must not be null");
 
         if (relation.isEmpty()) {
-            throw new IllegalArgumentException("relation must not be empty");
+            throw new SystemException("relation must not be empty", IError.PARAMS_EXIST_ERROR.getCode());
         }
     }
 

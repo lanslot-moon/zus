@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.common.utils.JacksonUtil;
+import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
@@ -42,6 +43,7 @@ public class CheckApplicationService implements ICheckApplicationService {
 
     @Override
     public CheckResultDTO check(CheckCommand request) {
+        ValidationUtil.validate(request);
         long startTime = System.currentTimeMillis();
 
         try {

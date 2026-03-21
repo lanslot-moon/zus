@@ -1,106 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-        <!--console ：表示当前的日志信息是可以输出到控制台的-->
+    <!-- 1. 定义属性变量 -->
+    <property name="LOG_PATH" value="logs" />
+    <property name="MAX_HISTORY" value="30" />
+    <property name="MAX_FILE_SIZE" value="50MB" />
+    <!-- 带有颜色高亮的控制台 Pattern -->
+    <property name="CONSOLE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) %magenta([%thread]) %green([trace-id:%X{traceId:-}]) %cyan(%logger{36}.%L) - %msg%n" />
+    <!-- 文件 Pattern -->
+    <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [trace-id:%X{traceId:-}] %logger{36}.%L - %msg%n" />
+
+    <!-- 2. 控制台输出 (开启颜色) -->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-        <!-- encoder 默认配置为PatternLayoutEncoder -->
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [trace-id:%X{traceId:-}] %-5level %logger{36}.%L - %msg%n</pattern>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <charset>utf-8</charset>
         </encoder>
     </appender>
 
-    <appender name="error" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/error.log</file>
-        <!--设置过滤器，如果是error级别的信息，则接受，否则拒绝-->
+    <!-- 3. 各级别文件 Appender (使用 SizeAndTimeBasedRollingPolicy) -->
+    <appender name="info_file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/info.log</file>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>error</level>
+            <level>INFO</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>DENY</onMismatch>
         </filter>
-        <!--设置文件超出最大容量后的处理方式为根据时间新建一个文件-->
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!--每日备份日志存储格式和位置 -->
-            <fileNamePattern>logs/bak/error.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <!--最大保存天数 -->
-            <maxHistory>15</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/bak/info.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
         </rollingPolicy>
-        <!--设置文件最大容量为20M-->
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>20MB</maxFileSize>
-        </triggeringPolicy>
-        <!--进行编码-->
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [trace-id:%X{traceId:-}] %-5level %logger{36}.%L - %msg%n</pattern>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
             <charset>utf-8</charset>
         </encoder>
     </appender>
 
-    <appender name="warn" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/warn.log</file>
+    <appender name="warn_file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/warn.log</file>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>warn</level>
+            <level>WARN</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>DENY</onMismatch>
         </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/bak/warn.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>15</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/bak/warn.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
         </rollingPolicy>
-        <!--设置文件最大容量为20M-->
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>20MB</maxFileSize>
-        </triggeringPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [trace-id:%X{traceId:-}] %-5level %logger{36}.%L - %msg%n</pattern>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
             <charset>utf-8</charset>
         </encoder>
     </appender>
 
-    <appender name="info" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/info.log</file>
+    <appender name="error_file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/error.log</file>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>info</level>
+            <level>ERROR</level>
             <onMatch>ACCEPT</onMatch>
             <onMismatch>DENY</onMismatch>
         </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/bak/info.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>5</maxHistory>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/bak/error.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
         </rollingPolicy>
-        <!--设置文件最大容量为20M-->
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>20MB</maxFileSize>
-        </triggeringPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [trace-id:%X{traceId:-}] %-5level %logger{36}.%L - %msg%n</pattern>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
             <charset>utf-8</charset>
         </encoder>
     </appender>
 
-    <appender name="debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/debug.log</file>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>debug</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/bak/debug.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>15</maxHistory>
-        </rollingPolicy>
-        <!--设置文件最大容量为20M-->
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>20MB</maxFileSize>
-        </triggeringPolicy>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [trace-id:%X{traceId:-}] %-5level %logger{36}.%L - %msg%n</pattern>
-            <charset>utf-8</charset>
-        </encoder>
+    <!-- 4. 异步输出（大幅提升高并发下的写入性能） -->
+    <appender name="async_info" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <appender-ref ref="info_file" />
+    </appender>
+    <appender name="async_error" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="error_file" />
     </appender>
 
-    <root level="info">
-        <appender-ref ref="info"/>
-        <appender-ref ref="error"/>
-        <appender-ref ref="warn"/>
-        <appender-ref ref="debug"/>
-        <appender-ref ref="console"/>
+    <!-- 优化 Spring 和 Hibernate 的白噪音 -->
+    <logger name="org.springframework" level="INFO" />
+    <logger name="org.hibernate" level="INFO" />
+
+    <!-- 6. 根级别配置 -->
+    <root level="INFO">
+        <appender-ref ref="console" />
+        <appender-ref ref="async_info" />
+        <appender-ref ref="warn_file" />
+        <appender-ref ref="async_error" />
     </root>
 
 </configuration>

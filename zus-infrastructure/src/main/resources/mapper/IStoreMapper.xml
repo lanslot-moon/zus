@@ -64,7 +64,6 @@
                tenant_id, create_time, created_by, update_time, updated_by, is_deleted
         FROM fga_store
         WHERE is_deleted = 0
-          AND status = 0
         <if test="pageToken != null and pageToken != ''">
           AND store_id &lt; #{pageToken}
         </if>

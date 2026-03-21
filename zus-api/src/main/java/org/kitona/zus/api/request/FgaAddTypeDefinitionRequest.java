@@ -2,6 +2,7 @@ package org.kitona.zus.api.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class FgaAddTypeDefinitionRequest {
      * 资源类型名，如 document、folder、user
      */
     @NotBlank(message = "type 不能为空")
+    @Size(max = 64, message = "type 长度不能超过 64")
     private String type;
 
     /**

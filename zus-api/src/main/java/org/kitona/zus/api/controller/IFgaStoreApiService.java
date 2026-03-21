@@ -81,5 +81,5 @@ public interface IFgaStoreApiService {
     @GetMapping
     RestResult<PageResponseVO<FgaStoreVO>> listStores(
             @RequestParam(value = "page_size", defaultValue = "20") Integer pageSize,
-            @RequestParam(value = "page_token", required = false) String pageToken);
+            @RequestParam(value = "continuation_token", required = false) String pageToken);
 }

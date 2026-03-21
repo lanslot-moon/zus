@@ -1,5 +1,6 @@
 package org.kitona.zus.service.dto.command;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,26 +31,31 @@ public class AddRelationCommand implements Serializable {
     /**
      * 存储空间ID
      */
+    @NotBlank(message = "storeId 不能为空")
     private String storeId;
 
     /**
      * 模型ID
      */
+    @NotBlank(message = "modelId 不能为空")
     private String modelId;
 
     /**
      * 类型名
      */
+    @NotBlank(message = "type 不能为空")
     private String type;
 
     /**
      * 关系名称，如 viewer、editor、owner
      */
+    @NotBlank(message = "relationName 不能为空")
     private String relationName;
 
     /**
      * 重写表达式，如 self、self or owner
      */
+    @NotBlank(message = "rewriteExpression 不能为空")
     private String rewriteExpression;
 
     /**

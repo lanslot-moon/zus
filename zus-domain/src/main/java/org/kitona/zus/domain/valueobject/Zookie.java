@@ -23,7 +23,7 @@ public final class Zookie implements Comparable<Zookie> {
     }
 
     public static Zookie of(Long version) {
-        if (version == null || version <= 0) {
+        if (version == null || version < 0) {
             return EMPTY;
         }
         return new Zookie(version);

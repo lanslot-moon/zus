@@ -3,6 +3,7 @@ package org.kitona.zus.service.application.impl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.aggregate.StoreAggregate;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.domain.valueobject.CursorPageResult;
@@ -113,6 +114,7 @@ public class StoreApplicationService implements IStoreApplicationService {
         if (query == null) {
             query = ListStoresQuery.builder().build();
         }
+        ValidationUtil.validate(query);
         CursorPageResult<StoreAggregate> pageResult = storeRepository.findPageByCursor(
                 query.getPageToken(),
                 query.getEffectivePageSize());

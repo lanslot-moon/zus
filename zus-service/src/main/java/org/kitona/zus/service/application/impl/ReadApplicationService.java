@@ -2,6 +2,7 @@ package org.kitona.zus.service.application.impl;
 
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
+import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.entity.RelationTupleEntity;
 import org.kitona.zus.domain.repository.ITupleDomainRepository;
 import org.kitona.zus.service.application.IReadApplicationService;
@@ -74,9 +75,7 @@ public class ReadApplicationService implements IReadApplicationService {
 
     @Override
     public ListObjectsResultDTO listObjects(ListObjectsQuery query) {
-        if (!isValidListObjectsQuery(query)) {
-            return ListObjectsResultDTO.empty();
-        }
+        ValidationUtil.validate(query);
 
         List<RelationTupleEntity> tuples = tupleRepository.findBySubject(
                 query.getStoreId(),
@@ -94,9 +93,7 @@ public class ReadApplicationService implements IReadApplicationService {
 
     @Override
     public ListUsersResultDTO listUsers(ListUsersQuery query) {
-        if (!isValidListUsersQuery(query)) {
-            return ListUsersResultDTO.empty();
-        }
+        ValidationUtil.validate(query);
 
         List<RelationTupleEntity> tuples = tupleRepository.findByObject(
                 query.getStoreId(),
@@ -110,23 +107,7 @@ public class ReadApplicationService implements IReadApplicationService {
         return ListUsersResultDTO.builder().users(users).build();
     }
 
-    private boolean isValidListObjectsQuery(ListObjectsQuery query) {
-        return query != null && StringUtils.isNoneBlank(
-                query.getStoreId(),
-                query.getSubjectType(),
-                query.getSubjectId(),
-                query.getRelation()
-        );
-    }
 
-    private boolean isValidListUsersQuery(ListUsersQuery query) {
-        return query != null && StringUtils.isNoneBlank(
-                query.getStoreId(),
-                query.getObjectType(),
-                query.getObjectId(),
-                query.getRelation()
-        );
-    }
 
     private String buildNextPageToken(List<RelationTupleEntity> tuples, int pageSize) {
         if (tuples.isEmpty() || tuples.size() < pageSize) {

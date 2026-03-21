@@ -58,19 +58,7 @@ public class ModelResultDTO implements Serializable {
      * 类型定义列表（内部使用，不参与 JSON 序列化）
      */
     @JsonIgnore
-    private transient List<TypeDefinitionResultDTO> typeDefinitions;
-
-    /**
-     * 类型定义 JSON，API 层可解析为 List&lt;FgaTypeDefinitionVO&gt;
-     * <p>序列化时从 typeDefinitions 自动生成
-     */
-    public String getTypeDefinitionsJson() {
-        if (typeDefinitions == null || typeDefinitions.isEmpty()) {
-            return null;
-        }
-        return JacksonUtil.toJSONString(typeDefinitions);
-    }
-
+    private List<TypeDefinitionResultDTO> typeDefinitions;
 
     /**
      * 创建时间（毫秒时间戳）

@@ -1,6 +1,8 @@
 package org.kitona.zus.api.request;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -23,7 +25,6 @@ public class FgaCreateModelRequest {
     /**
      * 类型定义列表
      */
-    @Valid
     private List<FgaTypeDefinitionInput> typeDefinitions;
 
     /**
@@ -34,5 +35,6 @@ public class FgaCreateModelRequest {
     /**
      * 模型描述
      */
+    @Size(max = 255, message = "description 长度不能超过 255")
     private String description;
 }

@@ -1,6 +1,8 @@
 package org.kitona.zus.domain.valueobject;
 
 import lombok.Getter;
+import org.kitona.zus.common.exception.IError;
+import org.kitona.zus.common.exception.SystemException;
 
 import java.util.Objects;
 
@@ -28,10 +30,10 @@ public final class ObjectRef {
         this.id = Objects.requireNonNull(id, "id must not be null");
 
         if (type.isEmpty()) {
-            throw new IllegalArgumentException("type must not be empty");
+            throw new SystemException("type must not be empty", IError.PARAMS_EXIST_ERROR.getCode());
         }
         if (id.isEmpty()) {
-            throw new IllegalArgumentException("id must not be empty");
+            throw new SystemException("id must not be empty", IError.PARAMS_EXIST_ERROR.getCode());
         }
     }
 
@@ -41,13 +43,12 @@ public final class ObjectRef {
 
     public static ObjectRef parse(String objectString) {
         if (objectString == null || objectString.isEmpty()) {
-            throw new IllegalArgumentException("objectString must not be null or empty");
+            throw new SystemException("objectString must not be null or empty", IError.PARAMS_EXIST_ERROR.getCode());
         }
 
         int separatorIndex = objectString.indexOf(SEPARATOR);
         if (separatorIndex <= 0 || separatorIndex >= objectString.length() - 1) {
-            throw new IllegalArgumentException("Invalid object format: " + objectString +
-                    ". Expected format: type:id");
+            throw new SystemException("Invalid object format: " + objectString + ". Expected format: type:id", IError.PARAMS_EXIST_ERROR.getCode());
         }
 
         String type = objectString.substring(0, separatorIndex);

@@ -7,6 +7,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.utils.JacksonUtil;
+import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
 import org.kitona.zus.domain.entity.TypeDefinitionEntity;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
@@ -43,9 +44,7 @@ public class ModelSchemaApplicationService implements IModelSchemaApplicationSer
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean addTypeDefinition(AddTypeDefinitionCommand command) {
-        if (command == null || StringUtils.isAnyBlank(command.getStoreId(), command.getModelId(), command.getType())) {
-            throw new ApplicationException(IError.PARAMS_EXIST_ERROR);
-        }
+        ValidationUtil.validate(command);
 
         AuthorizationModelAggregate model = this.loadForEdit(command.getStoreId(), command.getModelId());
 
@@ -130,10 +129,7 @@ public class ModelSchemaApplicationService implements IModelSchemaApplicationSer
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean addRelation(AddRelationCommand command) {
-        if (command == null || StringUtils.isAnyBlank(command.getStoreId(), command.getModelId(), command.getType(), command.getRelationName())) {
-            log.error("addRelation 参数为空: {}", JacksonUtil.toJSONString(command));
-            throw new ApplicationException(IError.PARAMS_EXIST_ERROR);
-        }
+        ValidationUtil.validate(command);
 
         AuthorizationModelAggregate model = this.loadForEdit(command.getStoreId(), command.getModelId());
         Optional<TypeDefinitionEntity> typeDefinition = model.getTypeDefinition(command.getType());
@@ -212,10 +208,7 @@ public class ModelSchemaApplicationService implements IModelSchemaApplicationSer
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateRelation(AddRelationCommand command) {
-        if (command == null || StringUtils.isAnyBlank(command.getStoreId(), command.getModelId(), command.getType(), command.getRelationName())) {
-            log.error("updateRelation 参数为空: {}", JacksonUtil.toJSONString(command));
-            throw new ApplicationException(IError.PARAMS_EXIST_ERROR);
-        }
+        ValidationUtil.validate(command);
 
         AuthorizationModelAggregate model = this.loadForEdit(command.getStoreId(), command.getModelId());
         Optional<TypeDefinitionEntity> typeDefinition = model.getTypeDefinition(command.getType());

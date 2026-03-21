@@ -1,6 +1,7 @@
 package org.kitona.zus.api.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -15,12 +16,14 @@ public class FgaAddRelationRequest {
      * 关系名称，如 viewer、editor、owner
      */
     @NotBlank(message = "relationName 不能为空")
+    @Size(max = 64, message = "relationName 长度不能超过 64")
     private String relationName;
 
     /**
      * 重写表达式，如 self、self or owner
      */
     @NotBlank(message = "rewriteExpression 不能为空")
+    @Size(max = 255, message = "rewriteExpression 长度不能超过 255")
     private String rewriteExpression;
 
     /**

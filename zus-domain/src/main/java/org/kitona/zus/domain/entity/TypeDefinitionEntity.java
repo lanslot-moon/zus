@@ -4,6 +4,8 @@ import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.kitona.zus.common.exception.IError;
+import org.kitona.zus.common.exception.SystemException;
 import org.kitona.zus.domain.valueobject.RelationDefinition;
 
 import java.util.Collections;
@@ -176,7 +178,7 @@ public class TypeDefinitionEntity {
         Objects.requireNonNull(definition, "关系定义不能为空");
         String relationName = definition.relationName();
         if (relations.containsKey(relationName)) {
-            throw new IllegalArgumentException("关系已存在: " + relationName);
+            throw new SystemException("关系已存在: " + relationName, IError.DATA_EXIST_ERROR.getCode());
         }
         this.relations.put(relationName, definition);
     }

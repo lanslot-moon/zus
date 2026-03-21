@@ -3,6 +3,7 @@ package org.kitona.zus.service.application.impl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.entity.ChangelogEntity;
 import org.kitona.zus.domain.entity.RelationTupleEntity;
 import org.kitona.zus.domain.event.TupleDeletedEvent;
@@ -72,6 +73,9 @@ public class WriteApplicationService implements IWriteApplicationService {
             return;
         }
 
+        // 校验每个元组命令
+        writeTuple.forEach(ValidationUtil::validate);
+
         // 获取新的 Zookie 版本
         Long version = storeRepository.nextZookie(storeId);
         Zookie newZookie = Zookie.of(version);
@@ -107,6 +111,9 @@ public class WriteApplicationService implements IWriteApplicationService {
         if (CollectionUtils.isEmpty(deleteTuple)) {
             return;
         }
+
+        // 校验每个元组命令
+        deleteTuple.forEach(ValidationUtil::validate);
 
         // 获取新的 Zookie 版本
         Long version = storeRepository.nextZookie(storeId);

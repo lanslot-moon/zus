@@ -1,5 +1,7 @@
 package org.kitona.zus.service.dto.command;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,16 +38,19 @@ public class CreateModelCommand implements Serializable {
     /**
      * 存储空间ID
      */
+    @NotBlank(message = "storeId 不能为空")
     private String storeId;
 
     /**
      * 模型 Schema 版本，如 1.1
      */
+    @NotBlank(message = "schemaVersion 不能为空")
     private String schemaVersion;
 
     /**
      * 类型定义列表（与 dslText 二选一）
      */
+    @Valid
     private List<TypeDefinitionInput> typeDefinitions;
 
     /**

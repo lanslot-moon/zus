@@ -1,6 +1,8 @@
 package org.kitona.zus.api.response;
 
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.kitona.zus.service.dto.response.TypeDefinitionResultDTO;
 
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.Map;
  * @since 2025-01-15
  */
 @Data
+@AutoMapper(target = TypeDefinitionResultDTO.class)
 public class FgaTypeDefinitionVO {
 
     /**

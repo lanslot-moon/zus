@@ -3,6 +3,8 @@ package org.kitona.zus.domain.aggregate;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.kitona.zus.common.exception.IError;
+import org.kitona.zus.common.exception.SystemException;
 import org.kitona.zus.domain.enums.StoreStatus;
 import org.kitona.zus.domain.valueobject.Zookie;
 
@@ -204,8 +206,9 @@ public class StoreAggregate {
             return;
         }
         if (status != StoreStatus.NORMAL) {
-            throw new IllegalStateException(
-                    "Cannot disable store in status: " + status + ", only NORMAL status can be disabled");
+            throw new SystemException(
+                    "Cannot disable store in status: " + status + ", only NORMAL status can be disabled",
+                    IError.DATA_STATUS_ERROR.getCode());
         }
         this.status = StoreStatus.DISABLE;
     }
@@ -222,8 +225,9 @@ public class StoreAggregate {
             return;
         }
         if (status != StoreStatus.DISABLE) {
-            throw new IllegalStateException(
-                    "Cannot enable store in status: " + status + ", only DISABLE status can be enabled");
+            throw new SystemException(
+                    "Cannot enable store in status: " + status + ", only DISABLE status can be enabled",
+                    IError.DATA_STATUS_ERROR.getCode());
         }
         this.status = StoreStatus.NORMAL;
     }
@@ -237,8 +241,9 @@ public class StoreAggregate {
      */
     public void checkDeletable() {
         if (status != StoreStatus.DISABLE) {
-            throw new IllegalStateException(
-                    "Cannot delete store in status: " + status + ", only DISABLE status can be deleted");
+            throw new SystemException(
+                    "Cannot delete store in status: " + status + ", only DISABLE status can be deleted",
+                    IError.DATA_STATUS_ERROR.getCode());
         }
     }
 

@@ -57,7 +57,7 @@ public interface IFgaModelApiService {
     @GetMapping
     RestResult<PageResponseVO<FgaModelVO>> listModels(@PathVariable String storeId,
                                                       @RequestParam(value = "page_size", defaultValue = "20") Integer pageSize,
-                                                      @RequestParam(value = "page_token", required = false) String pageToken,
+                                                      @RequestParam(value = "continuation_token", required = false) String pageToken,
                                                       @RequestParam(value = "status", required = false) Integer status);
 
     /**

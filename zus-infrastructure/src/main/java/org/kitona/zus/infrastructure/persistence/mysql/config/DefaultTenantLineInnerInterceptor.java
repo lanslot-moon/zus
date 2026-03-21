@@ -5,9 +5,9 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.StringValue;
 import org.apache.commons.lang3.StringUtils;
 
-import org.kitona.zus.common.utils.BeanFieldUtil;
 import org.kitona.zus.common.context.UserContextHolder;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.BasePoMinimal;
+
+import java.util.Objects;
 
 /**
  * 多租户分页插件
@@ -24,12 +24,12 @@ public class DefaultTenantLineInnerInterceptor implements TenantLineHandler {
 
     @Override
     public String getTenantIdColumn() {
-        return BeanFieldUtil.getFieldName(BasePoMinimal::getTenantId);
+        return "tenant_id";
     }
 
     @Override
     public boolean ignoreTable(String tableName) {
         // 根据需要返回是否忽略该表
-        return StringUtils.isBlank(getTenantIdColumn());
+        return Objects.isNull(getTenantId());
     }
 }

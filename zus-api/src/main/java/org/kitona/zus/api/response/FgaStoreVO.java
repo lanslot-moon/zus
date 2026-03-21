@@ -1,11 +1,14 @@
 package org.kitona.zus.api.response;
 
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.kitona.zus.service.dto.response.StoreResultDTO;
 
 /**
  * FGA 存储空间 VO
  */
 @Data
+@AutoMapper(target = StoreResultDTO.class)
 public class FgaStoreVO {
 
     /**

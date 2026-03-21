@@ -55,6 +55,6 @@ public final class StoreAssembler {
         }
         return aggregates.stream()
                 .map(StoreAssembler::toDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

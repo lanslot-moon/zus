@@ -3,6 +3,8 @@ package org.kitona.zus.domain.valueobject;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import org.kitona.zus.common.exception.IError;
+import org.kitona.zus.common.exception.SystemException;
 
 import java.util.Objects;
 
@@ -36,10 +38,10 @@ public final class Subject {
         this.relation = relation;
 
         if (type.isEmpty()) {
-            throw new IllegalArgumentException("type must not be empty");
+            throw new SystemException("type must not be empty", IError.PARAMS_EXIST_ERROR.getCode());
         }
         if (id.isEmpty()) {
-            throw new IllegalArgumentException("id must not be empty");
+            throw new SystemException("id must not be empty", IError.PARAMS_EXIST_ERROR.getCode());
         }
     }
 
@@ -49,7 +51,7 @@ public final class Subject {
 
     public static Subject userset(String type, String id, String relation) {
         if (relation == null || relation.isEmpty()) {
-            throw new IllegalArgumentException("relation must not be null or empty for userset");
+            throw new SystemException("relation must not be null or empty for userset", IError.PARAMS_EXIST_ERROR.getCode());
         }
         return new Subject(type, id, relation);
     }
@@ -60,12 +62,12 @@ public final class Subject {
 
     public static Subject parse(String subjectString) {
         if (subjectString == null || subjectString.isEmpty()) {
-            throw new IllegalArgumentException("subjectString must not be null or empty");
+            throw new SystemException("subjectString must not be null or empty", IError.PARAMS_EXIST_ERROR.getCode());
         }
 
         int colonIndex = subjectString.indexOf(SEPARATOR);
         if (colonIndex <= 0 || colonIndex >= subjectString.length() - 1) {
-            throw new IllegalArgumentException("Invalid subject format: " + subjectString);
+            throw new SystemException("Invalid subject format: " + subjectString, IError.PARAMS_EXIST_ERROR.getCode());
         }
 
         String type = subjectString.substring(0, colonIndex);
@@ -76,7 +78,7 @@ public final class Subject {
             String id = rest.substring(0, hashIndex);
             String relation = rest.substring(hashIndex + 1);
             if (relation.isEmpty()) {
-                throw new IllegalArgumentException("Invalid userset format: " + subjectString);
+                throw new SystemException("Invalid userset format: " + subjectString, IError.PARAMS_EXIST_ERROR.getCode());
             }
             return userset(type, id, relation);
         }

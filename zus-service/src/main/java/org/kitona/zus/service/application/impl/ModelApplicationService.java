@@ -6,6 +6,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.utils.JacksonUtil;
+import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
 import org.kitona.zus.domain.aggregate.StoreAggregate;
 import org.kitona.zus.domain.entity.TypeDefinitionEntity;
@@ -61,6 +62,7 @@ public class ModelApplicationService implements IModelApplicationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createModel(CreateModelCommand command) {
+        ValidationUtil.validate(command);
         // 1. 检查存储空间状态
         String storeId = command.getStoreId();
         StoreAggregate storeAggregate = storeDomainRepository.findByStoreId(storeId).orElse(null);
@@ -89,7 +91,7 @@ public class ModelApplicationService implements IModelApplicationService {
         if (CollectionUtils.isEmpty(typeDefinitions)) {
             modelDomainRepository.saveOrUpdateModel(modelAggregate);
             log.info("ModelApplicationService.createModel 无关系定义,创建授权模型成功: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
+            return true;
         }
 
         List<TypeDefinitionEntity> typeDefinitionList = this.buildTypeDefinition(typeDefinitions);
@@ -120,9 +122,7 @@ public class ModelApplicationService implements IModelApplicationService {
 
     @Override
     public PageResultDTO<ModelResultDTO> listModels(ListModelsQuery query) {
-        if (query == null || StringUtils.isBlank(query.getStoreId())) {
-            return PageResultDTO.empty();
-        }
+        ValidationUtil.validate(query);
 
         CursorPageResult<AuthorizationModelAggregate> pageResult = modelDomainRepository.findPageByCursor(
                 query.getStoreId(),
@@ -165,12 +165,7 @@ public class ModelApplicationService implements IModelApplicationService {
             throw new ApplicationException(IError.DATA_NOT_EXIST);
         }
 
-        try {
-            model.publish();
-        } catch (IllegalStateException e) {
-            log.error("ModelApplicationService.publishModel 发布模型失败", e);
-            throw new ApplicationException(IError.DATA_STATUS_ERROR);
-        }
+        model.publish();
 
         boolean result = modelDomainRepository.publishModel(storeId, modelId);
         if (!result) {
@@ -230,12 +225,7 @@ public class ModelApplicationService implements IModelApplicationService {
             throw new ApplicationException(IError.DATA_NOT_EXIST);
         }
 
-        try {
-            model.deprecate();
-        } catch (IllegalStateException e) {
-            log.warn("ModelApplicationService.deprecateModel 废弃模型失败", e);
-            throw new ApplicationException(IError.DATA_STATUS_ERROR);
-        }
+        model.deprecate();
 
         boolean result = modelDomainRepository.deprecateModel(storeId, modelId);
         if (!result) {
