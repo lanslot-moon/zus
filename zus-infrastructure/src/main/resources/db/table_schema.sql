@@ -12,7 +12,7 @@
 -- 【二、模型搭建顺序（仅建库/建模型时遵守）】
 --   1) 创建 Store (fga_store)，并可选先占位一条 fga_authorization_model 记录（得到 model_id）
 --   2) 写入类型：fga_type_definition（如 document、folder、user）
---   3) 写入关系定义：fga_model_relation（每个 type 下的 relation 及 rewrite_expression）
+--   3) 写入关系定义：fga_model_relation（每个 type 下 the relation 及 rewrite_expression）
 --   4) 写入关系限制：fga_relation_restriction（每个 relation 允许的 user 类型）
 --   5) 将 Store 的 current_model_id 设为该模型，后续 Check 使用此模型
 --
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `fga_store` (
                                            `name` VARCHAR(128) NOT NULL COMMENT '存储空间名称',
                                            `description` VARCHAR(512) DEFAULT NULL COMMENT '存储空间描述',
                                            `current_model_id` VARCHAR(64) DEFAULT NULL COMMENT '当前使用的授权模型ID(model_id)。原因：模型版本锁定，防止规则变更导致旧元组瞬间失效，实现无损发布或快照回滚',
-                                           `current_zookie` BIGINT NOT NULL DEFAULT 0 COMMENT '当前最新的Zookie版本号。原因：解决分布式环境下的一致性延迟，确保权限删除后即刻生效',
+                                           `current_zookie` BIGINT NOT NULL DEFAULT 0 COMMENT '当前最新的Zookie版本号。原因：解决分布式环境下的一致性延迟，确保权限删除即刻生效',
                                            `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态: 0-正常, 1-禁用, 2-删除中',
                                            `tenant_id` VARCHAR(64) DEFAULT NULL COMMENT '租户ID',
                                            `create_time` BIGINT DEFAULT NULL COMMENT '创建时间',
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `fga_authorization_model` (
 
 
 -- -----------------------------------------------------------
--- 3. 类型定义表 (fga_type_definition)
+-- 3. 类型 definition 表 (fga_type_definition)
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `fga_type_definition` (
                                                      `id` BIGINT NOT NULL COMMENT '主键ID',
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `fga_type_definition` (
 
 
 -- -----------------------------------------------------------
--- 4. 关系定义表 (fga_model_relation)
+-- 4. 关系 definition 表 (fga_model_relation)
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `fga_model_relation` (
                                                     `id` BIGINT NOT NULL COMMENT '主键ID',
@@ -159,22 +159,6 @@ CREATE TABLE IF NOT EXISTS `fga_changelog` (
                                                KEY `idx_store_zookie` (`store_id`, `zookie`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='FGA变更日志表';
 
--- -----------------------------------------------------------
--- 数据流与落地建议总结：
--- 1. 前端关联：React 编辑器中的“直接授权”应包含“主体类型”与“主体关系”两个输入框。
--- 2. 后端存储：MyBatis-Plus 处理 JSON 字段建议使用 @TableField(typeHandler = JacksonTypeHandler.class)。
--- 3. 鉴权：统一调用 API，不建议业务侧自行实现复杂的递归推导。
--- -----------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
 
 -- ============================================================
 -- 规则与业务边界
@@ -230,3 +214,32 @@ CREATE TABLE IF NOT EXISTS `fga_changelog` (
 --   - 资源管理在业务服务；资源创建/共享/删除时调用本系统 Write/Delete 同步元组
 --   - 鉴权时调用本系统 Check（或 ListObjects/ListUsers），不自行计算权限
 --
+
+-- ==================================================================
+-- 补充说明详细原因及业务价值
+-- ==================================================================
+--
+-- A. allowed_subject_relation (表 5) —— 支撑层级继承与 Userset
+-- 原因：在 ReBAC 中，权限往往授予给“一组人”。例如 document:viewer 的主体不是具体的 user:alice，而是 folder:A#viewer。
+-- 业务价值：这允许你实现 “父子继承”。如果没有这个字段，你只能在表 5 定义“允许 folder 类型”，但无法指定“允许 folder 的 viewer 关系”。
+--          增加此字段后，你的前端界面中的“主体类型”就能支持 类型#关系 的输入。
+-- 逻辑对应：对应 OpenFGA DSL 中的 define viewer: [user, group#member]。
+--
+-- B. condition_name & condition_context (表 6) —— 支撑 ABAC 混合模式
+-- 原因：纯关系模型无法处理“环境/属性约束”。
+-- 业务价值：例如：editor 权限仅在 request_client_ip 属于公司内网时生效。
+-- 实现逻辑：写入元组时，你可以绑定一个预定义的 condition（如 is_internal_network），并存入该元组特有的上下文数据（如 IP 白名单）。
+--          鉴权时，引擎会动态计算该 JSON 表达式。
+--
+-- C. zookie (表 1 & 表 6 & 表 7) —— 解决“新瓶装旧酒”安全问题
+-- 已存在于你的 DDL 中，但需注意其逻辑用途：
+-- 原因：分布式环境下，数据库主从同步可能有几百毫秒延迟。
+-- 业务价值：如果管理员刚删除了 A 的权限（产生 zookie: 100），A 立即发起访问。请求带上最新的 zookie，
+--          鉴权引擎会强制检查缓存/从库的版本是否 >= 100。如果不是，则等待或读主库，确保 “权限删除即刻生效”，防止越权。
+--
+-- D. current_model_id (表 1) —— 模型版本锁定
+-- 原因：权限模型（DSL）是元组的解析引擎。
+-- 业务价值：如果你在 viewer 的定义里删除了 self 逻辑，那么所有现存的 viewer 元组都会瞬间失效。
+--          通过在 Store 层面锁定 current_model_id，你可以先发布新模型，测试无误后再通过修改 Store 表一键切换，实现 “无损发布” 或 “快速回滚”。
+--
+-- ==================================================================
