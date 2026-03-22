@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 关系元组仓储接口（领域层）
+ * 关系元组聚合根仓储接口（领域层）
  * 
  * <p>关系元组(Relation Tuple)是 FGA 系统存储权限关系的基本单元。
  * 一个元组表示：<b>主体(Subject)</b> 与 <b>资源对象(Object)</b> 之间存在某种 <b>关系(Relation)</b>。
@@ -27,7 +27,8 @@ import java.util.Optional;
  *   <li>{@code folder:root#viewer@group:engineering#member} - engineering 组的 member 是 root 的 viewer</li>
  * </ul>
  * 
- * <p>按照 DDD 严格规范，Repository 操作领域实体 {@link RelationTupleEntity}。
+ * <p>按照 DDD 规范，Repository 负责 tuple 聚合根 {@link RelationTupleEntity} 的装载、
+ * 规则相关查询和持久化。分页、过滤、列表类能力由独立查询仓储承接。
  *
  * @author kitona
  * @version 1.0.0
@@ -82,67 +83,6 @@ public interface ITupleDomainRepository {
      */
     List<RelationTupleEntity> findByObjectAndRelation(String storeId, String objectType, String objectId,
                                                   String relation, Long maxZookie);
-
-    /**
-     * 分页列出关系元组（基础方法）
-     *
-     * @param storeId    存储空间ID
-     * @param objectType 资源对象类型过滤，可为 null
-     * @param relation   关系名称过滤，可为 null
-     * @param pageSize   每页数量
-     * @param pageToken  分页游标（上一页最后一条的 zookie），首页传 null
-     * @return 关系元组实体列表
-     */
-    List<RelationTupleEntity> listTuples(String storeId, String objectType, String relation, int pageSize, Long pageToken);
-
-    /**
-     * 分页列出关系元组（支持完整过滤条件）
-     *
-     * <p>支持按 object、relation、subject 进行组合过滤，过滤逻辑在 Repository 层完成。
-     *
-     * @param storeId         存储空间ID
-     * @param objectType      资源对象类型过滤，可为 null
-     * @param objectId        资源对象ID过滤，可为 null
-     * @param relation        关系名称过滤，可为 null
-     * @param subjectType     主体类型过滤，可为 null
-     * @param subjectId       主体ID过滤，可为 null
-     * @param subjectRelation 主体关系过滤，可为 null
-     * @param pageSize        每页数量
-     * @param pageToken       分页游标（上一页最后一条的ID），首页传 null
-     * @return 关系元组实体列表
-     */
-    List<RelationTupleEntity> listTuplesWithFilter(String storeId, String objectType, String objectId,
-                                                    String relation, String subjectType, String subjectId,
-                                                    String subjectRelation, int pageSize, Long pageToken);
-
-    /**
-     * 根据主体查询元组（反向查询）
-     * 
-     * <p>查询某主体在哪些资源上拥有哪些关系。
-     *
-     * @param storeId         存储空间ID
-     * @param subjectType     主体类型
-     * @param subjectId       主体ID
-     * @param subjectRelation 主体关系（userset 场景），普通用户为 null
-     * @param objectType      资源对象类型过滤，可为 null
-     * @param relation        关系名称过滤，可为 null
-     * @param maxZookie       一致性令牌
-     * @return 关系元组实体列表
-     */
-    List<RelationTupleEntity> findBySubject(String storeId, String subjectType, String subjectId, String subjectRelation,
-                                 String objectType, String relation, Long maxZookie);
-
-    /**
-     * 根据资源对象查询元组
-     *
-     * @param storeId    存储空间ID
-     * @param objectType 资源对象类型
-     * @param objectId   资源对象ID
-     * @param relation   关系名称过滤，可为 null
-     * @param maxZookie  一致性令牌
-     * @return 关系元组实体列表
-     */
-    List<RelationTupleEntity> findByObject(String storeId, String objectType, String objectId, String relation, Long maxZookie);
 
     /**
      * 批量保存关系元组

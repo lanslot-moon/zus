@@ -1,17 +1,16 @@
 package org.kitona.zus.service.assembler;
 
-import org.kitona.zus.domain.aggregate.StoreAggregate;
+import org.kitona.zus.domain.query.StoreView;
 import org.kitona.zus.service.dto.response.StoreResultDTO;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
- * Store 聚合根 Assembler
+ * Store 读侧视图 Assembler
  *
- * <p>负责 {@link StoreAggregate} 与 {@link StoreResultDTO} 之间的转换。
- * <p>DDD 规范：Assembler 位于应用服务层，用于领域对象与 DTO 之间的双向转换。
+ * <p>负责 {@link StoreView} 与 {@link StoreResultDTO} 之间的转换。
+ * <p>Store 对外返回的查询结果基于读侧视图，而不是直接暴露聚合状态。
  *
  * @author kitona
  * @version 1.0.0
@@ -23,37 +22,37 @@ public final class StoreAssembler {
     }
 
     /**
-     * 将聚合根转换为 DTO
+     * 将读侧视图转换为 DTO
      *
-     * @param aggregate Store 聚合根
-     * @return Store 结果 DTO，aggregate 为 null 时返回 null
+     * @param view Store 读侧视图
+     * @return Store 结果 DTO，view 为 null 时返回 null
      */
-    public static StoreResultDTO toDTO(StoreAggregate aggregate) {
-        if (aggregate == null) {
+    public static StoreResultDTO toDTO(StoreView view) {
+        if (view == null) {
             return null;
         }
         return StoreResultDTO.builder()
-                .storeId(aggregate.getStoreId())
-                .name(aggregate.getName())
-                .description(aggregate.getDescription())
-                .currentModelId(aggregate.getCurrentModelId())
-                .currentZookie(aggregate.getCurrentZookie() != null ? aggregate.getCurrentZookie().getVersion() : null)
-                .status(aggregate.getStatusCode())
-                .createTime(aggregate.getCreateTime())
+                .storeId(view.storeId())
+                .name(view.name())
+                .description(view.description())
+                .currentModelId(view.currentModelId())
+                .currentZookie(view.currentZookie())
+                .status(view.status())
+                .createTime(view.createTime())
                 .build();
     }
 
     /**
-     * 批量将聚合根转换为 DTO
+     * 批量将读侧视图转换为 DTO
      *
-     * @param aggregates Store 聚合根列表
-     * @return DTO 列表，aggregates 为 null 或空时返回空列表
+     * @param views Store 读侧视图列表
+     * @return DTO 列表，views 为 null 或空时返回空列表
      */
-    public static List<StoreResultDTO> toDTOList(List<StoreAggregate> aggregates) {
-        if (aggregates == null || aggregates.isEmpty()) {
+    public static List<StoreResultDTO> toDTOViewList(List<StoreView> views) {
+        if (views == null || views.isEmpty()) {
             return Collections.emptyList();
         }
-        return aggregates.stream()
+        return views.stream()
                 .map(StoreAssembler::toDTO)
                 .toList();
     }

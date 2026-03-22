@@ -64,15 +64,6 @@ public class ChangelogEntity {
     /** 操作时间戳（毫秒） */
     private Long operationTime;
 
-    /** 操作人ID（可选） */
-    private String operatorId;
-
-    /** 请求追踪ID（可选） */
-    private String traceId;
-
-    /** 租户ID（可选） */
-    private String tenantId;
-
     /**
      * 私有构造函数
      */
@@ -130,42 +121,6 @@ public class ChangelogEntity {
         return entity;
     }
 
-    /**
-     * 创建带操作人信息的写入日志
-     *
-     * @param storeId 存储空间ID
-     * @param tupleKey 元组键
-     * @param zookie Zookie 版本号
-     * @param operatorId 操作人ID
-     * @param traceId 追踪ID
-     * @return 变更日志实体
-     */
-    public static ChangelogEntity createWriteLogWithOperator(String storeId, TupleKey tupleKey, Long zookie,
-                                                              String operatorId, String traceId) {
-        ChangelogEntity entity = createWriteLog(storeId, tupleKey, zookie);
-        entity.operatorId = operatorId;
-        entity.traceId = traceId;
-        return entity;
-    }
-
-    /**
-     * 创建带操作人信息的删除日志
-     *
-     * @param storeId 存储空间ID
-     * @param tupleKey 元组键
-     * @param zookie Zookie 版本号
-     * @param operatorId 操作人ID
-     * @param traceId 追踪ID
-     * @return 变更日志实体
-     */
-    public static ChangelogEntity createDeleteLogWithOperator(String storeId, TupleKey tupleKey, Long zookie,
-                                                               String operatorId, String traceId) {
-        ChangelogEntity entity = createDeleteLog(storeId, tupleKey, zookie);
-        entity.operatorId = operatorId;
-        entity.traceId = traceId;
-        return entity;
-    }
-
     // ========== 重建方法（持久化恢复） ==========
 
     /**
@@ -181,14 +136,12 @@ public class ChangelogEntity {
      * @param subjectId 主体ID
      * @param subjectRelation 主体关系
      * @param operationTime 操作时间
-     * @param operatorId 操作人ID
-     * @param traceId 追踪ID
      * @return 重建后的实体
      */
     public static ChangelogEntity reconstitute(String storeId, Long zookie, String operation,
                                                 String objectType, String objectId, String relation,
                                                 String subjectType, String subjectId, String subjectRelation,
-                                                Long operationTime, String operatorId, String traceId) {
+                                                Long operationTime) {
         ChangelogEntity entity = new ChangelogEntity();
         entity.storeId = storeId;
         entity.zookie = zookie;
@@ -200,8 +153,6 @@ public class ChangelogEntity {
         entity.subjectId = subjectId;
         entity.subjectRelation = subjectRelation;
         entity.operationTime = operationTime;
-        entity.operatorId = operatorId;
-        entity.traceId = traceId;
         return entity;
     }
 

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.ToString;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
+import org.kitona.zus.domain.valueobject.TupleCondition;
 import org.kitona.zus.domain.valueobject.TupleKey;
 import org.kitona.zus.domain.valueobject.Zookie;
 
@@ -13,8 +14,8 @@ import java.util.Objects;
 /**
  * 关系元组聚合根
  *
- * <p>RelationTupleEntity 是权限系统的核心数据聚合根，表示一条具体的权限关系。
- * 它记录了"谁对什么资源有什么关系"的信息。
+ * <p>RelationTupleEntity 是以单条 tuple 为边界的聚合根，
+ * 表示一条具体的权限关系，记录了“谁对什么资源有什么关系”。
  *
  * <p>元组结构：{@code object#relation@subject}
  * <ul>
@@ -33,8 +34,10 @@ import java.util.Objects;
  *
  * <p>创建方式（符合 DDD）：
  * <ul>
- *   <li>业务创建：使用 {@link #create(String, TupleKey, Zookie)} 或 {@link #create(String, TupleKey, Zookie, String)}</li>
- *   <li>持久化重建：使用 {@link #reconstitute(Long, String, TupleKey, Zookie, String, Long)}（仅限基础设施层）</li>
+ *   <li>业务创建：使用 {@link #create(String, TupleKey, Zookie)} 或
+ *   {@link #create(String, TupleKey, Zookie, String, String)}</li>
+ *   <li>持久化重建：使用
+ *   {@link #reconstitute(Long, String, TupleKey, Zookie, String, String, Long)}（仅限基础设施层）</li>
  * </ul>
  *
  * <p>不变量（Invariant）：
@@ -74,9 +77,9 @@ public class RelationTupleEntity {
     private Zookie zookie;
 
     /**
-     * 条件表达式（可选，用于条件化权限）
+     * 条件名称（可选，用于条件化权限）
      */
-    private String conditionExpression;
+    private TupleCondition condition;
 
     /**
      * 创建时间（毫秒时间戳）
@@ -108,23 +111,31 @@ public class RelationTupleEntity {
         tuple.storeId = storeId;
         tuple.tupleKey = tupleKey;
         tuple.zookie = zookie != null ? zookie : Zookie.EMPTY;
+        tuple.condition = TupleCondition.EMPTY;
         tuple.createTime = System.currentTimeMillis();
         return tuple;
     }
 
     /**
-     * 创建带条件表达式的关系元组（业务场景）
+     * 创建带条件信息的关系元组（业务场景）
      *
      * @param storeId             存储空间ID
      * @param tupleKey            元组键
      * @param zookie              Zookie 版本
-     * @param conditionExpression 条件表达式
+     * @param conditionName       条件名称
+     * @param conditionContext    条件上下文
      * @return RelationTupleEntity 实例
      * @throws NullPointerException 如果 storeId 或 tupleKey 为 null
      */
-    public static RelationTupleEntity create(String storeId, TupleKey tupleKey, Zookie zookie, String conditionExpression) {
+    public static RelationTupleEntity create(String storeId, TupleKey tupleKey, Zookie zookie,
+                                             String conditionName, String conditionContext) {
+        return create(storeId, tupleKey, zookie, TupleCondition.of(conditionName, conditionContext));
+    }
+
+    public static RelationTupleEntity create(String storeId, TupleKey tupleKey, Zookie zookie,
+                                             TupleCondition condition) {
         RelationTupleEntity tuple = create(storeId, tupleKey, zookie);
-        tuple.conditionExpression = conditionExpression;
+        tuple.condition = condition != null ? condition : TupleCondition.EMPTY;
         return tuple;
     }
 
@@ -139,31 +150,27 @@ public class RelationTupleEntity {
      * @param storeId             存储空间ID
      * @param tupleKey            元组键
      * @param zookie              Zookie 版本
-     * @param conditionExpression 条件表达式
+     * @param conditionName       条件名称
+     * @param conditionContext    条件上下文
      * @param createTime          创建时间
      * @return 重建后的实体
      */
     public static RelationTupleEntity reconstitute(Long id, String storeId, TupleKey tupleKey,
-                                                    Zookie zookie, String conditionExpression, Long createTime) {
+                                                    Zookie zookie, String conditionName, String conditionContext,
+                                                    Long createTime) {
+        return reconstitute(id, storeId, tupleKey, zookie, TupleCondition.of(conditionName, conditionContext), createTime);
+    }
+
+    public static RelationTupleEntity reconstitute(Long id, String storeId, TupleKey tupleKey,
+                                                   Zookie zookie, TupleCondition condition, Long createTime) {
         RelationTupleEntity tuple = new RelationTupleEntity();
         tuple.id = id;
         tuple.storeId = storeId;
         tuple.tupleKey = tupleKey;
         tuple.zookie = zookie != null ? zookie : Zookie.EMPTY;
-        tuple.conditionExpression = conditionExpression;
+        tuple.condition = condition != null ? condition : TupleCondition.EMPTY;
         tuple.createTime = createTime;
         return tuple;
-    }
-
-    // ========== 领域行为方法 ==========
-
-    /**
-     * 分配持久化主键（仅供基础设施层在插入后回填 ID 时使用）
-     *
-     * @param id 主键ID
-     */
-    public void assignId(Long id) {
-        this.id = id;
     }
 
     // ========== 查询方法（委托给 TupleKey） ==========
@@ -247,11 +254,19 @@ public class RelationTupleEntity {
     }
 
     /**
-     * 判断是否有条件表达式
+     * 判断是否有关联条件
      *
-     * @return 有条件表达式返回 true
+     * @return 有条件信息返回 true
      */
     public boolean hasCondition() {
-        return conditionExpression != null && !conditionExpression.isEmpty();
+        return condition != null && !condition.isEmpty();
+    }
+
+    public String getConditionName() {
+        return condition != null ? condition.conditionName() : null;
+    }
+
+    public String getConditionContext() {
+        return condition != null ? condition.conditionContext() : null;
     }
 }

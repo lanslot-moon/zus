@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.micrometer.common.util.StringUtils;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO;
-import org.kitona.zus.infrastructure.persistence.mysql.mapper.ITypeDefinitionMapper;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.ISubjectDefinitionPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -21,7 +21,7 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class TypeDefinitionPersistenceRepository extends BaseRepository<SubjectDefinitionPO>
+public class TypeDefinitionPersistenceRepository extends SoftDeleteRepository<SubjectDefinitionPO>
         implements ISubjectDefinitionPersistenceRepository {
 
     @Override
@@ -37,7 +37,17 @@ public class TypeDefinitionPersistenceRepository extends BaseRepository<SubjectD
 
     @Override
     public List<SubjectDefinitionPO> selectByModelIdList(String storeId, Set<String> modelId) {
-        return List.of();
+        if (Objects.isNull(modelId) || modelId.isEmpty()) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SubjectDefinitionPO> wrapper = new LambdaQueryWrapper<SubjectDefinitionPO>()
+                .eq(StringUtils.isNotBlank(storeId), SubjectDefinitionPO::getStoreId, storeId)
+                .in(SubjectDefinitionPO::getModelId, modelId)
+                .eq(SubjectDefinitionPO::getIsDeleted, false)
+                .orderByAsc(SubjectDefinitionPO::getSortOrder)
+                .orderByAsc(SubjectDefinitionPO::getId);
+        List<SubjectDefinitionPO> list = this.list(wrapper);
+        return list != null ? list : Collections.emptyList();
     }
 
     @Override

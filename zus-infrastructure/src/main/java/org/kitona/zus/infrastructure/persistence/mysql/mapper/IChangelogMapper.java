@@ -20,6 +20,8 @@ import java.util.List;
 @Mapper
 public interface IChangelogMapper extends BaseMapper<ChangelogPO> {
 
+    int batchInsert(@Param("list") List<ChangelogPO> list);
+
     /**
      * 根据 Zookie 范围查询变更日志
      *

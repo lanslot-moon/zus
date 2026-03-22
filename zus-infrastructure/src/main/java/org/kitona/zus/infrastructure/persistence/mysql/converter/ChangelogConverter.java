@@ -1,5 +1,6 @@
 package org.kitona.zus.infrastructure.persistence.mysql.converter;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import org.kitona.zus.domain.entity.ChangelogEntity;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
 
@@ -34,9 +35,7 @@ public final class ChangelogConverter {
                 po.getSubjectType(),
                 po.getSubjectId(),
                 po.getSubjectRelation(),
-                po.getOperationTime(),
-                po.getOperatorId(),
-                po.getTraceId()
+                po.getOperationTime()
         );
     }
 
@@ -48,6 +47,7 @@ public final class ChangelogConverter {
             return null;
         }
         ChangelogPO po = new ChangelogPO();
+        po.setId(IdWorker.getId());
         po.setStoreId(entity.getStoreId());
         po.setZookie(entity.getZookie());
         po.setOperation(entity.getOperation());
@@ -58,8 +58,6 @@ public final class ChangelogConverter {
         po.setSubjectId(entity.getSubjectId());
         po.setSubjectRelation(entity.getSubjectRelation());
         po.setOperationTime(entity.getOperationTime());
-        po.setOperatorId(entity.getOperatorId());
-        po.setTraceId(entity.getTraceId());
         return po;
     }
 

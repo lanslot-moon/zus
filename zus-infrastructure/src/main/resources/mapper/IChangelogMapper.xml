@@ -15,28 +15,29 @@
         <result column="subject_id" property="subjectId"/>
         <result column="subject_relation" property="subjectRelation"/>
         <result column="operation_time" property="operationTime"/>
-        <result column="operator_id" property="operatorId"/>
-        <result column="trace_id" property="traceId"/>
-        <result column="tenant_id" property="tenantId"/>
-        <result column="create_time" property="createTime"/>
-        <result column="created_by" property="createdBy"/>
-        <result column="update_time" property="updateTime"/>
-        <result column="updated_by" property="updatedBy"/>
-        <result column="is_deleted" property="isDeleted"/>
     </resultMap>
+
+    <insert id="batchInsert">
+        INSERT INTO fga_changelog
+            (id, store_id, zookie, operation, object_type, object_id, relation,
+             subject_type, subject_id, subject_relation, operation_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.storeId}, #{item.zookie}, #{item.operation}, #{item.objectType}, #{item.objectId},
+             #{item.relation}, #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation}, #{item.operationTime})
+        </foreach>
+    </insert>
 
     <!-- 根据 Zookie 范围查询变更日志 -->
     <select id="selectByZookieRange" resultMap="BaseResultMap">
         SELECT id, store_id, zookie, operation, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, operation_time, operator_id, trace_id,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               subject_type, subject_id, subject_relation, operation_time
         FROM fga_changelog
         WHERE store_id = #{storeId}
           AND zookie &gt; #{startZookie}
           <if test="endZookie != null">
               AND zookie &lt;= #{endZookie}
           </if>
-          AND is_deleted = 0
         ORDER BY zookie ASC
         <if test="limit != null">
             LIMIT #{limit}
@@ -46,12 +47,10 @@
     <!-- 查询指定 Zookie 之后的所有变更 -->
     <select id="selectAfterZookie" resultMap="BaseResultMap">
         SELECT id, store_id, zookie, operation, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, operation_time, operator_id, trace_id,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               subject_type, subject_id, subject_relation, operation_time
         FROM fga_changelog
         WHERE store_id = #{storeId}
           AND zookie &gt; #{afterZookie}
-          AND is_deleted = 0
         ORDER BY zookie ASC
         <if test="limit != null">
             LIMIT #{limit}
@@ -63,7 +62,6 @@
         SELECT MAX(zookie)
         FROM fga_changelog
         WHERE store_id = #{storeId}
-          AND is_deleted = 0
     </select>
 
 

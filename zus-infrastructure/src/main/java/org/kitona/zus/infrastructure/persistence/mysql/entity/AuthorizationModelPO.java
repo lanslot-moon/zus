@@ -21,6 +21,7 @@ import java.io.Serializable;
  * - Rewrite Expression（重写表达式）: 定义关系的计算规则
  * 
  * 一个 Store 可以有多个版本的授权模型，但同一时间只有一个生效。
+ * 该 PO 既可用于完整聚合重建，也可用于读侧列表视图投影。
  * 
  * @author kitona
  * @version 1.0.0
@@ -30,7 +31,7 @@ import java.io.Serializable;
 @TableName("fga_authorization_model")
 @Data
 @Accessors(chain = true)
-public class AuthorizationModelPO extends BasePoMinimal implements Serializable {
+public class AuthorizationModelPO extends BaseTenantSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -12,7 +12,7 @@ import java.io.Serializable;
  * 存储空间持久化对象
  * 
  * Store 是权限数据的逻辑隔离单元，类似于数据库的 Schema 或租户概念。
- * 每个 Store 包含独立的授权模型、关系元组和变更日志。
+ * 该 PO 是持久化与读侧查询载体，不等同于领域聚合本身。
  * 
  * 使用场景：
  * - 多租户隔离：每个租户一个 Store
@@ -27,7 +27,7 @@ import java.io.Serializable;
 @TableName("fga_store")
 @Data
 @Accessors(chain = true)
-public class StorePO extends BasePoMinimal implements Serializable {
+public class StorePO extends BaseTenantTrackableSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -61,8 +61,8 @@ public class StorePO extends BasePoMinimal implements Serializable {
 
     /**
      * 当前最新的 Zookie 版本号
-     * 每次写入操作后自增，用于实现一致性读取
-     * 初始值为 0
+     * 作为持久化与读侧查询字段保存，用于一致性令牌读取。
+     * 该字段不再映射为 Store 聚合内部状态。
      */
     private Long currentZookie;
 

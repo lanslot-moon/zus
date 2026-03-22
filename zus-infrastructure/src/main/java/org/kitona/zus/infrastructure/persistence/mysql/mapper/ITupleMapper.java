@@ -19,6 +19,8 @@ import java.util.List;
  */
 @Mapper
 public interface ITupleMapper extends BaseMapper<TuplePO> {
+    int batchInsert(@Param("list") List<TuplePO> list);
+
     /**
      * 根据资源和关系查询元组列表
      * 

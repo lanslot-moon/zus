@@ -13,16 +13,14 @@
         <result column="status" property="status"/>
         <result column="tenant_id" property="tenantId"/>
         <result column="create_time" property="createTime"/>
-        <result column="created_by" property="createdBy"/>
         <result column="update_time" property="updateTime"/>
-        <result column="updated_by" property="updatedBy"/>
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
     <!-- 根据存储空间ID查询 -->
     <select id="selectByStoreId" resultMap="BaseResultMap">
         SELECT id, store_id, name, description, current_model_id, current_zookie, status,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               tenant_id, create_time, update_time, is_deleted
         FROM fga_store
         WHERE store_id = #{storeId}
           AND is_deleted = 0
@@ -61,7 +59,7 @@
     <!-- 游标分页查询存储空间列表（仅 NORMAL 状态） -->
     <select id="selectPageByCursor" resultMap="BaseResultMap">
         SELECT id, store_id, name, description, current_model_id, current_zookie, status,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               tenant_id, create_time, update_time, is_deleted
         FROM fga_store
         WHERE is_deleted = 0
         <if test="pageToken != null and pageToken != ''">

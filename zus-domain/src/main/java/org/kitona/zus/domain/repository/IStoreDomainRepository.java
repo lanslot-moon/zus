@@ -2,8 +2,6 @@ package org.kitona.zus.domain.repository;
 
 import org.kitona.zus.domain.aggregate.StoreAggregate;
 import org.kitona.zus.domain.enums.StoreStatus;
-import org.kitona.zus.domain.valueobject.CursorPageResult;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -11,12 +9,13 @@ import java.util.Optional;
  * 存储空间仓储接口（领域层）
  * 
  * <p>
- * Store 是 FGA 系统的顶层聚合根，代表一个权限数据的逻辑隔离单元。
- * 每个 Store 包含独立的授权模型、关系元组和变更日志。
+ * Store 是 FGA 系统中的 store 级聚合根，代表一个权限数据的逻辑隔离单元。
+ * 它负责管理 store 自身元数据、状态以及当前生效模型指针。
  * 
  * <p>
- * 按照 DDD 严格规范，Repository 操作聚合根 {@link StoreAggregate}。
- * 只定义不实现，实现在基础设施层。
+ * 按照 DDD 规范，Repository 负责聚合根 {@link StoreAggregate} 的装载与保存。
+ * 跨聚合协调行为（如 zookie 序列生成）以及列表/展示型查询
+ * 由独立的查询仓储处理，不在该接口中定义。
  *
  * @author kitona
  * @version 1.0.0
@@ -49,35 +48,6 @@ public interface IStoreDomainRepository {
     boolean saveOrUpdateStore(StoreAggregate store);
 
     /**
-     * 更新存储空间当前使用的授权模型
-     *
-     * @param storeId 存储空间ID
-     * @param modelId 授权模型ID
-     * @return 更新成功返回 true
-     */
-    boolean updateCurrentModelId(String storeId, String modelId);
-
-    /**
-     * 获取下一个 Zookie 版本号（原子递增）
-     * 
-     * <p>
-     * Zookie 是一致性令牌，用于实现快照读取。
-     * 每次写入操作后递增，确保读取操作能看到指定版本之前的所有变更。
-     *
-     * @param storeId 存储空间ID
-     * @return 递增后的 Zookie 版本号
-     */
-    Long nextZookie(String storeId);
-
-    /**
-     * 获取当前 Zookie 版本号
-     *
-     * @param storeId 存储空间ID
-     * @return 当前 Zookie 版本号，不存在返回 0
-     */
-    Long getCurrentZookie(String storeId);
-
-    /**
      * 删除存储空间（逻辑删除，标记为删除中状态）
      *
      * @param storeId 存储空间ID
@@ -85,20 +55,4 @@ public interface IStoreDomainRepository {
      */
     boolean deleteByStoreId(String storeId);
 
-    /**
-     * 检查存储空间是否存在
-     *
-     * @param storeId 存储空间ID
-     * @return 存在返回 true
-     */
-    boolean existsByStoreId(String storeId);
-
-    /**
-     * 游标分页查询存储空间列表
-     *
-     * @param pageToken 分页游标（上一页最后一条记录的 storeId），首页传 null
-     * @param pageSize  每页大小
-     * @return 游标分页结果
-     */
-    CursorPageResult<StoreAggregate> findPageByCursor(String pageToken, int pageSize);
 }

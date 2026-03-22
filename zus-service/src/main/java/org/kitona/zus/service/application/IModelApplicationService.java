@@ -56,7 +56,8 @@ public interface IModelApplicationService {
      * 激活授权模型（将已发布的模型设为当前生效）
      *
      * <p>前置条件：模型必须是已发布状态（PUBLISHED）
-     * <p>激活后，Store 的 currentModelId 指向该模型，后续 Check 请求使用此模型。
+     * <p>激活后，Store 的 currentModelId 在命令事务内同步指向该模型，
+     * 接口成功即表示后续 Check 请求可立即使用此模型。
      *
      * @param storeId 存储空间ID
      * @param modelId 模型ID

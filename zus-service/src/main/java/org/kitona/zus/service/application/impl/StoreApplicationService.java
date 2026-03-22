@@ -3,15 +3,19 @@ package org.kitona.zus.service.application.impl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.aggregate.StoreAggregate;
+import org.kitona.zus.domain.query.StoreView;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
+import org.kitona.zus.domain.repository.IStoreQueryRepository;
 import org.kitona.zus.domain.valueobject.CursorPageResult;
 import org.kitona.zus.service.application.IStoreApplicationService;
 import org.kitona.zus.service.assembler.StoreAssembler;
 import org.kitona.zus.service.dto.query.ListStoresQuery;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.StoreResultDTO;
+import org.kitona.zus.service.exception.ApplicationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,12 +45,22 @@ public class StoreApplicationService implements IStoreApplicationService {
     @Resource
     private IStoreDomainRepository storeRepository;
 
+    @Resource
+    private IStoreQueryRepository storeQueryRepository;
+
     @Override
     public StoreResultDTO createStore(String name, String description) {
         StoreAggregate store = StoreAggregate.createWithGeneratedId(name, description);
-        storeRepository.saveOrUpdateStore(store);
+        boolean saved = storeRepository.saveOrUpdateStore(store);
+        if (!saved) {
+            log.warn("创建存储空间失败: storeId={}, name={}", store.getStoreId(), name);
+            throw new ApplicationException(IError.SYSTEM_ERROR, "create store failed");
+        }
         log.info("创建存储空间: storeId={}, name={}", store.getStoreId(), name);
-        return StoreAssembler.toDTO(store);
+        return storeQueryRepository.findViewByStoreId(store.getStoreId())
+                .map(StoreAssembler::toDTO)
+                .orElseThrow(() -> new ApplicationException(IError.DATA_NOT_EXIST,
+                        "store view not found after create: " + store.getStoreId()));
     }
 
     @Override
@@ -54,7 +68,7 @@ public class StoreApplicationService implements IStoreApplicationService {
         if (StringUtils.isBlank(storeId)) {
             return null;
         }
-        return storeRepository.findByStoreId(storeId)
+        return storeQueryRepository.findViewByStoreId(storeId)
                 .map(StoreAssembler::toDTO)
                 .orElse(null);
     }
@@ -115,14 +129,14 @@ public class StoreApplicationService implements IStoreApplicationService {
             query = ListStoresQuery.builder().build();
         }
         ValidationUtil.validate(query);
-        CursorPageResult<StoreAggregate> pageResult = storeRepository.findPageByCursor(
+        CursorPageResult<StoreView> pageResult = storeQueryRepository.findPageViewByCursor(
                 query.getPageToken(),
                 query.getEffectivePageSize());
         if (pageResult.isEmpty()) {
             log.info("StoreApplicationService.listStores 查询存储空间列表为空");
             return PageResultDTO.empty();
         }
-        List<StoreResultDTO> list = StoreAssembler.toDTOList(pageResult.data());
+        List<StoreResultDTO> list = StoreAssembler.toDTOViewList(pageResult.data());
         return PageResultDTO.of(list, pageResult.nextPageToken());
     }
 }

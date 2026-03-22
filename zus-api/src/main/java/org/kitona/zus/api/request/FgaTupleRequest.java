@@ -50,4 +50,16 @@ public class FgaTupleRequest {
      */
     @Size(max = 64, message = "subjectRelation 长度不能超过 64")
     private String subjectRelation;
+
+    /**
+     * 条件名称
+     */
+    @Size(max = 64, message = "conditionName 长度不能超过 64")
+    private String conditionName;
+
+    /**
+     * 条件上下文（JSON 字符串）
+     */
+    @Size(max = 2048, message = "conditionContext 长度不能超过 2048")
+    private String conditionContext;
 }

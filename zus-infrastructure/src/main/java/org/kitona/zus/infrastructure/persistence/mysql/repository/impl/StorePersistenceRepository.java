@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.infrastructure.cache.FgaCacheManager;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
 import org.kitona.zus.infrastructure.enums.StoreStatusEnum;
@@ -29,7 +30,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Repository
-public class StorePersistenceRepository extends BaseRepository<StorePO> implements IStorePersistenceRepository {
+public class StorePersistenceRepository extends SoftDeleteRepository<StorePO> implements IStorePersistenceRepository {
 
     @Resource
     private IStoreMapper storeMapper;
@@ -62,27 +63,8 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         if (!success) {
             return false;
         }
-        cacheManager.initZookieIfAbsent(store.getStoreId(), store.getCurrentZookie());
+        cacheManager.initZookieIfAbsent(store.getStoreId(), 0L);
         log.info("创建存储空间: storeId={}, name={}", store.getStoreId(), store.getName());
-        return true;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean updateCurrentModelId(String storeId, String modelId) {
-        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
-                .eq(StorePO::getStoreId, storeId)
-                .eq(StorePO::getStatus, StoreStatusEnum.NORMAL.getCode());
-
-        StorePO storePO = new StorePO();
-        storePO.setCurrentModelId(modelId);
-        boolean result = super.update(storePO, wrapper);
-
-        if (!result) {
-            return false;
-        }
-        cacheManager.invalidateModel(storeId, modelId);
-        log.info("更新存储空间当前模型: storeId={}, modelId={}", storeId, modelId);
         return true;
     }
 
@@ -132,14 +114,6 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return true;
     }
 
-    @Override
-    public boolean existsByStoreId(String storeId) {
-        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
-                .eq(StorePO::getStoreId, storeId);
-
-        return this.count(wrapper) > 0;
-    }
-
     /**
      * 更新存储空间
      *
@@ -150,7 +124,14 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
     public boolean updateStore(StorePO store) {
         LambdaUpdateWrapper<StorePO> wrapper = new LambdaUpdateWrapper<>();
         wrapper.eq(StorePO::getStoreId, store.getStoreId());
-        return this.update(store, wrapper);
+        boolean updated = this.update(store, wrapper);
+        if (!updated) {
+            return false;
+        }
+        if (StringUtils.isNotBlank(store.getCurrentModelId())) {
+            cacheManager.invalidateModel(store.getStoreId(), store.getCurrentModelId());
+        }
+        return true;
     }
 
     @Override

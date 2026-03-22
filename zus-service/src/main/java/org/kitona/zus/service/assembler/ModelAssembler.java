@@ -2,6 +2,7 @@ package org.kitona.zus.service.assembler;
 
 import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
 import org.kitona.zus.domain.entity.TypeDefinitionEntity;
+import org.kitona.zus.domain.query.AuthorizationModelView;
 import org.kitona.zus.service.dto.response.ModelResultDTO;
 import org.kitona.zus.service.dto.response.TypeDefinitionResultDTO;
 
@@ -60,6 +61,30 @@ public final class ModelAssembler {
     }
 
     /**
+     * 将读侧视图转换为 DTO，并标记是否为当前生效模型
+     *
+     * @param view           授权模型读侧视图
+     * @param currentModelId Store 当前生效的模型ID，用于判断 isCurrent
+     * @return 模型结果 DTO
+     */
+    public static ModelResultDTO toDTO(AuthorizationModelView view, String currentModelId) {
+        if (view == null) {
+            return null;
+        }
+        boolean isCurrent = currentModelId != null && currentModelId.equals(view.modelId());
+        return ModelResultDTO.builder()
+                .modelId(view.modelId())
+                .schemaVersion(view.schemaVersion())
+                .dslText(view.dslText())
+                .status(view.status())
+                .description(view.description())
+                .typeDefinitions(Collections.emptyList())
+                .createTime(view.createTime())
+                .isCurrent(isCurrent)
+                .build();
+    }
+
+    /**
      * 批量将聚合根转换为 DTO
      *
      * @param aggregates 授权模型聚合根列表
@@ -82,6 +107,22 @@ public final class ModelAssembler {
         }
         return aggregates.stream()
                 .map(agg -> toDTO(agg, currentModelId))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 批量将读侧视图转换为 DTO，并标记是否为当前生效模型
+     *
+     * @param views          授权模型读侧视图列表
+     * @param currentModelId Store 当前生效的模型ID
+     * @return DTO 列表
+     */
+    public static List<ModelResultDTO> toViewDTOList(List<AuthorizationModelView> views, String currentModelId) {
+        if (views == null || views.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return views.stream()
+                .map(view -> toDTO(view, currentModelId))
                 .collect(Collectors.toList());
     }
 

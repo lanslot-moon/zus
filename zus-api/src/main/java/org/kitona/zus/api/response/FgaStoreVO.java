@@ -32,7 +32,7 @@ public class FgaStoreVO {
     private String currentModelId;
 
     /**
-     * 当前 Zookie 版本号
+     * 当前 Zookie 版本号（读侧视图字段）
      */
     private Long currentZookie;
 

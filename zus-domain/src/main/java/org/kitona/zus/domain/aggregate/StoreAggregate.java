@@ -6,15 +6,14 @@ import lombok.ToString;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.exception.SystemException;
 import org.kitona.zus.domain.enums.StoreStatus;
-import org.kitona.zus.domain.valueobject.Zookie;
 
 import java.util.Objects;
 
 /**
  * 存储空间聚合根
  *
- * StoreAggregate 是权限数据的逻辑隔离单元，是 FGA 系统的顶层聚合根。
- * 每个 Store 包含独立的授权模型、关系元组和变更日志。
+ * StoreAggregate 是权限数据的逻辑隔离单元，是 FGA 系统的顶层聚合根之一。
+ * 它负责维护 store 级别的元数据、当前生效模型指针以及生命周期状态。
  *
  * <p>创建方式（符合 DDD）：
  * <ul>
@@ -23,14 +22,16 @@ import java.util.Objects;
  * </ul>
  *
  * 聚合边界：
- * - Store 管理其下的所有 AuthorizationModel
- * - Store 管理其下的所有 RelationTuple
- * - Store 管理 Zookie 版本序列
+ * - Store 管理 store 自身的标识、名称、描述与状态
+ * - Store 持有当前生效模型的引用（currentModelId）
+ *
+ * <p>说明：
+ * tuple 写入、变更日志记录、zookie 序列生成以及一致性令牌查询
+ * 由跨聚合协调流程或读侧查询处理，不作为 Store 聚合内部实体或行为的一部分。
  *
  * 不变量（Invariant）：
  * - storeId 在系统内唯一
- * - currentZookie 只能递增
- * - currentModelId 必须指向有效的已发布模型
+ * - currentModelId 必须引用一个可用于鉴权的模型版本
  *
  * @author kitona
  * @version 1.0.0
@@ -67,11 +68,6 @@ public class StoreAggregate {
     private String currentModelId;
 
     /**
-     * 当前 Zookie 版本
-     */
-    private Zookie currentZookie;
-
-    /**
      * 存储空间状态
      */
     private StoreStatus status;
@@ -105,7 +101,6 @@ public class StoreAggregate {
         store.storeId = Objects.requireNonNull(storeId, "storeId must not be null");
         store.name = Objects.requireNonNull(name, "name must not be null");
         store.description = description;
-        store.currentZookie = Zookie.of(0L);
         store.status = StoreStatus.NORMAL;
         store.createTime = System.currentTimeMillis();
         return store;
@@ -140,7 +135,6 @@ public class StoreAggregate {
         store.name = snapshot.name();
         store.description = snapshot.description();
         store.currentModelId = snapshot.currentModelId();
-        store.currentZookie = snapshot.currentZookie() != null ? snapshot.currentZookie() : Zookie.of(0L);
         store.status = snapshot.status() != null ? snapshot.status() : StoreStatus.NORMAL;
         store.tenantId = snapshot.tenantId();
         store.createTime = snapshot.createTime();
@@ -167,9 +161,10 @@ public class StoreAggregate {
     }
 
     /**
-     * 更新当前授权模型
+     * 更新当前授权模型引用
      *
-     * 聚合根方法，确保状态一致性。
+     * <p>模型是否允许被激活由上层用例先完成校验，
+     * 聚合根只负责维护当前指针状态。
      *
      * @param modelId 新的模型ID
      */
@@ -177,22 +172,6 @@ public class StoreAggregate {
         Objects.requireNonNull(modelId, "modelId must not be null");
         this.currentModelId = modelId;
     }
-
-    /**
-     * 递增 Zookie 并返回新值
-     *
-     * 聚合根方法，确保 Zookie 只能递增。
-     *
-     * @return 新的 Zookie
-     */
-    public Zookie incrementZookie() {
-        long newVersion = (currentZookie != null && currentZookie.getVersion() != null)
-                ? currentZookie.getVersion() + 1
-                : 1L;
-        this.currentZookie = Zookie.of(newVersion);
-        return this.currentZookie;
-    }
-
 
     /**
      * 禁用存储空间

@@ -1,20 +1,23 @@
 package org.kitona.zus.service.application.impl;
 
-import org.apache.commons.lang3.StringUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.ValidationUtil;
-import org.kitona.zus.domain.repository.IStoreDomainRepository;
+import org.kitona.zus.domain.repository.IChangelogQueryRepository;
+import org.kitona.zus.domain.valueobject.AuthorizationCheckResult;
+import org.kitona.zus.domain.valueobject.AuthorizationCheckStatus;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
 import org.kitona.zus.service.application.ICheckApplicationService;
-import org.kitona.zus.service.application.support.AuthorizationCheckExecutor;
+import org.kitona.zus.service.application.coordinator.AuthorizationCheckOrchestrator;
 import org.kitona.zus.service.dto.command.CheckCommand;
 import org.kitona.zus.service.dto.response.CheckResultDTO;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -23,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>对外暴露权限检查用例，负责：
  * <ul>
  *   <li>请求参数转换与校验</li>
- *   <li>调用 AuthorizationCheckExecutor 执行检查</li>
+ *   <li>调用 AuthorizationCheckOrchestrator 执行检查</li>
  *   <li>组装返回结果</li>
  * </ul>
  *
@@ -36,46 +39,78 @@ import java.util.concurrent.CompletableFuture;
 public class CheckApplicationService implements ICheckApplicationService {
 
     @Resource
-    private AuthorizationCheckExecutor authorizationCheckExecutor;
+    private AuthorizationCheckOrchestrator authorizationCheckOrchestrator;
 
     @Resource
-    private IStoreDomainRepository storeRepository;
+    private IChangelogQueryRepository changelogQueryRepository;
 
     @Override
     public CheckResultDTO check(CheckCommand request) {
         ValidationUtil.validate(request);
         long startTime = System.currentTimeMillis();
+        Zookie zookie = Zookie.parse(request.getConsistencyToken());
+        ObjectRef object = ObjectRef.of(request.getObjectType(), request.getObjectId());
+        Subject subject = buildSubject(request);
 
-        try {
-            Zookie zookie = Zookie.parse(request.getConsistencyToken());
-            // 资源对象
-            ObjectRef object = ObjectRef.of(request.getObjectType(), request.getObjectId());
-            // 资源主体
-            Subject subject = Subject.user(request.getSubjectType(), request.getSubjectId());
+        AuthorizationCheckResult result = authorizationCheckOrchestrator.execute(
+                request.getStoreId(), object, request.getRelation(), subject, zookie);
 
-            if (StringUtils.isNotBlank(request.getSubjectRelation())) {
-                subject = Subject.userset(request.getSubjectType(), request.getSubjectId(), request.getSubjectRelation());
-            }
+        String zookieToken = resolveZookieToken(request.getStoreId(), result);
+        long duration = System.currentTimeMillis() - startTime;
+        CheckResultDTO response = toCheckResultDTO(result, zookieToken, duration);
 
-            boolean allowed = authorizationCheckExecutor.execute(request.getStoreId(), object, request.getRelation(), subject, zookie);
-
-            // 通过仓储获取当前 Zookie
-            Long version = storeRepository.getCurrentZookie(request.getStoreId());
-            Zookie currentZookie = Zookie.of(version);
-            String zookieToken = currentZookie != null ? currentZookie.toToken() : "";
-            long duration = System.currentTimeMillis() - startTime;
-
-            log.info("权限检查完成: params:{}, allowed={}, duration={}ms", JacksonUtil.toJSONString(request), allowed, duration);
-
-            return allowed ? CheckResultDTO.allowed(zookieToken, duration) : CheckResultDTO.denied(zookieToken, duration);
-        } catch (Exception e) {
-            log.error("权限检查异常", e);
-            return CheckResultDTO.error("权限检查失败: " + e.getMessage());
-        }
+        logCheckResult(request, result, duration);
+        return response;
     }
 
     @Override
     public CompletableFuture<CheckResultDTO> checkAsync(CheckCommand request) {
         return CompletableFuture.supplyAsync(() -> check(request));
+    }
+
+    private Subject buildSubject(CheckCommand request) {
+        if (StringUtils.isBlank(request.getSubjectRelation())) {
+            return Subject.user(request.getSubjectType(), request.getSubjectId());
+        }
+        return Subject.userset(request.getSubjectType(), request.getSubjectId(), request.getSubjectRelation());
+    }
+
+    private String resolveZookieToken(String storeId, AuthorizationCheckResult result) {
+        if (AuthorizationCheckStatus.STORE_NOT_FOUND == result.status()) {
+            return "";
+        }
+        Long version = changelogQueryRepository.getMaxZookie(storeId);
+        return Zookie.of(version).toToken();
+    }
+
+    private CheckResultDTO toCheckResultDTO(AuthorizationCheckResult result, String zookieToken, long duration) {
+        if (result.isAllowed()) {
+            return CheckResultDTO.allowed(zookieToken, duration);
+        }
+        if (result.isDenied()) {
+            return CheckResultDTO.denied(zookieToken, duration);
+        }
+        return CheckResultDTO.error(result.status().name(), buildErrorMessage(result.status()), zookieToken, duration);
+    }
+
+    private String buildErrorMessage(AuthorizationCheckStatus status) {
+        return switch (status) {
+            case STORE_NOT_FOUND -> "store 不存在";
+            case MODEL_NOT_BOUND -> "store 未绑定授权模型";
+            case MODEL_NOT_FOUND -> "当前授权模型不存在";
+            case MODEL_INVALID -> "当前授权模型无效";
+            case ALLOWED, DENIED -> "";
+        };
+    }
+
+    private void logCheckResult(CheckCommand request, AuthorizationCheckResult result, long duration) {
+        if (Objects.equals(AuthorizationCheckStatus.ALLOWED, result.status())
+                || Objects.equals(AuthorizationCheckStatus.DENIED, result.status())) {
+            log.info("权限检查完成: params:{}, result={}, duration={}ms",
+                    JacksonUtil.toJSONString(request), result.status(), duration);
+            return;
+        }
+        log.warn("权限检查未能产出权限判定: params:{}, result={}, duration={}ms",
+                JacksonUtil.toJSONString(request), result.status(), duration);
     }
 }

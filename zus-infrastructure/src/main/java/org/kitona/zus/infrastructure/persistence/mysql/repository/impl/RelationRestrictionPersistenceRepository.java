@@ -4,12 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictionPO;
-import org.kitona.zus.infrastructure.persistence.mysql.mapper.IRelationRestrictionMapper;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IRelationRestrictionPersistenceRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -24,7 +25,7 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class RelationRestrictionPersistenceRepository extends BaseRepository< RelationRestrictionPO>
+public class RelationRestrictionPersistenceRepository extends SoftDeleteRepository<RelationRestrictionPO>
         implements IRelationRestrictionPersistenceRepository {
 
     @Override
@@ -38,7 +39,14 @@ public class RelationRestrictionPersistenceRepository extends BaseRepository< Re
 
     @Override
     public List<RelationRestrictionPO> selectByRelationDefinitionId(Set<Long> relationDefinitionIdSet) {
-        return List.of();
+        if (Objects.isNull(relationDefinitionIdSet) || relationDefinitionIdSet.isEmpty()) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<RelationRestrictionPO> wrapper = getLambdaQueryWrapper()
+                .in(RelationRestrictionPO::getRelationDefinitionId, relationDefinitionIdSet)
+                .eq(RelationRestrictionPO::getIsDeleted, false)
+                .orderByAsc(RelationRestrictionPO::getId);
+        return this.list(wrapper);
     }
 
     @Override

@@ -33,7 +33,7 @@ import java.util.*;
  * @since 2025-02-06
  */
 @Repository
-public class TuplePersistenceRepository extends BaseRepository<TuplePO> implements ITuplePersistenceRepository {
+public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> implements ITuplePersistenceRepository {
 
     @Resource
     private ITupleMapper tupleMapper;
@@ -70,9 +70,8 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation,
-                        query.getSubjectRelation())
                 .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
+        applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
         return wrapper;
     }
 
@@ -119,15 +118,15 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
     }
 
     private LambdaQueryWrapper<TuplePO> buildLambdaQueryWrapper(TupleSubjectQuery query) {
-        return getLambdaQueryWrapper()
+        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
                 .eq(TuplePO::getStoreId, query.getStoreId())
                 .eq(TuplePO::getObjectType, query.getObjectType())
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation,
-                        query.getSubjectRelation())
                 .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
+        applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
+        return wrapper;
     }
 
     @Override
@@ -158,9 +157,8 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .eq(TuplePO::getObjectId, query.getObjectId())
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
-                .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isNotBlank(query.getSubjectRelation()), TuplePO::getSubjectRelation,
-                        query.getSubjectRelation());
+                .eq(TuplePO::getSubjectId, query.getSubjectId());
+        applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
 
         return Optional.ofNullable(this.getOne(wrapper));
     }
@@ -172,7 +170,7 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
             return false;
         }
 
-        boolean result = super.saveBatch(tuples);
+        boolean result = tupleMapper.batchInsert(tuples) > 0;
         if (!result) {
             return false;
         }
@@ -247,9 +245,8 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .eq(TuplePO::getObjectId, query.getObjectId())
                 .eq(TuplePO::getRelation, query.getRelation())
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
-                .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .eq(StringUtils.isNotBlank(query.getSubjectRelation()),
-                        TuplePO::getSubjectRelation, query.getSubjectRelation());
+                .eq(TuplePO::getSubjectId, query.getSubjectId());
+        applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
     }
 
     @Override
@@ -269,5 +266,15 @@ public class TuplePersistenceRepository extends BaseRepository<TuplePO> implemen
                 .last("LIMIT " + pageSize);
 
         return this.list(wrapper);
+    }
+
+    private void applyExactSubjectRelationCondition(LambdaQueryWrapper<TuplePO> wrapper, String subjectRelation) {
+        if (StringUtils.isNotBlank(subjectRelation)) {
+            wrapper.eq(TuplePO::getSubjectRelation, subjectRelation);
+            return;
+        }
+        wrapper.and(condition -> condition.isNull(TuplePO::getSubjectRelation)
+                .or()
+                .eq(TuplePO::getSubjectRelation, ""));
     }
 }

@@ -7,8 +7,8 @@
         <id column="id" property="id"/>
         <result column="relation_definition_id" property="relationDefinitionId"/>
         <result column="allowed_type" property="allowedType"/>
+        <result column="allowed_subject_relation" property="allowedSubjectRelation"/>
         <result column="create_time" property="createTime"/>
-        <result column="update_time" property="updateTime"/>
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 

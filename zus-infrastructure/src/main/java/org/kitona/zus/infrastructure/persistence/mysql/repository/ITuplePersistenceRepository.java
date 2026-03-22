@@ -1,7 +1,6 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.kitona.zus.domain.repository.ITupleDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleExistsQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleKeyQuery;
@@ -14,7 +13,9 @@ import java.util.Optional;
 /**
  * 关系元组持久化仓储接口（基础设施层）
  *
- * <p>定义基于 PO 的持久化契约，与领域层 {@link ITupleDomainRepository} 职责不同：
+ * <p>定义基于 PO 的持久化契约，与领域层
+ * {@link org.kitona.zus.domain.repository.ITupleDomainRepository} /
+ * {@link org.kitona.zus.domain.repository.ITupleQueryRepository} 职责不同：
  * <ul>
  *   <li>领域层接口：操作领域实体（RelationTupleEntity），定义业务契约</li>
  *   <li>本接口：操作持久化对象（TuplePO），定义技术契约</li>

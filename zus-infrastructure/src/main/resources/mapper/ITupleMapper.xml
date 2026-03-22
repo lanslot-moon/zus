@@ -13,12 +13,10 @@
         <result column="subject_id" property="subjectId"/>
         <result column="subject_relation" property="subjectRelation"/>
         <result column="zookie" property="zookie"/>
-        <result column="condition_expression" property="conditionExpression"/>
+        <result column="condition_name" property="conditionName"/>
+        <result column="condition_context" property="conditionContext"/>
         <result column="tenant_id" property="tenantId"/>
         <result column="create_time" property="createTime"/>
-        <result column="created_by" property="createdBy"/>
-        <result column="update_time" property="updateTime"/>
-        <result column="updated_by" property="updatedBy"/>
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
@@ -26,7 +24,7 @@
     <select id="selectByObjectAndRelation" resultMap="BaseResultMap">
         SELECT id, store_id, object_type, object_id, relation,
                subject_type, subject_id, subject_relation,
-               zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               zookie, condition_name, condition_context, tenant_id, create_time, is_deleted
         FROM fga_relation_tuple
         WHERE store_id = #{storeId}
           AND object_type = #{objectType}
@@ -42,7 +40,7 @@
     <select id="selectBySubject" resultMap="BaseResultMap">
         SELECT id, store_id, object_type, object_id, relation,
                subject_type, subject_id, subject_relation,
-               zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               zookie, condition_name, condition_context, tenant_id, create_time, is_deleted
         FROM fga_relation_tuple
         WHERE store_id = #{storeId}
           AND subject_type = #{subjectType}
@@ -69,7 +67,7 @@
     <select id="selectByObject" resultMap="BaseResultMap">
         SELECT id, store_id, object_type, object_id, relation,
                subject_type, subject_id, subject_relation,
-               zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               zookie, condition_name, condition_context, tenant_id, create_time, is_deleted
         FROM fga_relation_tuple
         WHERE store_id = #{storeId}
           AND object_type = #{objectType}
@@ -84,16 +82,16 @@
     </select>
 
     <!-- 批量插入元组 -->
-    <insert id="batchInsert" useGeneratedKeys="true" keyProperty="id">
+    <insert id="batchInsert">
         INSERT INTO fga_relation_tuple
-            (store_id, object_type, object_id, relation, subject_type, subject_id,
-             subject_relation, zookie, condition_expression, tenant_id, create_time, created_by, update_time, updated_by, is_deleted)
+            (id, store_id, object_type, object_id, relation, subject_type, subject_id,
+             subject_relation, zookie, condition_name, condition_context, tenant_id, create_time, is_deleted)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.storeId}, #{item.objectType}, #{item.objectId}, #{item.relation},
+            (#{item.id}, #{item.storeId}, #{item.objectType}, #{item.objectId}, #{item.relation},
              #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation},
-             #{item.zookie}, #{item.conditionExpression}, #{item.tenantId},
-             #{item.createTime}, #{item.createdBy}, #{item.updateTime}, #{item.updatedBy}, 0)
+             #{item.zookie}, #{item.conditionName}, #{item.conditionContext}, #{item.tenantId},
+             #{item.createTime}, 0)
         </foreach>
     </insert>
 

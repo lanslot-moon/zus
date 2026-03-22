@@ -63,4 +63,14 @@ public class WriteTupleCommand implements Serializable {
      * <p>如：group:engineering#member 中的 member
      */
     private String subjectRelation;
+
+    /**
+     * 条件名称（可选）
+     */
+    private String conditionName;
+
+    /**
+     * 条件上下文（可选，JSON 字符串）
+     */
+    private String conditionContext;
 }

@@ -4,12 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.micrometer.common.util.StringUtils;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ModelRelationPO;
-import org.kitona.zus.infrastructure.persistence.mysql.mapper.IModelRelationMapper;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IModelRelationPersistenceRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,7 +26,7 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class ModelRelationPersistenceRepository extends BaseRepository<ModelRelationPO>
+public class ModelRelationPersistenceRepository extends SoftDeleteRepository<ModelRelationPO>
         implements IModelRelationPersistenceRepository {
 
     @Override
@@ -39,7 +40,14 @@ public class ModelRelationPersistenceRepository extends BaseRepository<ModelRela
 
     @Override
     public List<ModelRelationPO> selectByTypeDefinitionId(Set<Long> typeDefinitionId) {
-        return List.of();
+        if (Objects.isNull(typeDefinitionId) || typeDefinitionId.isEmpty()) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<ModelRelationPO> wrapper = getLambdaQueryWrapper()
+                .in(ModelRelationPO::getTypeDefinitionId, typeDefinitionId)
+                .eq(ModelRelationPO::getIsDeleted, false)
+                .orderByAsc(ModelRelationPO::getId);
+        return this.list(wrapper);
     }
 
     @Override
@@ -64,6 +72,14 @@ public class ModelRelationPersistenceRepository extends BaseRepository<ModelRela
 
     @Override
     public boolean deleteByTypeDefinitionIds(Set<Long> typeDefinitionIds) {
-        return false;
+        if (Objects.isNull(typeDefinitionIds) || typeDefinitionIds.isEmpty()) {
+            return true;
+        }
+        LambdaQueryWrapper<ModelRelationPO> wrapper = getLambdaQueryWrapper()
+                .in(ModelRelationPO::getTypeDefinitionId, typeDefinitionIds);
+
+        ModelRelationPO modelRelationPO = new ModelRelationPO();
+        modelRelationPO.setIsDeleted(DeletedStatusEnum.DELETED.getCode());
+        return this.update(modelRelationPO, wrapper);
     }
 }

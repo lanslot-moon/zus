@@ -1,5 +1,6 @@
 package org.kitona.zus.infrastructure.persistence.mysql.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,10 +19,10 @@ import java.io.Serializable;
  * @since 2025-01-15
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName("fga_subject_definition")
+@TableName("fga_type_definition")
 @Data
 @Accessors(chain = true)
-public class SubjectDefinitionPO extends BasePoMinimal implements Serializable {
+public class SubjectDefinitionPO extends BaseTenantSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,6 +32,7 @@ public class SubjectDefinitionPO extends BasePoMinimal implements Serializable {
     /** 授权模型ID */
     private String modelId;
     /** 资源类型名，如 document、folder、user */
+    @TableField("type")
     private String subjectType;
     /** 排序序号 */
     private Integer sortOrder;

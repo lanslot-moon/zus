@@ -36,5 +36,5 @@ public interface IFgaWriteApiService {
      * @return 写入结果
      */
     @DeleteMapping("/write")
-    RestResult<Void> deleted(@PathVariable String storeId, @Valid @RequestBody List<FgaTupleRequest> deletes);
+    RestResult<Void> delete(@PathVariable String storeId, @Valid @RequestBody List<FgaTupleRequest> deletes);
 }

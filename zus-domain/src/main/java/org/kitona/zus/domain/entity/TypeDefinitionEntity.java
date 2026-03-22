@@ -262,15 +262,6 @@ public class TypeDefinitionEntity {
     }
 
     /**
-     * 分配持久化主键（仅供基础设施层在插入后回填 ID 时使用）
-     *
-     * @param id 主键ID
-     */
-    public void assignId(Long id) {
-        this.id = id;
-    }
-
-    /**
      * 分配排序序号（由聚合根在添加/替换类型定义时调用）
      *
      * @param sortOrder 排序序号

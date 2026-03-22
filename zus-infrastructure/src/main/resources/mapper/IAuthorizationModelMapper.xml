@@ -13,16 +13,13 @@
         <result column="description" property="description"/>
         <result column="tenant_id" property="tenantId"/>
         <result column="create_time" property="createTime"/>
-        <result column="created_by" property="createdBy"/>
-        <result column="update_time" property="updateTime"/>
-        <result column="updated_by" property="updatedBy"/>
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
     <!-- 根据存储空间和模型ID查询（仅本表） -->
     <select id="selectByModelId" resultMap="BaseResultMap">
         SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               tenant_id, create_time, is_deleted
         FROM fga_authorization_model
         WHERE store_id = #{storeId}
           AND model_id = #{modelId}
@@ -32,7 +29,7 @@
     <!-- 查询存储空间的所有模型（仅本表） -->
     <select id="selectByStoreId" resultMap="BaseResultMap">
         SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               tenant_id, create_time, is_deleted
         FROM fga_authorization_model
         WHERE store_id = #{storeId}
           AND is_deleted = 0
@@ -42,7 +39,7 @@
     <!-- 查询存储空间的最新已发布模型（仅本表） -->
     <select id="selectLatestByStoreId" resultMap="BaseResultMap">
         SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               tenant_id, create_time, is_deleted
         FROM fga_authorization_model
         WHERE store_id = #{storeId}
           AND status = 1
@@ -63,7 +60,7 @@
     <!-- 游标分页查询授权模型 -->
     <select id="selectPageByCursor" resultMap="BaseResultMap">
         SELECT id, store_id, model_id, schema_version, dsl_text, status, description,
-               tenant_id, create_time, created_by, update_time, updated_by, is_deleted
+               tenant_id, create_time, is_deleted
         FROM fga_authorization_model
         WHERE store_id = #{storeId}
           AND is_deleted = 0

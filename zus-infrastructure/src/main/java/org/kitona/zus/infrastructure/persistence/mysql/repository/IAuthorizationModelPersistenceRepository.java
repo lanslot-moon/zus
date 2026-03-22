@@ -83,39 +83,13 @@ public interface IAuthorizationModelPersistenceRepository extends IService<Autho
     void createModel(AuthorizationModelPO model);
 
     /**
-     * 将指定模型发布（status 置为 1）
+     * 逻辑删除指定草稿模型（is_deleted 置为 1）
      *
      * @param storeId 存储空间 ID
      * @param modelId 模型 ID
      * @return 更新成功返回 true
      */
-    boolean publishModel(String storeId, String modelId);
-
-    /**
-     * 将指定模型废弃（status 置为 2）
-     *
-     * @param storeId 存储空间 ID
-     * @param modelId 模型 ID
-     * @return 更新成功返回 true
-     */
-    boolean deprecateModel(String storeId, String modelId);
-
-    /**
-     * 逻辑删除指定模型（is_deleted 置为 1）
-     *
-     * @param storeId 存储空间 ID
-     * @param modelId 模型 ID
-     * @return 更新成功返回 true
-     */
-    boolean deleteModel(String storeId, String modelId);
-
-    /**
-     * 统计该存储空间下已发布模型数量（status=1 且未删除）
-     *
-     * @param storeId 存储空间 ID
-     * @return 数量
-     */
-    long countPublishedModels(String storeId);
+    boolean deleteDraftModel(String storeId, String modelId);
 
     /**
      * 游标分页查询授权模型

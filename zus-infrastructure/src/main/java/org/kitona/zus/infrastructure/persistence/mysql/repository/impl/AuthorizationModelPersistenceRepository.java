@@ -25,7 +25,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Repository
-public class AuthorizationModelPersistenceRepository extends BaseRepository<AuthorizationModelPO>
+public class AuthorizationModelPersistenceRepository extends SoftDeleteRepository<AuthorizationModelPO>
         implements IAuthorizationModelPersistenceRepository {
 
     @Resource
@@ -106,48 +106,11 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean publishModel(String storeId, String modelId) {
+    public boolean deleteDraftModel(String storeId, String modelId) {
         LambdaQueryWrapper<AuthorizationModelPO> wrapper = getLambdaQueryWrapper()
                 .eq(AuthorizationModelPO::getStoreId, storeId)
-                .eq(AuthorizationModelPO::getModelId, modelId);
-
-        AuthorizationModelPO authorizationModelPO = new AuthorizationModelPO();
-        authorizationModelPO.setStatus(ModelPublishStatus.PUBLISHED.getStatus());
-
-        boolean result = this.update(authorizationModelPO, wrapper);
-        if (!result) {
-            return false;
-        }
-        cacheManager.invalidateModel(storeId, modelId);
-        log.info("发布授权模型: storeId={}, modelId={}", storeId, modelId);
-        return true;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean deprecateModel(String storeId, String modelId) {
-        LambdaQueryWrapper<AuthorizationModelPO> wrapper = getLambdaQueryWrapper()
-                .eq(AuthorizationModelPO::getStoreId, storeId)
-                .eq(AuthorizationModelPO::getModelId, modelId);
-
-        AuthorizationModelPO authorizationModelPO = new AuthorizationModelPO();
-        authorizationModelPO.setStatus(ModelPublishStatus.ABANDONED.getStatus());
-        boolean result = this.update(authorizationModelPO, wrapper);
-        if (!result) {
-            return false;
-        }
-
-        cacheManager.invalidateModel(storeId, modelId);
-        log.info("废弃授权模型: storeId={}, modelId={}", storeId, modelId);
-        return true;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public boolean deleteModel(String storeId, String modelId) {
-        LambdaQueryWrapper<AuthorizationModelPO> wrapper = getLambdaQueryWrapper()
-                .eq(AuthorizationModelPO::getStoreId, storeId)
-                .eq(AuthorizationModelPO::getModelId, modelId);
+                .eq(AuthorizationModelPO::getModelId, modelId)
+                .eq(AuthorizationModelPO::getStatus, ModelPublishStatus.DRAFT.getStatus());
 
         AuthorizationModelPO authorizationModelPO = new AuthorizationModelPO();
         authorizationModelPO.setIsDeleted(DeletedStatusEnum.DELETED.getCode());
@@ -156,15 +119,8 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
             return false;
         }
         cacheManager.invalidateModel(storeId, modelId);
-        log.info("删除授权模型: storeId={}, modelId={}", storeId, modelId);
+        log.info("删除草稿授权模型: storeId={}, modelId={}", storeId, modelId);
         return true;
-    }
-
-    @Override
-    public long countPublishedModels(String storeId) {
-        LambdaQueryWrapper<AuthorizationModelPO> wrapper = getLambdaQueryWrapper()
-                .eq(AuthorizationModelPO::getStoreId, storeId);
-        return this.count(wrapper);
     }
 
     @Override

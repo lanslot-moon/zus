@@ -29,5 +29,5 @@ public interface IWriteApplicationService {
      * @param storeId 存储ID，用于标识特定的数据存储
      * @param writeTuple 包含要删除的元组数据的DTO列表
      */
-    void deleted(String storeId, List<WriteTupleCommand> writeTuple);
+    void delete(String storeId, List<WriteTupleCommand> writeTuple);
 }

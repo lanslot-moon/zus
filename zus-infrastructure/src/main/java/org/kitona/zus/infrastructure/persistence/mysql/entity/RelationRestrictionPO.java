@@ -25,7 +25,7 @@ import java.io.Serializable;
 @TableName("fga_relation_restriction")
 @Data
 @Accessors(chain = true)
-public class RelationRestrictionPO extends BasePoMinimal implements Serializable {
+public class RelationRestrictionPO extends BaseSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -33,9 +33,9 @@ public class RelationRestrictionPO extends BasePoMinimal implements Serializable
     /** 关系定义ID（fga_model_relation.id） */
     private Long relationDefinitionId;
 
-    /** 关系名（fga_model_relation.relation_name） */
-    private String relationName;
-
     /** 允许的主体类型，如 user、folder */
     private String allowedType;
+
+    /** 允许的主体关系，如 group#member 中的 member */
+    private String allowedSubjectRelation;
 }

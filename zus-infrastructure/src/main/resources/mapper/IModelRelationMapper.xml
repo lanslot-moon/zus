@@ -9,7 +9,6 @@
         <result column="relation_name" property="relationName"/>
         <result column="rewrite_expression" property="rewriteExpression"/>
         <result column="create_time" property="createTime"/>
-        <result column="update_time" property="updateTime"/>
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 

@@ -7,7 +7,7 @@ import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.service.exception.ApplicationException;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.domain.entity.UserInfoEntity;
-import org.kitona.zus.domain.port.IUserInfoAdapter;
+import org.kitona.zus.domain.gateway.IUserInfoGateway;
 import org.kitona.zus.domain.repository.IUserInfoDomainRepository;
 import org.kitona.zus.service.application.IUserInfoApplicationService;
 import org.kitona.zus.service.assembler.UserInfoAssembler;
@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
  * <ul>
  *   <li>依赖 Domain 层的 {@link IUserInfoDomainRepository} 接口</li>
  *   <li>通过领域实体 {@link UserInfoEntity} 操作</li>
+ *   <li>外部用户中心补充信息通过应用层网关 {@link IUserInfoGateway} 获取</li>
  * </ul>
  *
  * @author kitona
@@ -35,7 +36,7 @@ public class UserInfoApplicationService implements IUserInfoApplicationService {
     private IUserInfoDomainRepository userInfoDomainRepository;
 
     @Resource
-    private IUserInfoAdapter userInfoAdapter;
+    private IUserInfoGateway userInfoGateway;
 
     @Override
     public UserInfoDTO getUserInfo(String userId) {
@@ -45,7 +46,7 @@ public class UserInfoApplicationService implements IUserInfoApplicationService {
             throw new ApplicationException(IError.USER_NOT_EXIST);
         }
 
-        String userAddress = userInfoAdapter.getUserAddress(userId);
+        String userAddress = userInfoGateway.getUserAddress(userId);
         if (StringUtils.isBlank(userAddress)) {
             log.error("用户地址不存在, userId: {}", userId);
             throw new ApplicationException(IError.USER_NOT_EXIST);

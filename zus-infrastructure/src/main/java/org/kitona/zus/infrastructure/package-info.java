@@ -18,7 +18,7 @@
  * │   └── tuple/      RepositoryTupleStore、InMemoryTupleStore
  * ├── enums/          基础设施枚举（与表/缓存状态对应）
  * ├── external/       外部系统适配（防腐层实现）
- * │   └── usercenter/ 用户中心 IUserInfoAdapterService 实现
+ * │   └── usercenter/ 用户中心 IUserInfoGateway 实现
  * ├── handler/        MyBatis-Plus 自动填充等
  * └── persistence/    持久化
  *     └── mysql/      MyBatis-Plus + MySQL
@@ -30,7 +30,9 @@
  *
  * <h2>依赖规则</h2>
  * <ul>
- *   <li>依赖领域层：实现领域定义的 Repository、Facade、Port 接口</li>
+ *   <li>依赖领域层：实现领域定义的 Repository、Port 接口</li>
+ *   <li>也可实现领域模块中单独声明的共享协作契约（如 {@code domain.gateway} 下的外部查询网关）</li>
+ *   <li>基础设施层可以被应用层装配和调用，但不反向依赖 API 协议对象</li>
  *   <li>不暴露领域模型：对外仅通过领域接口与 DTO/PO 交互</li>
  * </ul>
  *

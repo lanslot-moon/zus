@@ -33,6 +33,15 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
     private IChangelogMapper changelogMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean batchCreate(List<ChangelogPO> changelogs) {
+        if (changelogs == null || changelogs.isEmpty()) {
+            return true;
+        }
+        return changelogMapper.batchInsert(changelogs) > 0;
+    }
+
+    @Override
     public List<ChangelogPO> findByZookieRange(String storeId, Long startZookie,
             Long endZookie, Integer limit) {
         if (limit == null || limit <= 0) {

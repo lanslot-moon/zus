@@ -4,7 +4,7 @@ import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.entity.RelationTupleEntity;
-import org.kitona.zus.domain.repository.ITupleDomainRepository;
+import org.kitona.zus.domain.repository.ITupleQueryRepository;
 import org.kitona.zus.service.application.IReadApplicationService;
 import org.kitona.zus.service.assembler.TupleAssembler;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
@@ -21,20 +21,20 @@ import java.util.List;
 /**
  * Read / ListObjects / ListUsers 应用服务
  *
- * <p>通过 ITupleDomainRepository 实现元组读取与列表查询。
+ * <p>通过 ITupleQueryRepository 实现元组读取与列表查询。
  * <p>职责：编排查询流程，将结果转换为 DTO 返回。
  *
  * <h3>CQRS 读模型说明</h3>
  * <p>本服务遵循 CQRS（命令查询职责分离）模式，专注于<b>查询职责</b>。
- * 与写操作不同，查询服务直接通过 Repository 获取领域实体，
- * 而非通过聚合根，原因如下：
+ * 与写操作不同，查询服务直接通过查询仓储获取结果，原因如下：
  * <ul>
  *   <li>查询操作是只读的，不涉及状态变更，无需聚合根保证一致性</li>
  *   <li>查询通常需要跨聚合的数据组合，绕过聚合根可避免不必要的对象加载</li>
  *   <li>性能考量：直接查询 Repository 避免了加载完整聚合的开销</li>
  * </ul>
  *
- * <p>RelationTupleEntity 作为独立聚合根，其查询操作直接通过 ITupleDomainRepository 完成。
+ * <p>RelationTupleEntity 的列表、过滤与反向查询能力由查询仓储承接，
+ * 避免命令仓储继续膨胀为通用 DAO。
  *
  * @author kitona
  * @version 1.0.0
@@ -45,7 +45,7 @@ import java.util.List;
 public class ReadApplicationService implements IReadApplicationService {
 
     @Resource
-    private ITupleDomainRepository tupleRepository;
+    private ITupleQueryRepository tupleQueryRepository;
 
     @Override
     public PageResultDTO<TupleResultDTO> read(String storeId, ReadQuery query) {
@@ -56,7 +56,7 @@ public class ReadApplicationService implements IReadApplicationService {
         ReadQuery effectiveQuery = (query != null) ? query : new ReadQuery();
         int pageSize = effectiveQuery.getEffectivePageSize();
 
-        List<RelationTupleEntity> tuples = tupleRepository.listTuplesWithFilter(
+        List<RelationTupleEntity> tuples = tupleQueryRepository.listTuplesWithFilter(
                 storeId,
                 effectiveQuery.getObjectType(),
                 effectiveQuery.getObjectId(),
@@ -77,7 +77,7 @@ public class ReadApplicationService implements IReadApplicationService {
     public ListObjectsResultDTO listObjects(ListObjectsQuery query) {
         ValidationUtil.validate(query);
 
-        List<RelationTupleEntity> tuples = tupleRepository.findBySubject(
+        List<RelationTupleEntity> tuples = tupleQueryRepository.findBySubject(
                 query.getStoreId(),
                 query.getSubjectType(),
                 query.getSubjectId(),
@@ -95,7 +95,7 @@ public class ReadApplicationService implements IReadApplicationService {
     public ListUsersResultDTO listUsers(ListUsersQuery query) {
         ValidationUtil.validate(query);
 
-        List<RelationTupleEntity> tuples = tupleRepository.findByObject(
+        List<RelationTupleEntity> tuples = tupleQueryRepository.findByObject(
                 query.getStoreId(),
                 query.getObjectType(),
                 query.getObjectId(),

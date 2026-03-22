@@ -1,6 +1,6 @@
 package org.kitona.zus.infrastructure.external.usercenter;
 
-import org.kitona.zus.domain.port.IUserInfoAdapter;
+import org.kitona.zus.domain.gateway.IUserInfoGateway;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
  * @author kitona
  */
 @Service
-public class UserInfoAdapterServiceImpl implements IUserInfoAdapter {
+public class UserInfoAdapterServiceImpl implements IUserInfoGateway {
 
     @Override
     public String getUserAddress(String userId) {

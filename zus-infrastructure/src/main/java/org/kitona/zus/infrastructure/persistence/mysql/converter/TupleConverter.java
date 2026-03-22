@@ -1,6 +1,8 @@
 package org.kitona.zus.infrastructure.persistence.mysql.converter;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import org.kitona.zus.domain.entity.RelationTupleEntity;
+import org.kitona.zus.domain.valueobject.TupleCondition;
 import org.kitona.zus.domain.valueobject.TupleKey;
 import org.kitona.zus.domain.valueobject.Zookie;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
@@ -39,7 +41,7 @@ public final class TupleConverter {
                 po.getStoreId(),
                 tupleKey,
                 po.getZookie() != null ? Zookie.of(po.getZookie()) : null,
-                po.getConditionExpression(),
+                TupleCondition.of(po.getConditionName(), po.getConditionContext()),
                 po.getCreateTime()
         );
     }
@@ -52,7 +54,7 @@ public final class TupleConverter {
             return null;
         }
         TuplePO po = new TuplePO();
-        po.setId(entity.getId());
+        po.setId(entity.getId() != null ? entity.getId() : IdWorker.getId());
         po.setCreateTime(entity.getCreateTime());
         po.setStoreId(entity.getStoreId());
         po.setObjectType(entity.getObjectType());
@@ -62,7 +64,8 @@ public final class TupleConverter {
         po.setSubjectId(entity.getSubjectId());
         po.setSubjectRelation(entity.getSubjectRelation());
         po.setZookie(entity.getZookie() != null ? entity.getZookie().getVersion() : null);
-        po.setConditionExpression(entity.getConditionExpression());
+        po.setConditionName(entity.getConditionName());
+        po.setConditionContext(entity.getConditionContext());
         return po;
     }
 

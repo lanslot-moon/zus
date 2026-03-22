@@ -34,9 +34,9 @@ public class FgaWriteApiService implements IFgaWriteApiService {
     }
 
     @Override
-    public RestResult<Void> deleted(String storeId, List<FgaTupleRequest> deletes) {
+    public RestResult<Void> delete(String storeId, List<FgaTupleRequest> deletes) {
         List<WriteTupleCommand> writeTuple = MapstructUtil.convert(deletes, WriteTupleCommand.class);
-        writeApplicationService.deleted(storeId, writeTuple);
+        writeApplicationService.delete(storeId, writeTuple);
         return RestResult.success(null);
     }
 }

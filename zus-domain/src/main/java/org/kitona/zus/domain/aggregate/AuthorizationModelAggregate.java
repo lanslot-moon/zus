@@ -559,15 +559,6 @@ public class AuthorizationModelAggregate {
         this.typeDefinitions = typeDefinitions != null ? new ArrayList<>(typeDefinitions) : new ArrayList<>();
     }
 
-    /**
-     * 应用持久化状态（仅供基础设施层在部分更新等场景使用,非业务 API）
-     *
-     * @param status 状态
-     */
-    public void applyStatusFromPersistence(ModelPublishStatus status) {
-        this.status = status;
-    }
-
     // ========== ID 生成方法 ==========
 
     /**

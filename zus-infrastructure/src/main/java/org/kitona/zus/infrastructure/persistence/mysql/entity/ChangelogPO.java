@@ -30,7 +30,7 @@ import java.io.Serializable;
 @TableName("fga_changelog")
 @Data
 @Accessors(chain = true)
-public class ChangelogPO extends BasePoMinimal implements Serializable {
+public class ChangelogPO extends BaseIdPO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -91,15 +91,4 @@ public class ChangelogPO extends BasePoMinimal implements Serializable {
      */
     private Long operationTime;
 
-    /**
-     * 操作人ID（可选）
-     * 记录执行该操作的用户
-     */
-    private String operatorId;
-
-    /**
-     * 请求追踪ID（可选）
-     * 用于关联请求日志，便于问题排查
-     */
-    private String traceId;
 }

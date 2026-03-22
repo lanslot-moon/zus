@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `fga_store` (
                                            `name` VARCHAR(128) NOT NULL COMMENT '存储空间名称',
                                            `description` VARCHAR(512) DEFAULT NULL COMMENT '存储空间描述',
                                            `current_model_id` VARCHAR(64) DEFAULT NULL COMMENT '当前使用的授权模型ID(model_id)。原因：模型版本锁定，防止规则变更导致旧元组瞬间失效，实现无损发布或快照回滚',
-                                           `current_zookie` BIGINT NOT NULL DEFAULT 0 COMMENT '当前最新的Zookie版本号。原因：解决分布式环境下的一致性延迟，确保权限删除即刻生效',
+                                           `current_zookie` BIGINT NOT NULL DEFAULT 0 COMMENT '当前最新的Zookie版本号。作为一致性令牌的持久化/读侧查询字段，解决分布式环境下的一致性延迟，确保权限删除即刻生效',
                                            `status` TINYINT NOT NULL DEFAULT 0 COMMENT '状态: 0-正常, 1-禁用, 2-删除中',
                                            `tenant_id` VARCHAR(64) DEFAULT NULL COMMENT '租户ID',
                                            `create_time` BIGINT DEFAULT NULL COMMENT '创建时间',

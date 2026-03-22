@@ -1,8 +1,8 @@
 /**
  * 用户中心防腐层实现
  *
- * <p>实现领域层 {@link org.kitona.zus.domain.facade.IUserInfoAdapterService}，
- * 从外部用户中心获取用户信息并转换为领域可用格式。
+ * <p>实现共享协作契约 {@link org.kitona.zus.domain.gateway.IUserInfoGateway}，
+ * 从外部用户中心获取 DTO 组装所需的补充信息。
  *
  * @author kitona
  * @version 1.0.0

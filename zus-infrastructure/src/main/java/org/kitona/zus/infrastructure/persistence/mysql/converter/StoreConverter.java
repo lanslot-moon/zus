@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.converter;
 import org.kitona.zus.domain.aggregate.StoreAggregate;
 import org.kitona.zus.domain.aggregate.StoreSnapshot;
 import org.kitona.zus.domain.enums.StoreStatus;
-import org.kitona.zus.domain.valueobject.Zookie;
+import org.kitona.zus.domain.query.StoreView;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
 
 /**
@@ -29,7 +29,6 @@ public final class StoreConverter {
                 po.getName(),
                 po.getDescription(),
                 po.getCurrentModelId(),
-                po.getCurrentZookie() != null ? Zookie.of(po.getCurrentZookie()) : null,
                 StoreStatus.fromCode(po.getStatus()),
                 po.getTenantId(),
                 po.getCreateTime()
@@ -50,9 +49,27 @@ public final class StoreConverter {
         po.setName(aggregate.getName());
         po.setDescription(aggregate.getDescription());
         po.setCurrentModelId(aggregate.getCurrentModelId());
-        po.setCurrentZookie(aggregate.getCurrentZookie() != null ? aggregate.getCurrentZookie().getVersion() : null);
         po.setStatus(aggregate.getStatusCode());
+        po.setTenantId(aggregate.getTenantId());
         po.setCreateTime(aggregate.getCreateTime());
         return po;
+    }
+
+    /**
+     * PO 转换为读侧视图
+     */
+    public static StoreView toView(StorePO po) {
+        if (po == null) {
+            return null;
+        }
+        return new StoreView(
+                po.getStoreId(),
+                po.getName(),
+                po.getDescription(),
+                po.getCurrentModelId(),
+                po.getCurrentZookie(),
+                po.getStatus(),
+                po.getCreateTime()
+        );
     }
 }

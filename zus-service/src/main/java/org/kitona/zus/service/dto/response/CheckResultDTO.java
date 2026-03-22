@@ -37,6 +37,11 @@ public class CheckResultDTO implements Serializable {
     private String zookieToken;
 
     /**
+     * 鉴权语义结果
+     */
+    private String decision;
+
+    /**
      * 错误信息（如果有）
      */
     private String errorMessage;
@@ -53,6 +58,7 @@ public class CheckResultDTO implements Serializable {
         dto.allowed = true;
         dto.zookieToken = zookieToken;
         dto.durationMs = durationMs;
+        dto.decision = "ALLOWED";
         return dto;
     }
 
@@ -68,6 +74,7 @@ public class CheckResultDTO implements Serializable {
         dto.allowed = false;
         dto.zookieToken = zookieToken;
         dto.durationMs = durationMs;
+        dto.decision = "DENIED";
         return dto;
     }
 
@@ -81,6 +88,26 @@ public class CheckResultDTO implements Serializable {
         CheckResultDTO dto = new CheckResultDTO();
         dto.allowed = false;
         dto.errorMessage = errorMessage;
+        dto.decision = "SYSTEM_ERROR";
+        return dto;
+    }
+
+    /**
+     * 创建带明确语义的错误响应
+     *
+     * @param decision     语义结果
+     * @param errorMessage 错误信息
+     * @param zookieToken  Zookie 令牌
+     * @param durationMs   耗时
+     * @return 响应 DTO
+     */
+    public static CheckResultDTO error(String decision, String errorMessage, String zookieToken, long durationMs) {
+        CheckResultDTO dto = new CheckResultDTO();
+        dto.allowed = false;
+        dto.decision = decision;
+        dto.errorMessage = errorMessage;
+        dto.zookieToken = zookieToken;
+        dto.durationMs = durationMs;
         return dto;
     }
 

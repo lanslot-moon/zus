@@ -1,10 +1,7 @@
 package org.kitona.zus.domain.repository;
 
 import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
-import org.kitona.zus.domain.enums.ModelPublishStatus;
-import org.kitona.zus.domain.valueobject.CursorPageResult;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -27,8 +24,9 @@ import java.util.Optional;
  *
  * <p>模型有生命周期状态：草稿(DRAFT) -> 已发布(PUBLISHED) -> 已废弃(ABANDONED)
  *
- * <p>按照 DDD 严格规范，本 Repository 操作完整的聚合根 {@link AuthorizationModelAggregate}，
- * 包括级联加载/保存所有聚合内实体。
+ * <p>按照 DDD 严格规范，本 Repository 只操作完整聚合根
+ * {@link AuthorizationModelAggregate}，包括级联加载/保存所有聚合内实体。
+ * 列表/分页等读侧查询由独立的查询仓储承担。
  *
  * @author kitona
  * @version 1.0.0
@@ -72,7 +70,7 @@ public interface IAuthorizationModelDomainRepository {
     boolean saveOrUpdateModel(AuthorizationModelAggregate aggregate);
 
     /**
-     * 删除完整聚合根（级联删除，仅限草稿状态）
+     * 删除草稿状态的完整聚合根（级联删除）
      *
      * <p>级联删除内容：
      * <ul>
@@ -86,95 +84,6 @@ public interface IAuthorizationModelDomainRepository {
      * @param modelId 授权模型ID
      * @return 删除成功返回 true
      */
-    boolean deleteModel(String storeId, String modelId);
+    boolean deleteDraftModel(String storeId, String modelId);
 
-    // ==================== 查询方法 ====================
-
-    /**
-     * 查询存储空间下的所有授权模型（不加载类型定义）
-     *
-     * <p>轻量级查询，只加载模型基本信息，适用于列表展示场景。
-     * 如需完整聚合，请使用 {@link #findByModelId(String, String)}。
-     *
-     * @param storeId 存储空间ID
-     * @return 授权模型聚合根列表（不含类型定义）
-     */
-    List<AuthorizationModelAggregate> findByStoreId(String storeId);
-
-    /**
-     * 根据状态查询授权模型列表（不加载类型定义）
-     *
-     * @param storeId 存储空间ID
-     * @param status  状态
-     * @return 授权模型聚合根列表（不含类型定义）
-     */
-    List<AuthorizationModelAggregate> findByStoreIdAndStatus(String storeId, ModelPublishStatus status);
-
-    /**
-     * 查询存储空间下最新发布的授权模型（加载完整聚合）
-     *
-     * @param storeId 存储空间ID
-     * @return 最新发布的完整授权模型聚合根，不存在返回 empty
-     */
-    Optional<AuthorizationModelAggregate> findLatestByStoreId(String storeId);
-
-    /**
-     * 分页查询授权模型（游标分页，不加载类型定义）
-     *
-     * <p>游标分页相比偏移分页的优势：
-     * <ul>
-     *   <li>性能更好：避免 OFFSET 导致的深分页性能问题</li>
-     *   <li>数据一致性：不会因为数据插入/删除导致重复或遗漏</li>
-     * </ul>
-     *
-     * @param storeId   存储空间ID
-     * @param status    状态过滤，可为 null 表示不过滤
-     * @param pageToken 分页游标（上一页最后一条的模型ID），首页传 null
-     * @param pageSize  每页数量
-     * @return 游标分页结果，包含数据列表和下一页游标
-     */
-    CursorPageResult<AuthorizationModelAggregate> findPageByCursor(String storeId, Integer status, String pageToken, int pageSize);
-
-    // ==================== 状态变更方法 ====================
-
-    /**
-     * 发布授权模型（草稿 -> 已发布）
-     *
-     * <p>发布后模型不可修改，成为只读状态。
-     *
-     * @param storeId 存储空间ID
-     * @param modelId 授权模型ID
-     * @return 发布成功返回 true
-     */
-    boolean publishModel(String storeId, String modelId);
-
-    /**
-     * 废弃授权模型（已发布 -> 已废弃）
-     *
-     * <p>废弃后模型仍可用于历史查询，但不会被用于新的权限检查。
-     *
-     * @param storeId 存储空间ID
-     * @param modelId 授权模型ID
-     * @return 废弃成功返回 true
-     */
-    boolean deprecateModel(String storeId, String modelId);
-
-    // ==================== 统计方法 ====================
-
-    /**
-     * 统计存储空间下已发布模型数量
-     *
-     * @param storeId 存储空间ID
-     * @return 已发布模型数量
-     */
-    long countPublishedModels(String storeId);
-
-    /**
-     * 检查模型是否存在
-     *
-     * @param storeId 存储空间ID
-     * @param modelId 授权模型ID
-     * @return 存在返回 true
-     */
-    boolean existsByModelId(String storeId, String modelId);
 }

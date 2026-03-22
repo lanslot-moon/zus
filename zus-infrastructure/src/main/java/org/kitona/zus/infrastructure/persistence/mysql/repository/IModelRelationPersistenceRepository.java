@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * 关系定义持久化仓储接口（基础设施层，仅 fga_model_relation 单表）
  *
- * <p>定义基于 PO 的持久化契约，仅供 AuthorizationModelRepositoryDomainAdapter 内部使用。
+ * <p>定义基于 PO 的持久化契约，仅供 AuthorizationModelDomainRepositoryAdapter 内部使用。
  * 按照 DDD 规范，外部不应直接访问此接口，所有操作应通过聚合根 Repository 进行。
  *
  * @author kitona

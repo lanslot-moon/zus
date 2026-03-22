@@ -32,7 +32,7 @@ import java.io.Serializable;
 @TableName("fga_relation_tuple")
 @Data
 @Accessors(chain = true)
-public class TuplePO extends BasePoMinimal implements Serializable {
+public class TuplePO extends BaseTenantSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -88,9 +88,14 @@ public class TuplePO extends BasePoMinimal implements Serializable {
     private Long zookie;
 
     /**
-     * 条件表达式（可选）
-     * 支持基于上下文的条件权限，如时间、IP等
-     * JSON 格式存储
+     * 条件名称（可选）
+     * 例如 is_internal_network、within_business_hours。
      */
-    private String conditionExpression;
+    private String conditionName;
+
+    /**
+     * 条件上下文（可选）
+     * JSON 字符串形式存储，与 condition_name 配合使用。
+     */
+    private String conditionContext;
 }

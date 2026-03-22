@@ -1,7 +1,6 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
 
 import java.util.List;
@@ -11,7 +10,8 @@ import java.util.Optional;
  * 存储空间持久化仓储接口（基础设施层）
  *
  * <p>
- * 定义基于 PO 的持久化契约，与领域层 {@link IStoreDomainRepository} 职责不同：
+ * 定义基于 PO 的持久化契约，与领域层
+ * {@link org.kitona.zus.domain.repository.IStoreDomainRepository} 职责不同：
  * <ul>
  * <li>领域层接口：操作聚合根（StoreAggregate），定义业务契约</li>
  * <li>本接口：操作持久化对象（StorePO），定义技术契约</li>
@@ -48,13 +48,12 @@ public interface IStorePersistenceRepository extends IService<StorePO> {
     boolean createStore(StorePO store);
 
     /**
-     * 更新当前使用的授权模型 ID
+     * 更新存储空间
      *
-     * @param storeId 存储空间 ID
-     * @param modelId 新的授权模型 ID
+     * @param store 存储空间持久化对象
      * @return 更新成功返回 true
      */
-    boolean updateCurrentModelId(String storeId, String modelId);
+    boolean updateStore(StorePO store);
 
     /**
      * 获取下一个 Zookie 版本号并递增（用于写元组时打版本）
@@ -79,14 +78,6 @@ public interface IStorePersistenceRepository extends IService<StorePO> {
      * @return 删除成功返回 true
      */
     boolean deleteByStoreId(String storeId);
-
-    /**
-     * 检查存储空间 ID 是否存在且未删除
-     *
-     * @param storeId 存储空间 ID
-     * @return 存在且未删除返回 true
-     */
-    boolean existsByStoreId(String storeId);
 
     /**
      * 游标分页查询存储空间列表（仅 NORMAL 状态）

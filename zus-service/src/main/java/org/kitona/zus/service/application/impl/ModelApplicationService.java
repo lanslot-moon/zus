@@ -10,9 +10,12 @@ import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
 import org.kitona.zus.domain.aggregate.StoreAggregate;
 import org.kitona.zus.domain.entity.TypeDefinitionEntity;
-import org.kitona.zus.domain.event.ModelActivatedEvent;
+import org.kitona.zus.domain.query.AuthorizationModelView;
+import org.kitona.zus.domain.query.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
+import org.kitona.zus.domain.repository.IAuthorizationModelQueryRepository;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
+import org.kitona.zus.domain.repository.IStoreQueryRepository;
 import org.kitona.zus.domain.valueobject.CursorPageResult;
 import org.kitona.zus.domain.valueobject.RelationDefinition;
 import org.kitona.zus.service.application.IModelApplicationService;
@@ -23,7 +26,6 @@ import org.kitona.zus.service.dto.query.ListModelsQuery;
 import org.kitona.zus.service.dto.response.ModelResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.exception.ApplicationException;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,27 +56,20 @@ public class ModelApplicationService implements IModelApplicationService {
     private IAuthorizationModelDomainRepository modelDomainRepository;
 
     @Resource
+    private IAuthorizationModelQueryRepository modelQueryRepository;
+
+    @Resource
     private IStoreDomainRepository storeDomainRepository;
 
     @Resource
-    private ApplicationEventPublisher eventPublisher;
+    private IStoreQueryRepository storeQueryRepository;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createModel(CreateModelCommand command) {
         ValidationUtil.validate(command);
-        // 1. 检查存储空间状态
         String storeId = command.getStoreId();
-        StoreAggregate storeAggregate = storeDomainRepository.findByStoreId(storeId).orElse(null);
-        if (storeAggregate == null) {
-            log.warn("createModel Store不存在: storeId={}", storeId);
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
-        }
-
-        if (!storeAggregate.isActive()) {
-            log.warn("createModel Store 未激活，无法操作模型,模型信息:{}", JacksonUtil.toJSONString(storeAggregate));
-            throw new ApplicationException(IError.DATA_STATUS_ERROR);
-        }
+        ensureStoreActive(storeId, "createModel");
 
         // 2. 创建聚合根（ID 由聚合根内部生成）
         AuthorizationModelAggregate modelAggregate = AuthorizationModelAggregate.createWithGeneratedId(
@@ -124,7 +119,7 @@ public class ModelApplicationService implements IModelApplicationService {
     public PageResultDTO<ModelResultDTO> listModels(ListModelsQuery query) {
         ValidationUtil.validate(query);
 
-        CursorPageResult<AuthorizationModelAggregate> pageResult = modelDomainRepository.findPageByCursor(
+        CursorPageResult<AuthorizationModelView> pageResult = modelQueryRepository.findPageViewByCursor(
                 query.getStoreId(),
                 query.getStatus(),
                 query.getPageToken(),
@@ -137,7 +132,7 @@ public class ModelApplicationService implements IModelApplicationService {
         }
 
         String currentModelId = getCurrentModelId(query.getStoreId());
-        List<ModelResultDTO> resultList = ModelAssembler.toDTOList(pageResult.data(), currentModelId);
+        List<ModelResultDTO> resultList = ModelAssembler.toViewDTOList(pageResult.data(), currentModelId);
         return PageResultDTO.of(resultList, pageResult.nextPageToken());
     }
 
@@ -147,27 +142,12 @@ public class ModelApplicationService implements IModelApplicationService {
         if (StringUtils.isAnyBlank(storeId, modelId)) {
             return false;
         }
-
-        StoreAggregate storeAggregate = storeDomainRepository.findByStoreId(storeId).orElse(null);
-        if (storeAggregate == null) {
-            log.warn("publishModel Store不存在: storeId={}", storeId);
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
-        }
-
-        if (!storeAggregate.isActive()) {
-            log.warn("publishModel Store 未激活，无法操作模型,模型信息:{}", JacksonUtil.toJSONString(storeAggregate));
-            throw new ApplicationException(IError.DATA_STATUS_ERROR);
-        }
-
-        AuthorizationModelAggregate model = modelDomainRepository.findByModelId(storeId, modelId).orElse(null);
-        if (model == null) {
-            log.warn("ModelApplicationService.publishModel 查询授权模型失败: storeId={}, modelId={}", storeId, modelId);
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
-        }
+        ensureStoreActive(storeId, "publishModel");
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "publishModel");
 
         model.publish();
 
-        boolean result = modelDomainRepository.publishModel(storeId, modelId);
+        boolean result = modelDomainRepository.saveOrUpdateModel(model);
         if (!result) {
             log.info("发布授权模型失败: storeId={}, modelId={}", storeId, modelId);
             return false;
@@ -183,23 +163,8 @@ public class ModelApplicationService implements IModelApplicationService {
         if (StringUtils.isAnyBlank(storeId, modelId)) {
             return false;
         }
-
-        StoreAggregate storeAggregate = storeDomainRepository.findByStoreId(storeId).orElse(null);
-        if (storeAggregate == null) {
-            log.warn("activateModel Store不存在: storeId={}", storeId);
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
-        }
-
-        if (!storeAggregate.isActive()) {
-            log.warn("activateModel Store 未激活，无法操作模型,模型信息:{}", JacksonUtil.toJSONString(storeAggregate));
-            throw new ApplicationException(IError.DATA_STATUS_ERROR);
-        }
-
-        AuthorizationModelAggregate model = modelDomainRepository.findByModelId(storeId, modelId).orElse(null);
-        if (model == null) {
-            log.warn("ModelApplicationService.activateModel 查询授权模型失败: storeId={}, modelId={}", storeId, modelId);
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
-        }
+        StoreAggregate store = ensureStoreActive(storeId, "activateModel");
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "activateModel");
 
         if (!model.isPublished()) {
             log.warn("ModelApplicationService.activateModel 只能激活已发布的模型: storeId={}, modelId={}, status={}",
@@ -207,8 +172,19 @@ public class ModelApplicationService implements IModelApplicationService {
             throw new ApplicationException(IError.DATA_STATUS_ERROR);
         }
 
-        eventPublisher.publishEvent(new ModelActivatedEvent(storeId, modelId));
-        log.info("激活授权模型，已发送激活事件: storeId={}, modelId={}", storeId, modelId);
+        if (modelId.equals(store.getCurrentModelId())) {
+            log.info("激活授权模型时发现已是当前模型: storeId={}, modelId={}", storeId, modelId);
+            return true;
+        }
+
+        store.updateCurrentModel(modelId);
+        boolean updated = storeDomainRepository.saveOrUpdateStore(store);
+        if (!updated) {
+            log.warn("激活授权模型失败，Store 当前模型指针更新未生效: storeId={}, modelId={}", storeId, modelId);
+            return false;
+        }
+
+        log.info("激活授权模型成功，事务内已完成 Store 当前模型切换: storeId={}, modelId={}", storeId, modelId);
         return true;
     }
 
@@ -218,16 +194,12 @@ public class ModelApplicationService implements IModelApplicationService {
         if (StringUtils.isAnyBlank(storeId, modelId)) {
             return false;
         }
-
-        AuthorizationModelAggregate model = modelDomainRepository.findByModelId(storeId, modelId).orElse(null);
-        if (model == null) {
-            log.warn("ModelApplicationService.deprecateModel 查询授权模型失败: storeId={}, modelId={}", storeId, modelId);
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
-        }
+        ensureStoreActive(storeId, "deprecateModel");
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "deprecateModel");
 
         model.deprecate();
 
-        boolean result = modelDomainRepository.deprecateModel(storeId, modelId);
+        boolean result = modelDomainRepository.saveOrUpdateModel(model);
         if (!result) {
             log.info("废弃授权模型失败: storeId={}, modelId={}", storeId, modelId);
             return false;
@@ -242,27 +214,46 @@ public class ModelApplicationService implements IModelApplicationService {
         if (StringUtils.isBlank(storeId) || StringUtils.isBlank(modelId)) {
             return false;
         }
-
-        AuthorizationModelAggregate model = modelDomainRepository.findByModelId(storeId, modelId).orElse(null);
-        if (model == null) {
-            throw new ApplicationException(IError.DATA_NOT_EXIST);
-        }
+        ensureStoreActive(storeId, "deleteModel");
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "deleteModel");
 
         if (!model.isDraft()) {
             log.warn("只能删除草稿状态的模型: storeId={}, modelId={}, status={}", storeId, modelId, model.getStatus());
             throw new ApplicationException(IError.PARAMS_EXIST_ERROR);
         }
 
-        return modelDomainRepository.deleteModel(storeId, modelId);
+        return modelDomainRepository.deleteDraftModel(storeId, modelId);
     }
 
     /**
      * 获取 Store 当前生效的模型ID
      */
     private String getCurrentModelId(String storeId) {
-        return storeDomainRepository.findByStoreId(storeId)
-                .map(StoreAggregate::getCurrentModelId)
+        return storeQueryRepository.findViewByStoreId(storeId)
+                .map(StoreView::currentModelId)
                 .orElse(null);
+    }
+
+    private StoreAggregate ensureStoreActive(String storeId, String action) {
+        StoreAggregate storeAggregate = storeDomainRepository.findByStoreId(storeId).orElse(null);
+        if (storeAggregate == null) {
+            log.warn("{} Store不存在: storeId={}", action, storeId);
+            throw new ApplicationException(IError.DATA_NOT_EXIST);
+        }
+        if (!storeAggregate.isActive()) {
+            log.warn("{} Store 未激活，无法操作模型,模型信息:{}", action, JacksonUtil.toJSONString(storeAggregate));
+            throw new ApplicationException(IError.DATA_STATUS_ERROR);
+        }
+        return storeAggregate;
+    }
+
+    private AuthorizationModelAggregate loadModelOrThrow(String storeId, String modelId, String action) {
+        AuthorizationModelAggregate model = modelDomainRepository.findByModelId(storeId, modelId).orElse(null);
+        if (model != null) {
+            return model;
+        }
+        log.warn("ModelApplicationService.{} 查询授权模型失败: storeId={}, modelId={}", action, storeId, modelId);
+        throw new ApplicationException(IError.DATA_NOT_EXIST);
     }
 
 

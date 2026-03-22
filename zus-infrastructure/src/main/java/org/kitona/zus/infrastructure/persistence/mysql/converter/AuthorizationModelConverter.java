@@ -3,6 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.converter;
 import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
 import org.kitona.zus.domain.aggregate.AuthorizationModelSnapshot;
 import org.kitona.zus.domain.enums.ModelPublishStatus;
+import org.kitona.zus.domain.query.AuthorizationModelView;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
 
 /**
@@ -51,5 +52,23 @@ public final class AuthorizationModelConverter {
         po.setDescription(aggregate.getDescription());
         po.setCreateTime(aggregate.getCreateTime());
         return po;
+    }
+
+    /**
+     * PO 转换为读侧视图
+     */
+    public static AuthorizationModelView toView(AuthorizationModelPO po) {
+        if (po == null) {
+            return null;
+        }
+        return new AuthorizationModelView(
+                po.getStoreId(),
+                po.getModelId(),
+                po.getSchemaVersion(),
+                po.getDslText(),
+                po.getStatus(),
+                po.getDescription(),
+                po.getCreateTime()
+        );
     }
 }

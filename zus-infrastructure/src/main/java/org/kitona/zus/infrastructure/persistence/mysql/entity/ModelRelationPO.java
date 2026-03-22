@@ -1,5 +1,6 @@
 package org.kitona.zus.infrastructure.persistence.mysql.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,7 +22,7 @@ import java.io.Serializable;
 @TableName("fga_model_relation")
 @Data
 @Accessors(chain = true)
-public class ModelRelationPO extends BasePoMinimal implements Serializable {
+public class ModelRelationPO extends BaseSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -32,6 +33,7 @@ public class ModelRelationPO extends BasePoMinimal implements Serializable {
     /**
      * 类型名称,冗余存储
      */
+    @TableField(exist = false)
     private String subjectType;
 
     /** 关系名，如 viewer、editor、owner */

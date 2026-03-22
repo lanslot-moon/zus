@@ -36,6 +36,11 @@ public class FgaCheckResultVO {
     private String zookieToken;
 
     /**
+     * 鉴权语义结果
+     */
+    private String decision;
+
+    /**
      * 错误信息（如果有）
      */
     private String errorMessage;

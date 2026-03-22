@@ -22,6 +22,8 @@
  * ├── valueobject/       值对象（Value Object）
  * │   ├── Zookie                      一致性令牌
  * │   ├── TupleKey                    元组键
+ * │   ├── AuthorizationCheckResult    鉴权结果
+ * │   ├── AuthorizationCheckStatus    鉴权结果状态
  * │   ├── RelationDefinition          关系定义
  * │   ├── TypeDefinition              类型定义（运行时用）
  * │   └── ...
@@ -30,14 +32,27 @@
  * │   ├── ModelPublishStatus          模型发布状态
  * │   └── StoreStatus                 存储空间状态
  * │
- * ├── repository/        仓储接口（Repository Interface，仅聚合根）
+ * ├── repository/        仓储接口（Repository Interface）
  * │   ├── IStoreDomainRepository      存储空间仓储
  * │   ├── IAuthorizationModelDomainRepository 授权模型仓储
- * │   └── ITupleDomainRepository      元组仓储
+ * │   ├── ITupleDomainRepository      元组命令仓储
+ * │   ├── IChangelogDomainRepository  变更日志命令仓储
+ * │   ├── IStoreQueryRepository       存储空间查询仓储
+ * │   ├── IAuthorizationModelQueryRepository 授权模型查询仓储
+ * │   ├── ITupleQueryRepository       元组查询仓储
+ * │   └── IChangelogQueryRepository   变更日志查询仓储
+ * │
+ * ├── query/             读侧视图（Query Model）
+ * │   ├── StoreView                    存储空间读侧视图
+ * │   └── AuthorizationModelView       授权模型读侧视图
+ * │
+ * ├── gateway/           共享协作网关契约
+ * │   └── IUserInfoGateway             DTO 组装所需的外部查询协作契约
  * │
  * ├── service/           领域服务（Domain Service）
  * │   ├── AuthorizationChecker        权限检查器
  * │   ├── AuthorizationModelGraph     授权模型图
+ * │   ├── TupleMutationDomainService  tuple 变更领域服务
  * │   └── internal/      内部实现（不对外暴露）
  * │       ├── DirectedGraph           有向图数据结构
  * │       ├── GraphNode               图节点
@@ -48,14 +63,9 @@
  * ├── port/              端口（Ports，六边形架构）
  * │   ├── IModelCompiler              模型编译器端口
  * │   ├── ITupleStore                 元组存储端口
- * │   ├── IUserInfoAdapter            用户信息适配器（防腐层）
- * │   └── IChangelogQueryPort         变更日志查询端口
- * │
- * ├── event/             领域事件（Domain Event）
- * │   ├── DomainEvent                 事件基类
- * │   ├── TupleWrittenEvent           元组写入事件
- * │   ├── TupleDeletedEvent           元组删除事件
- * │   └── ModelUpdatedEvent           模型更新事件
+ * │   ├── ITupleStoreFactory          元组存储工厂端口
+ * │   ├── IZookieSequencePort         zookie 序列端口
+ * │   └── ...                         领域规则真正依赖的外部能力
  * │
  * └── factory/           工厂（Factory）
  *     └── AuthorizationModelFactory   授权模型工厂
@@ -90,6 +100,8 @@
  *   <li>聚合根：AuthorizationModelAggregate</li>
  *   <li>聚合内实体：TypeDefinitionEntity</li>
  *   <li>值对象：RelationDefinition</li>
+ *   <li>命令仓储只负责完整聚合装载、保存与“仅草稿可删”这类不变量封装</li>
+ *   <li>最新已发布模型、分页列表等读语义由查询仓储承担</li>
  * </ul>
  *
  * <h3>3. RelationTupleEntity（关系元组）</h3>
@@ -98,7 +110,9 @@
  * <h2>依赖规则</h2>
  * <ul>
  *   <li>领域层是系统核心，不依赖任何外部框架（无 Spring 注解）</li>
- *   <li>Repository 接口定义在领域层，实现在基础设施层</li>
+ *   <li>命令仓储与查询仓储接口定义在领域层，实现在基础设施层</li>
+ *   <li>领域层不再承载由应用层直接发布的“伪领域事件”，提交后通知改由应用事件表达</li>
+ *   <li>仅 DTO 组装或读侧补充所需的外部查询协作，放在 domain.gateway 包中，而非领域端口</li>
  *   <li>Port 接口定义在领域层，Adapter 实现在基础设施层</li>
  * </ul>
  *
