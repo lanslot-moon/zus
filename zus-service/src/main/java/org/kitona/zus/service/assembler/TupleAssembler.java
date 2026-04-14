@@ -1,6 +1,6 @@
 package org.kitona.zus.service.assembler;
 
-import org.kitona.zus.domain.entity.RelationTupleEntity;
+import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.service.dto.response.ListUsersResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
 
@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * 关系元组 Assembler
  *
- * <p>负责 {@link RelationTupleEntity} 与 DTO 之间的转换。
+ * <p>负责 {@link RelationTuple} 与 DTO 之间的转换。
  * <p>DDD 规范：Assembler 位于应用服务层，用于领域对象与 DTO 之间的双向转换。
  *
  * @author kitona
@@ -31,7 +31,7 @@ public final class TupleAssembler {
      * @param entity 关系元组实体
      * @return 读取结果 DTO，entity 为 null 时返回 null
      */
-    public static TupleResultDTO toDTO(RelationTupleEntity entity) {
+    public static TupleResultDTO toDTO(RelationTuple entity) {
         if (entity == null) {
             return null;
         }
@@ -51,7 +51,7 @@ public final class TupleAssembler {
      * @param entities 关系元组实体列表
      * @return DTO 列表，entities 为 null 或空时返回空列表
      */
-    public static List<TupleResultDTO> toDTOList(List<RelationTupleEntity> entities) {
+    public static List<TupleResultDTO> toDTOList(List<RelationTuple> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }
@@ -66,12 +66,12 @@ public final class TupleAssembler {
      * @param entities 关系元组实体列表
      * @return 去重的对象引用列表
      */
-    public static List<String> toDistinctObjectRefs(List<RelationTupleEntity> entities) {
+    public static List<String> toDistinctObjectRefs(List<RelationTuple> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }
         Set<String> objects = new LinkedHashSet<>();
-        for (RelationTupleEntity entity : entities) {
+        for (RelationTuple entity : entities) {
             objects.add(entity.getObjectType() + ":" + entity.getObjectId());
         }
         return List.copyOf(objects);
@@ -83,7 +83,7 @@ public final class TupleAssembler {
      * @param entities 关系元组实体列表
      * @return 去重的用户 DTO 列表
      */
-    public static List<ListUsersResultDTO.UserDTO> toDistinctUserDTOList(List<RelationTupleEntity> entities) {
+    public static List<ListUsersResultDTO.UserDTO> toDistinctUserDTOList(List<RelationTuple> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }
@@ -93,7 +93,7 @@ public final class TupleAssembler {
                 .collect(Collectors.toList());
     }
 
-    private static ListUsersResultDTO.UserDTO toUserDTO(RelationTupleEntity entity) {
+    private static ListUsersResultDTO.UserDTO toUserDTO(RelationTuple entity) {
         return ListUsersResultDTO.UserDTO.builder()
                 .type(entity.getSubjectType())
                 .id(entity.getSubjectId())

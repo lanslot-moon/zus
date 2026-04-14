@@ -82,20 +82,35 @@ public class TuplePO extends BaseTenantSoftDeletePO implements Serializable {
     private String subjectRelation;
 
     /**
+     * 是否通配符主体。
+     */
+    private Boolean isWildcard;
+
+    /**
      * Zookie 版本号
      * 记录该元组写入时的版本，用于一致性读取
      */
     private Long zookie;
 
     /**
-     * 条件名称（可选）
+     * 条件定义ID（可选）
+     */
+    private Long conditionDefinitionId;
+
+    /**
+     * 条件名称快照（可选）
      * 例如 is_internal_network、within_business_hours。
      */
     private String conditionName;
 
     /**
      * 条件上下文（可选）
-     * JSON 字符串形式存储，与 condition_name 配合使用。
+     * JSON 字符串形式存储，与 condition_definition_id 配合使用。
      */
     private String conditionContext;
+
+    /**
+     * 过期时间（毫秒），null 表示永不过期。
+     */
+    private Long expiresAt;
 }

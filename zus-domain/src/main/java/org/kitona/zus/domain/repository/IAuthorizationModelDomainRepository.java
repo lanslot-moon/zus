@@ -1,6 +1,6 @@
 package org.kitona.zus.domain.repository;
 
-import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 
 import java.util.Optional;
 
@@ -18,7 +18,7 @@ import java.util.Optional;
  * <p>聚合边界：
  * <ul>
  *   <li>AuthorizationModelAggregate（聚合根）</li>
- *   <li>TypeDefinitionEntity（聚合内实体）</li>
+ *   <li>TypeDefinition（聚合内实体）</li>
  *   <li>RelationDefinition（值对象）</li>
  * </ul>
  *

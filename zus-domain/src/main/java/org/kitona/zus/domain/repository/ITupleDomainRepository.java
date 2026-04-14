@@ -1,8 +1,10 @@
 package org.kitona.zus.domain.repository;
 
-import org.kitona.zus.domain.entity.RelationTupleEntity;
-import org.kitona.zus.domain.valueobject.RelationTuple;
-import org.kitona.zus.domain.valueobject.TupleKey;
+import org.kitona.zus.domain.authorization.tuple.RelationTuple;
+import org.kitona.zus.domain.read.criteria.TupleExistenceCriteria;
+import org.kitona.zus.domain.read.criteria.TupleKeyCriteria;
+import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
+import org.kitona.zus.domain.authorization.tuple.TupleDescriptor;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +29,7 @@ import java.util.Optional;
  *   <li>{@code folder:root#viewer@group:engineering#member} - engineering 组的 member 是 root 的 viewer</li>
  * </ul>
  * 
- * <p>按照 DDD 规范，Repository 负责 tuple 聚合根 {@link RelationTupleEntity} 的装载、
+ * <p>按照 DDD 规范，Repository 负责 tuple 聚合根 {@link RelationTuple} 的装载、
  * 规则相关查询和持久化。分页、过滤、列表类能力由独立查询仓储承接。
  *
  * @author kitona
@@ -51,8 +53,7 @@ public interface ITupleDomainRepository {
      * @param maxZookie       一致性令牌，只查询该版本之前的元组
      * @return 存在返回 true
      */
-    boolean existsTuple(String storeId, String objectType, String objectId, String relation,
-                        String subjectType, String subjectId, String subjectRelation, Long maxZookie);
+    boolean existsTuple(TupleExistenceCriteria criteria);
 
     /**
      * 检查是否存在通配符元组
@@ -67,12 +68,12 @@ public interface ITupleDomainRepository {
      * @param maxZookie  一致性令牌
      * @return 存在返回 true
      */
-    boolean existsWildcardTuple(String storeId, String objectType, String objectId, String relation, Long maxZookie);
+    boolean existsWildcardTuple(TupleExistenceCriteria criteria);
 
     /**
      * 根据资源对象和关系查询所有元组
      * 
-     * <p>返回轻量级的 {@link RelationTuple} 用于权限检查引擎。
+     * <p>返回轻量级的 {@link TupleDescriptor} 用于权限检查引擎。
      *
      * @param storeId    存储空间ID
      * @param objectType 资源对象类型
@@ -81,8 +82,7 @@ public interface ITupleDomainRepository {
      * @param maxZookie  一致性令牌
      * @return 元组列表
      */
-    List<RelationTupleEntity> findByObjectAndRelation(String storeId, String objectType, String objectId,
-                                                  String relation, Long maxZookie);
+    List<RelationTuple> findByObjectAndRelation(TupleQueryCriteria criteria);
 
     /**
      * 批量保存关系元组
@@ -90,7 +90,7 @@ public interface ITupleDomainRepository {
      * @param tuples 关系元组实体列表
      * @return 保存成功返回 true
      */
-    boolean saveBatch(List<RelationTupleEntity> tuples);
+    boolean saveBatch(List<RelationTuple> tuples);
 
     /**
      * 根据元组键精确查询（唯一性查询）
@@ -106,8 +106,7 @@ public interface ITupleDomainRepository {
      * @param subjectRelation 主体关系，可为 null
      * @return 关系元组实体，不存在返回 empty
      */
-    Optional<RelationTupleEntity> findByTupleKey(String storeId, String objectType, String objectId, String relation,
-                                      String subjectType, String subjectId, String subjectRelation);
+    Optional<RelationTuple> findByTupleKey(TupleExistenceCriteria criteria);
 
     /**
      * 批量删除关系元组
@@ -127,5 +126,5 @@ public interface ITupleDomainRepository {
      * @param tupleKeys 元组键列表
      * @return 存在的关系元组实体列表
      */
-    List<RelationTupleEntity> findByTupleKeys(String storeId, List<TupleKey> tupleKeys);
+    List<RelationTuple> findByTupleKeys(TupleKeyCriteria criteria);
 }

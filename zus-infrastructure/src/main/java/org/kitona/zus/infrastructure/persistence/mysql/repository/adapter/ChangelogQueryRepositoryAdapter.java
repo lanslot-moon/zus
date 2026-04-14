@@ -1,7 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
 import jakarta.annotation.Resource;
-import org.kitona.zus.domain.entity.ChangelogEntity;
+import org.kitona.zus.domain.authorization.audit.Changelog;
 import org.kitona.zus.domain.repository.IChangelogQueryRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.ChangelogConverter;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
@@ -20,13 +20,13 @@ public class ChangelogQueryRepositoryAdapter implements IChangelogQueryRepositor
     private IChangelogPersistenceRepository changelogPersistenceRepository;
 
     @Override
-    public List<ChangelogEntity> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit) {
+    public List<Changelog> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit) {
         List<ChangelogPO> poList = changelogPersistenceRepository.findByZookieRange(storeId, startZookie, endZookie, limit);
         return ChangelogConverter.toEntityList(poList);
     }
 
     @Override
-    public List<ChangelogEntity> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
+    public List<Changelog> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
         List<ChangelogPO> poList = changelogPersistenceRepository.findAfterZookie(storeId, afterZookie, limit);
         return ChangelogConverter.toEntityList(poList);
     }
@@ -37,7 +37,7 @@ public class ChangelogQueryRepositoryAdapter implements IChangelogQueryRepositor
     }
 
     @Override
-    public List<ChangelogEntity> findRecentChanges(String storeId, Integer limit) {
+    public List<Changelog> findRecentChanges(String storeId, Integer limit) {
         List<ChangelogPO> poList = changelogPersistenceRepository.findRecentChanges(storeId, limit);
         return ChangelogConverter.toEntityList(poList);
     }

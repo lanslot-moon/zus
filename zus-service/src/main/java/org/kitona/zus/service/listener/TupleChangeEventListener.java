@@ -2,8 +2,9 @@ package org.kitona.zus.service.listener;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.kitona.zus.domain.valueobject.TupleKey;
-import org.kitona.zus.service.dto.response.WatchChangeResultDTO;
+import org.kitona.zus.domain.authorization.audit.AuditMetadata;
+import org.kitona.zus.domain.authorization.tuple.TupleKey;
+import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 import org.kitona.zus.service.event.WatchEventPublisher;
 import org.kitona.zus.service.event.application.TupleDeletedApplicationEvent;
 import org.kitona.zus.service.event.application.TupleWrittenApplicationEvent;
@@ -22,7 +23,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
  *   <li>可扩展：更新搜索索引、触发 Webhook 等</li>
  * </ul>
  *
- * <p>注意：Changelog 写入已在 WriteApplicationService 中同步完成，
+ * <p>注意：Changelog 写入已在 TupleMutationApplicationService 中同步完成，
  * 本监听器不再重复写入。
  *
  * @author kitona
@@ -57,7 +58,7 @@ public class TupleChangeEventListener {
                 storeId, zookie, event.getTupleKeys().size());
 
         for (TupleKey tupleKey : event.getTupleKeys()) {
-            WatchChangeResultDTO change = buildChangeDTO(tupleKey, OPERATION_WRITE, zookie);
+            TupleChangeResultDTO change = buildChangeDTO(tupleKey, OPERATION_WRITE, zookie, event.getAuditMetadata());
             watchEventPublisher.publish(storeId, change);
         }
     }
@@ -80,19 +81,23 @@ public class TupleChangeEventListener {
                 storeId, zookie, event.getTupleKeys().size());
 
         for (TupleKey tupleKey : event.getTupleKeys()) {
-            WatchChangeResultDTO change = buildChangeDTO(tupleKey, OPERATION_DELETE, zookie);
+            TupleChangeResultDTO change = buildChangeDTO(tupleKey, OPERATION_DELETE, zookie, event.getAuditMetadata());
             watchEventPublisher.publish(storeId, change);
         }
     }
 
-    private WatchChangeResultDTO buildChangeDTO(TupleKey tupleKey, String operation, String zookie) {
-        return WatchChangeResultDTO.builder()
+    private TupleChangeResultDTO buildChangeDTO(TupleKey tupleKey, String operation, String zookie,
+                                                AuditMetadata auditMetadata) {
+        return TupleChangeResultDTO.builder()
                 .objectType(tupleKey.getObjectType())
                 .objectId(tupleKey.getObjectId())
                 .relation(tupleKey.getRelation())
                 .subjectType(tupleKey.getSubjectType())
                 .subjectId(tupleKey.getSubjectId())
                 .subjectRelation(tupleKey.getSubjectRelation())
+                .operatorId(auditMetadata.operatorId())
+                .requestId(auditMetadata.requestId())
+                .source(auditMetadata.source())
                 .operation(operation)
                 .zookie(zookie)
                 .build();

@@ -12,9 +12,12 @@
         <result column="subject_type" property="subjectType"/>
         <result column="subject_id" property="subjectId"/>
         <result column="subject_relation" property="subjectRelation"/>
+        <result column="is_wildcard" property="isWildcard"/>
         <result column="zookie" property="zookie"/>
+        <result column="condition_definition_id" property="conditionDefinitionId"/>
         <result column="condition_name" property="conditionName"/>
         <result column="condition_context" property="conditionContext"/>
+        <result column="expires_at" property="expiresAt"/>
         <result column="tenant_id" property="tenantId"/>
         <result column="create_time" property="createTime"/>
         <result column="is_deleted" property="isDeleted"/>
@@ -23,8 +26,8 @@
     <!-- 根据资源和关系查询元组列表（用于 TTU） -->
     <select id="selectByObjectAndRelation" resultMap="BaseResultMap">
         SELECT id, store_id, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation,
-               zookie, condition_name, condition_context, tenant_id, create_time, is_deleted
+               subject_type, subject_id, subject_relation, is_wildcard,
+               zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted
         FROM fga_relation_tuple
         WHERE store_id = #{storeId}
           AND object_type = #{objectType}
@@ -39,8 +42,8 @@
     <!-- 根据主体查询元组列表（用于 ListObjects） -->
     <select id="selectBySubject" resultMap="BaseResultMap">
         SELECT id, store_id, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation,
-               zookie, condition_name, condition_context, tenant_id, create_time, is_deleted
+               subject_type, subject_id, subject_relation, is_wildcard,
+               zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted
         FROM fga_relation_tuple
         WHERE store_id = #{storeId}
           AND subject_type = #{subjectType}
@@ -66,8 +69,8 @@
     <!-- 根据资源查询元组列表（用于 ListUsers） -->
     <select id="selectByObject" resultMap="BaseResultMap">
         SELECT id, store_id, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation,
-               zookie, condition_name, condition_context, tenant_id, create_time, is_deleted
+               subject_type, subject_id, subject_relation, is_wildcard,
+               zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted
         FROM fga_relation_tuple
         WHERE store_id = #{storeId}
           AND object_type = #{objectType}
@@ -85,12 +88,12 @@
     <insert id="batchInsert">
         INSERT INTO fga_relation_tuple
             (id, store_id, object_type, object_id, relation, subject_type, subject_id,
-             subject_relation, zookie, condition_name, condition_context, tenant_id, create_time, is_deleted)
+             subject_relation, is_wildcard, zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted)
         VALUES
         <foreach collection="list" item="item" separator=",">
             (#{item.id}, #{item.storeId}, #{item.objectType}, #{item.objectId}, #{item.relation},
-             #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation},
-             #{item.zookie}, #{item.conditionName}, #{item.conditionContext}, #{item.tenantId},
+             #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation}, #{item.isWildcard},
+             #{item.zookie}, #{item.conditionDefinitionId}, #{item.conditionName}, #{item.conditionContext}, #{item.expiresAt}, #{item.tenantId},
              #{item.createTime}, 0)
         </foreach>
     </insert>

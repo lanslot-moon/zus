@@ -1,7 +1,8 @@
 package org.kitona.zus.service.event.application;
 
 import lombok.Getter;
-import org.kitona.zus.domain.valueobject.TupleKey;
+import org.kitona.zus.domain.authorization.audit.AuditMetadata;
+import org.kitona.zus.domain.authorization.tuple.TupleKey;
 import org.kitona.zus.domain.valueobject.Zookie;
 
 import java.util.List;
@@ -16,10 +17,13 @@ public class TupleWrittenApplicationEvent extends ApplicationEvent {
 
     private final List<TupleKey> tupleKeys;
     private final Zookie zookie;
+    private final AuditMetadata auditMetadata;
 
-    public TupleWrittenApplicationEvent(String storeId, List<TupleKey> tupleKeys, Zookie zookie) {
+    public TupleWrittenApplicationEvent(String storeId, List<TupleKey> tupleKeys, Zookie zookie,
+                                        AuditMetadata auditMetadata) {
         super(storeId);
         this.tupleKeys = tupleKeys;
         this.zookie = zookie;
+        this.auditMetadata = auditMetadata != null ? auditMetadata : AuditMetadata.EMPTY;
     }
 }

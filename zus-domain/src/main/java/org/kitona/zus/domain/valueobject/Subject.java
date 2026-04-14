@@ -2,7 +2,6 @@ package org.kitona.zus.domain.valueobject;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.exception.SystemException;
 
@@ -17,7 +16,6 @@ import java.util.Objects;
  * @version 1.0.0
  * @since 2025-01-15
  */
-@ToString
 @EqualsAndHashCode
 @Getter
 public final class Subject {
@@ -96,5 +94,13 @@ public final class Subject {
 
     public boolean isDirectUser() {
         return !isUserset() && !isWildcard();
+    }
+
+    @Override
+    public String toString() {
+        if (isUserset()) {
+            return type + SEPARATOR + id + RELATION_SEPARATOR + relation;
+        }
+        return type + SEPARATOR + id;
     }
 }

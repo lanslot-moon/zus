@@ -16,7 +16,7 @@ import java.util.Optional;
  *
  * <p>
  * 基于 MyBatis-Plus 与 IUserInfoMapper 的持久化实现，
- * 供 UserInfoDomainRepositoryAdapter 适配为领域仓储。
+ * 供 UserProfileRepositoryAdapter 适配为领域仓储。
  *
  * @author kitona
  * @version 1.0.0

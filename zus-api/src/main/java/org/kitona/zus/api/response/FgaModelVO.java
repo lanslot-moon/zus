@@ -2,7 +2,7 @@ package org.kitona.zus.api.response;
 
 import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
-import org.kitona.zus.service.dto.response.ModelResultDTO;
+import org.kitona.zus.service.dto.response.AuthorizationModelResultDTO;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import java.util.List;
  * 
  * 对应数据库表 fga_authorization_model
  */
-@AutoMapper(target = ModelResultDTO.class)
+@AutoMapper(target = AuthorizationModelResultDTO.class)
 @Data
 public class FgaModelVO {
 

@@ -6,7 +6,7 @@ import org.kitona.zus.api.controller.IFgaWriteApiService;
 import org.kitona.zus.api.request.FgaTupleRequest;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.utils.MapstructUtil;
-import org.kitona.zus.service.application.IWriteApplicationService;
+import org.kitona.zus.service.application.ITupleMutationApplicationService;
 import org.kitona.zus.service.dto.command.WriteTupleCommand;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +24,7 @@ import java.util.List;
 public class FgaWriteApiService implements IFgaWriteApiService {
 
     @Resource
-    private IWriteApplicationService writeApplicationService;
+    private ITupleMutationApplicationService writeApplicationService;
 
     @Override
     public RestResult<Void> write(String storeId, List<FgaTupleRequest> writes) {

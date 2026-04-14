@@ -1,9 +1,9 @@
 package org.kitona.zus.infrastructure.persistence.mysql.converter;
 
-import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
-import org.kitona.zus.domain.aggregate.AuthorizationModelSnapshot;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelSnapshot;
 import org.kitona.zus.domain.enums.ModelPublishStatus;
-import org.kitona.zus.domain.query.AuthorizationModelView;
+import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
 
 /**

@@ -1,6 +1,6 @@
 package org.kitona.zus.service.event;
 
-import org.kitona.zus.service.dto.response.WatchChangeResultDTO;
+import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 
 /**
  * Watch 事件发布接口
@@ -20,5 +20,5 @@ public interface WatchEventPublisher {
      * @param storeId 存储空间ID
      * @param change  变更数据
      */
-    void publish(String storeId, WatchChangeResultDTO change);
+    void publish(String storeId, TupleChangeResultDTO change);
 }

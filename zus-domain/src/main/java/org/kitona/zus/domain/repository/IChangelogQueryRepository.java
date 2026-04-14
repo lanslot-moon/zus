@@ -1,6 +1,6 @@
 package org.kitona.zus.domain.repository;
 
-import org.kitona.zus.domain.entity.ChangelogEntity;
+import org.kitona.zus.domain.authorization.audit.Changelog;
 
 import java.util.List;
 
@@ -14,12 +14,12 @@ public interface IChangelogQueryRepository {
     /**
      * 按 Zookie 范围查询变更日志
      */
-    List<ChangelogEntity> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit);
+    List<Changelog> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit);
 
     /**
      * 查询指定 Zookie 之后的增量变更
      */
-    List<ChangelogEntity> findAfterZookie(String storeId, Long afterZookie, Integer limit);
+    List<Changelog> findAfterZookie(String storeId, Long afterZookie, Integer limit);
 
     /**
      * 获取存储空间当前最大的 Zookie 版本号
@@ -29,5 +29,5 @@ public interface IChangelogQueryRepository {
     /**
      * 查询最近生成的变更日志
      */
-    List<ChangelogEntity> findRecentChanges(String storeId, Integer limit);
+    List<Changelog> findRecentChanges(String storeId, Integer limit);
 }

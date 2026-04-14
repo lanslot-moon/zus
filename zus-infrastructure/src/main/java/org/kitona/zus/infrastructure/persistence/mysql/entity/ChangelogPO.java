@@ -27,7 +27,7 @@ import java.io.Serializable;
  * @since 2025-01-15
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName("fga_changelog")
+@TableName("fga_tuple_changelog")
 @Data
 @Accessors(chain = true)
 public class ChangelogPO extends BaseIdPO implements Serializable {
@@ -84,6 +84,21 @@ public class ChangelogPO extends BaseIdPO implements Serializable {
      * 主体关系（用于用户集）
      */
     private String subjectRelation;
+
+    /**
+     * 操作人。
+     */
+    private String operatorId;
+
+    /**
+     * 请求标识。
+     */
+    private String requestId;
+
+    /**
+     * 操作来源。
+     */
+    private String source;
 
     /**
      * 操作时间戳（毫秒）

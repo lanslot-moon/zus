@@ -5,15 +5,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.api.controller.IFgaTypeDefinitionApiService;
 import org.kitona.zus.api.request.FgaAddRelationRequest;
 import org.kitona.zus.api.request.FgaAddTypeDefinitionRequest;
+import org.kitona.zus.api.request.FgaRelationDefinitionInput;
 import org.kitona.zus.api.response.FgaRelationVO;
 import org.kitona.zus.api.response.FgaTypeDefinitionVO;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.utils.MapstructUtil;
-import org.kitona.zus.service.application.IModelSchemaApplicationService;
+import org.kitona.zus.service.application.IAuthorizationModelSchemaApplicationService;
 import org.kitona.zus.service.dto.command.AddRelationCommand;
 import org.kitona.zus.service.dto.command.AddTypeDefinitionCommand;
-import org.kitona.zus.service.dto.response.RelationResultDTO;
-import org.kitona.zus.service.dto.response.TypeDefinitionResultDTO;
+import org.kitona.zus.service.dto.command.CreateModelCommand;
+import org.kitona.zus.service.dto.response.AuthorizationRelationResultDTO;
+import org.kitona.zus.service.dto.response.AuthorizationTypeDefinitionResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +23,7 @@ import java.util.List;
 /**
  * FGA 类型定义管理 API 实现
  *
- * <p>委托给「模型结构」应用服务 {@link IModelSchemaApplicationService}，对应领域能力：管理授权模型结构。
+ * <p>委托给「模型结构」应用服务 {@link IAuthorizationModelSchemaApplicationService}，对应领域能力：管理授权模型结构。
  *
  * @author kitona
  * @version 2.0.0
@@ -32,7 +34,7 @@ import java.util.List;
 public class FgaTypeDefinitionApiService implements IFgaTypeDefinitionApiService {
 
     @Resource
-    private IModelSchemaApplicationService modelSchemaApplicationService;
+    private IAuthorizationModelSchemaApplicationService modelSchemaApplicationService;
 
     // ==================== 类型定义管理 ====================
 
@@ -43,19 +45,36 @@ public class FgaTypeDefinitionApiService implements IFgaTypeDefinitionApiService
         }
         log.info("FgaTypeDefinitionApiService addTypeDefinition, storeId:{}, modelId:{}, type:{}", storeId, modelId, request.getType());
 
-        AddTypeDefinitionCommand command = MapstructUtil.convert(request, AddTypeDefinitionCommand.class);
-        command.setStoreId(storeId);
-        command.setModelId(modelId);
+        AddTypeDefinitionCommand command = AddTypeDefinitionCommand.builder()
+                .storeId(storeId)
+                .modelId(modelId)
+                .type(request.getType())
+                .relations(convertRelations(request.getRelations()))
+                .build();
 
         boolean result = modelSchemaApplicationService.addTypeDefinition(command);
         return RestResult.success(result);
+    }
+
+    private List<CreateModelCommand.RelationInput> convertRelations(List<FgaRelationDefinitionInput> relations) {
+        if (relations == null || relations.isEmpty()) {
+            return List.of();
+        }
+        return relations.stream()
+                .map(relation -> CreateModelCommand.RelationInput.builder()
+                        .relationName(relation.getRelationName())
+                        .rewriteExpression(relation.getRewriteExpression())
+                        .allowedSubjectTypes(relation.getAllowedSubjectTypes())
+                        .build())
+                .toList();
     }
 
     @Override
     public RestResult<List<FgaTypeDefinitionVO>> listTypeDefinitions(String storeId, String modelId) {
         log.debug("FgaTypeDefinitionApiService listTypeDefinitions, storeId:{}, modelId:{}", storeId, modelId);
 
-        List<TypeDefinitionResultDTO> resultList = modelSchemaApplicationService.listTypeDefinitions(storeId, modelId);
+        List<AuthorizationTypeDefinitionResultDTO> resultList =
+                modelSchemaApplicationService.listTypeDefinitions(storeId, modelId);
         List<FgaTypeDefinitionVO> voList = MapstructUtil.convert(resultList, FgaTypeDefinitionVO.class);
         return RestResult.success(voList);
     }
@@ -64,7 +83,8 @@ public class FgaTypeDefinitionApiService implements IFgaTypeDefinitionApiService
     public RestResult<FgaTypeDefinitionVO> getTypeDefinition(String storeId, String modelId, String type) {
         log.debug("FgaTypeDefinitionApiService getTypeDefinition, storeId:{}, modelId:{}, type:{}", storeId, modelId, type);
 
-        TypeDefinitionResultDTO result = modelSchemaApplicationService.getTypeDefinition(storeId, modelId, type);
+        AuthorizationTypeDefinitionResultDTO result =
+                modelSchemaApplicationService.getTypeDefinition(storeId, modelId, type);
         FgaTypeDefinitionVO vo = MapstructUtil.convert(result, FgaTypeDefinitionVO.class);
         return RestResult.success(vo);
     }
@@ -100,7 +120,8 @@ public class FgaTypeDefinitionApiService implements IFgaTypeDefinitionApiService
     public RestResult<List<FgaRelationVO>> listRelations(String storeId, String modelId, String type) {
         log.debug("FgaTypeDefinitionApiService listRelations, storeId:{}, modelId:{}, type:{}", storeId, modelId, type);
 
-        List<RelationResultDTO> resultList = modelSchemaApplicationService.listRelations(storeId, modelId, type);
+        List<AuthorizationRelationResultDTO> resultList =
+                modelSchemaApplicationService.listRelations(storeId, modelId, type);
         List<FgaRelationVO> voList = MapstructUtil.convert(resultList, FgaRelationVO.class);
         return RestResult.success(voList);
     }
@@ -110,7 +131,8 @@ public class FgaTypeDefinitionApiService implements IFgaTypeDefinitionApiService
         log.debug("FgaTypeDefinitionApiService getRelation, storeId:{}, modelId:{}, type:{}, relationName:{}", 
                 storeId, modelId, type, relationName);
 
-        RelationResultDTO result = modelSchemaApplicationService.getRelation(storeId, modelId, type, relationName);
+        AuthorizationRelationResultDTO result =
+                modelSchemaApplicationService.getRelation(storeId, modelId, type, relationName);
         FgaRelationVO vo = MapstructUtil.convert(result, FgaRelationVO.class);
         return RestResult.success(vo);
     }

@@ -13,10 +13,10 @@ import org.kitona.zus.api.response.FgaUserVO;
 import org.kitona.zus.api.response.PageResponseVO;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.utils.MapstructUtil;
-import org.kitona.zus.service.application.IReadApplicationService;
+import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
 import org.kitona.zus.service.dto.query.ListUsersQuery;
-import org.kitona.zus.service.dto.query.ReadQuery;
+import org.kitona.zus.service.dto.query.TupleReadQuery;
 import org.kitona.zus.service.dto.response.ListObjectsResultDTO;
 import org.kitona.zus.service.dto.response.ListUsersResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
@@ -38,7 +38,7 @@ import java.util.List;
 public class FgaReadApiService implements IFgaReadApiService {
 
     @Resource
-    private IReadApplicationService readApplicationService;
+    private IAuthorizationReadApplicationService readApplicationService;
 
     @Override
     public RestResult<PageResponseVO<FgaTupleVO>> read(String storeId, FgaReadRequest request) {
@@ -47,7 +47,7 @@ public class FgaReadApiService implements IFgaReadApiService {
                 request != null ? request.getObjectId() : null,
                 request != null ? request.getRelation() : null);
 
-        ReadQuery query = MapstructUtil.convert(request, ReadQuery.class);
+        TupleReadQuery query = MapstructUtil.convert(request, TupleReadQuery.class);
         PageResultDTO<TupleResultDTO> result = readApplicationService.read(storeId, query);
 
         List<FgaTupleVO> tuples = MapstructUtil.convert(result.getData(), FgaTupleVO.class);

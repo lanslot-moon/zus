@@ -12,13 +12,15 @@
  * │   ├── config/     Caffeine、Redis 配置
  * │   └── query/      缓存查询封装
  * ├── context/        运行时上下文（如当前用户）
- * ├── engine/         领域引擎实现（解析器、图工厂、元组存储）
- * │   ├── factory/    IModelGraphFactory、ITupleStoreFactory 实现
+ * ├── engine/         领域引擎实现（解析器、编译器、快照渲染）
+ * │   ├── compiler/   CompiledAuthorizationModelCompiler
  * │   ├── parser/     OpenFGA 模型解析（ANTLR4）
- * │   └── tuple/      RepositoryTupleStore、InMemoryTupleStore
+ * │   └── render/     授权模型快照渲染
  * ├── enums/          基础设施枚举（与表/缓存状态对应）
  * ├── external/       外部系统适配（防腐层实现）
- * │   └── usercenter/ 用户中心 IUserInfoGateway 实现
+ * │   ├── audit/      审计上下文适配
+ * │   ├── cel/        CEL 条件求值适配
+ * │   └── usercenter/ 用户中心应用层协作网关实现
  * ├── handler/        MyBatis-Plus 自动填充等
  * └── persistence/    持久化
  *     └── mysql/      MyBatis-Plus + MySQL
@@ -31,7 +33,7 @@
  * <h2>依赖规则</h2>
  * <ul>
  *   <li>依赖领域层：实现领域定义的 Repository、Port 接口</li>
- *   <li>也可实现领域模块中单独声明的共享协作契约（如 {@code domain.gateway} 下的外部查询网关）</li>
+ *   <li>也可实现应用层声明的外部协作契约（如 DTO 组装所需的查询网关）</li>
  *   <li>基础设施层可以被应用层装配和调用，但不反向依赖 API 协议对象</li>
  *   <li>不暴露领域模型：对外仅通过领域接口与 DTO/PO 交互</li>
  * </ul>

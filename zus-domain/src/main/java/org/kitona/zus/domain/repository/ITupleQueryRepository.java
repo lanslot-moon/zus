@@ -1,6 +1,7 @@
 package org.kitona.zus.domain.repository;
 
-import org.kitona.zus.domain.entity.RelationTupleEntity;
+import org.kitona.zus.domain.authorization.tuple.RelationTuple;
+import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
 
 import java.util.List;
 
@@ -12,25 +13,17 @@ import java.util.List;
 public interface ITupleQueryRepository {
 
     /**
-     * 分页列出关系元组（基础方法）
+     * 分页列出关系元组。
      */
-    List<RelationTupleEntity> listTuples(String storeId, String objectType, String relation, int pageSize, Long pageToken);
-
-    /**
-     * 分页列出关系元组（支持完整过滤条件）
-     */
-    List<RelationTupleEntity> listTuplesWithFilter(String storeId, String objectType, String objectId,
-                                                   String relation, String subjectType, String subjectId,
-                                                   String subjectRelation, int pageSize, Long pageToken);
+    List<RelationTuple> list(TupleQueryCriteria criteria);
 
     /**
      * 根据主体查询元组
      */
-    List<RelationTupleEntity> findBySubject(String storeId, String subjectType, String subjectId, String subjectRelation,
-                                            String objectType, String relation, Long maxZookie);
+    List<RelationTuple> findBySubject(TupleQueryCriteria criteria);
 
     /**
      * 根据资源对象查询元组
      */
-    List<RelationTupleEntity> findByObject(String storeId, String objectType, String objectId, String relation, Long maxZookie);
+    List<RelationTuple> findByObject(TupleQueryCriteria criteria);
 }

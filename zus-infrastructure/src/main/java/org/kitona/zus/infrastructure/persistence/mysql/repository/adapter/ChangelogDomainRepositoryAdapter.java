@@ -1,7 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
 import jakarta.annotation.Resource;
-import org.kitona.zus.domain.entity.ChangelogEntity;
+import org.kitona.zus.domain.authorization.audit.Changelog;
 import org.kitona.zus.domain.repository.IChangelogDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.ChangelogConverter;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
@@ -20,7 +20,7 @@ public class ChangelogDomainRepositoryAdapter implements IChangelogDomainReposit
     private IChangelogPersistenceRepository changelogPersistenceRepository;
 
     @Override
-    public void saveBatch(List<ChangelogEntity> changelogs) {
+    public void saveBatch(List<Changelog> changelogs) {
         if (changelogs == null || changelogs.isEmpty()) {
             return;
         }
@@ -29,7 +29,7 @@ public class ChangelogDomainRepositoryAdapter implements IChangelogDomainReposit
     }
 
     @Override
-    public void save(ChangelogEntity changelog) {
+    public void save(Changelog changelog) {
         if (changelog == null) {
             return;
         }

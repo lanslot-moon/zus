@@ -1,5 +1,6 @@
 package org.kitona.zus.api.request;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -58,8 +59,20 @@ public class FgaTupleRequest {
     private String conditionName;
 
     /**
+     * 条件定义ID
+     */
+    private Long conditionDefinitionId;
+
+    /**
      * 条件上下文（JSON 字符串）
      */
     @Size(max = 2048, message = "conditionContext 长度不能超过 2048")
     private String conditionContext;
+
+    @AssertTrue(message = "存在条件信息时必须提供 conditionDefinitionId")
+    public boolean isConditionReferenceValid() {
+        boolean hasConditionSnapshot = (conditionName != null && !conditionName.isBlank())
+                || (conditionContext != null && !conditionContext.isBlank());
+        return !hasConditionSnapshot || conditionDefinitionId != null;
+    }
 }

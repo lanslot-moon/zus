@@ -8,24 +8,17 @@
  * <pre>
  * domain/
  * │
- * ├── aggregate/         聚合根（Aggregate Root）与重建快照
- * │   ├── StoreAggregate              存储空间聚合根
- * │   ├── StoreSnapshot               存储空间持久化快照
- * │   ├── AuthorizationModelAggregate 授权模型聚合根
- * │   └── AuthorizationModelSnapshot  授权模型持久化快照
- * │
- * ├── entity/            聚合内实体（Entity）
- * │   ├── TypeDefinitionEntity        类型定义实体
- * │   ├── RelationTupleEntity         关系元组实体
- * │   └── ChangelogEntity             变更日志实体
+ * ├── authorization/     授权领域上下文
+ * │   ├── store/                     Store 聚合
+ * │   ├── model/                     Authorization Model 聚合
+ * │   ├── tuple/                     Tuple 子域
+ * │   ├── audit/                     审计子域
+ * │   └── evaluation/                编译模型与求值子域
  * │
  * ├── valueobject/       值对象（Value Object）
  * │   ├── Zookie                      一致性令牌
- * │   ├── TupleKey                    元组键
- * │   ├── AuthorizationCheckResult    鉴权结果
- * │   ├── AuthorizationCheckStatus    鉴权结果状态
- * │   ├── RelationDefinition          关系定义
- * │   ├── TypeDefinition              类型定义（运行时用）
+ * │   ├── PermissionCheckResult       鉴权结果
+ * │   ├── PermissionCheckStatus       鉴权结果状态
  * │   └── ...
  * │
  * ├── enums/             领域枚举
@@ -42,33 +35,22 @@
  * │   ├── ITupleQueryRepository       元组查询仓储
  * │   └── IChangelogQueryRepository   变更日志查询仓储
  * │
- * ├── query/             读侧视图（Query Model）
- * │   ├── StoreView                    存储空间读侧视图
- * │   └── AuthorizationModelView       授权模型读侧视图
- * │
- * ├── gateway/           共享协作网关契约
- * │   └── IUserInfoGateway             DTO 组装所需的外部查询协作契约
+ * ├── read/              读侧契约
+ * │   ├── criteria/                 查询条件对象
+ * │   └── view/                     读侧结果视图
  * │
  * ├── service/           领域服务（Domain Service）
- * │   ├── AuthorizationChecker        权限检查器
- * │   ├── AuthorizationModelGraph     授权模型图
- * │   ├── TupleMutationDomainService  tuple 变更领域服务
- * │   └── internal/      内部实现（不对外暴露）
- * │       ├── DirectedGraph           有向图数据结构
- * │       ├── GraphNode               图节点
- * │       ├── NodeType                节点类型枚举
- * │       ├── GraphBuilder            图构建器
- * │       └── ModelTextParser         模型文本解析器
+ * │   ├── PermissionEvaluator        统一权限求值器
+ * │   └── TupleMutationDomainService tuple 变更领域服务
  * │
- * ├── port/              端口（Ports，六边形架构）
- * │   ├── IModelCompiler              模型编译器端口
- * │   ├── ITupleStore                 元组存储端口
- * │   ├── ITupleStoreFactory          元组存储工厂端口
- * │   ├── IZookieSequencePort         zookie 序列端口
- * │   └── ...                         领域规则真正依赖的外部能力
- * │
- * └── factory/           工厂（Factory）
- *     └── AuthorizationModelFactory   授权模型工厂
+ * └── port/              端口（Ports，六边形架构）
+ *     ├── ICompiledModelCompiler     编译模型编译端口
+ *     ├── ICompiledModelCache        编译模型缓存端口
+ *     ├── IConditionEvaluator        条件求值端口
+ *     ├── IModelSnapshotRenderer     模型快照渲染端口
+ *     ├── IAuditContextProvider      审计上下文端口
+ *     ├── IZookieSequencePort        zookie 序列端口
+ *     └── ...                        领域规则真正依赖的外部能力
  * </pre>
  *
  * <h2>六边形架构说明</h2>
@@ -95,24 +77,33 @@
  * </ul>
  *
  * <h3>2. AuthorizationModelAggregate（授权模型聚合）</h3>
- * <p>定义权限关系的模型，包含类型定义和关系定义。
+ * <p>定义权限关系的模型，包含类型定义、关系定义、类型限制与条件定义。
  * <ul>
  *   <li>聚合根：AuthorizationModelAggregate</li>
- *   <li>聚合内实体：TypeDefinitionEntity</li>
+ *   <li>聚合内实体：TypeDefinition</li>
  *   <li>值对象：RelationDefinition</li>
  *   <li>命令仓储只负责完整聚合装载、保存与“仅草稿可删”这类不变量封装</li>
  *   <li>最新已发布模型、分页列表等读语义由查询仓储承担</li>
  * </ul>
  *
- * <h3>3. RelationTupleEntity（关系元组）</h3>
- * <p>具体的权限关系数据实例。
+ * <h3>3. RelationTuple（关系元组）</h3>
+ * <p>具体的权限关系数据实例，显式承载 wildcard、过期时间、条件与 zookie 语义。
+ *
+ * <h3>4. evaluation（授权求值子域）</h3>
+ * <p>用于承载授权模型编译产物、运行时上下文、求值规格和 rewrite AST。
+ * <ul>
+ *   <li>{@code compiled}: 已编译模型与关系</li>
+ *   <li>{@code runtime}: 单次求值请求、递归保护、运行时模板</li>
+ *   <li>{@code specification}: tuple 可见性、主体匹配、关系限制规则</li>
+ *   <li>{@code nodes}: rewrite 抽象语法树</li>
+ *   <li>{@code strategy}: 节点求值策略</li>
+ * </ul>
  *
  * <h2>依赖规则</h2>
  * <ul>
  *   <li>领域层是系统核心，不依赖任何外部框架（无 Spring 注解）</li>
  *   <li>命令仓储与查询仓储接口定义在领域层，实现在基础设施层</li>
  *   <li>领域层不再承载由应用层直接发布的“伪领域事件”，提交后通知改由应用事件表达</li>
- *   <li>仅 DTO 组装或读侧补充所需的外部查询协作，放在 domain.gateway 包中，而非领域端口</li>
  *   <li>Port 接口定义在领域层，Adapter 实现在基础设施层</li>
  * </ul>
  *

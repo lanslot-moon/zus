@@ -1,6 +1,6 @@
 package org.kitona.zus.infrastructure.external.usercenter;
 
-import org.kitona.zus.domain.gateway.IUserInfoGateway;
+import org.kitona.zus.common.gateway.IUserInfoGateway;
 import org.springframework.stereotype.Service;
 
 /**

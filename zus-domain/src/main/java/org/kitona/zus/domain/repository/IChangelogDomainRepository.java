@@ -1,6 +1,6 @@
 package org.kitona.zus.domain.repository;
 
-import org.kitona.zus.domain.entity.ChangelogEntity;
+import org.kitona.zus.domain.authorization.audit.Changelog;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import java.util.List;
  *
  * <p>
  * Changelog 记录了元组（Tuple）的所有变更历史，是实现 Zookie 一致性读取和 Watch API 的核心。
- * 按照 DDD 规范，Repository 负责领域实体 {@link ChangelogEntity} 的写侧持久化；
+ * 按照 DDD 规范，Repository 负责领域实体 {@link Changelog} 的写侧持久化；
  * Watch、增量同步与 zookie 查询能力交由独立查询仓储处理。
  *
  * @author kitona
@@ -23,14 +23,14 @@ public interface IChangelogDomainRepository {
      *
      * @param changelogs 变更日志实体列表
      */
-    void saveBatch(List<ChangelogEntity> changelogs);
+    void saveBatch(List<Changelog> changelogs);
 
     /**
      * 持久化单条变更日志
      *
      * @param changelog 变更日志实体
      */
-    void save(ChangelogEntity changelog);
+    void save(Changelog changelog);
 
     /**
      * 清理历史变更日志

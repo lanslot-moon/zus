@@ -2,7 +2,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
 import jakarta.annotation.Resource;
 import org.apache.commons.collections4.CollectionUtils;
-import org.kitona.zus.domain.query.AuthorizationModelView;
+import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.domain.repository.IAuthorizationModelQueryRepository;
 import org.kitona.zus.domain.valueobject.CursorPageResult;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.AuthorizationModelConverter;

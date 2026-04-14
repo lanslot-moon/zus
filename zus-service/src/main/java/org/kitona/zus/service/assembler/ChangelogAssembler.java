@@ -1,7 +1,7 @@
 package org.kitona.zus.service.assembler;
 
-import org.kitona.zus.domain.entity.ChangelogEntity;
-import org.kitona.zus.service.dto.response.WatchChangeResultDTO;
+import org.kitona.zus.domain.authorization.audit.Changelog;
+import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 
 import java.util.Collections;
 import java.util.List;
@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 变更日志 Assembler
  *
- * <p>负责 {@link ChangelogEntity} 与 {@link WatchChangeResultDTO} 之间的转换。
+ * <p>负责 {@link Changelog} 与 {@link TupleChangeResultDTO} 之间的转换。
  * <p>DDD 规范：Assembler 位于应用服务层，用于领域对象与 DTO 之间的转换。
  *
  * @author kitona
@@ -27,11 +27,11 @@ public final class ChangelogAssembler {
      * @param entity 变更日志实体
      * @return Watch 变更结果 DTO，entity 为 null 时返回 null
      */
-    public static WatchChangeResultDTO toDTO(ChangelogEntity entity) {
+    public static TupleChangeResultDTO toDTO(Changelog entity) {
         if (entity == null) {
             return null;
         }
-        return WatchChangeResultDTO.builder()
+        return TupleChangeResultDTO.builder()
                 .zookie(entity.getZookie() != null ? entity.getZookie().toString() : null)
                 .operation(entity.getOperation())
                 .objectType(entity.getObjectType())
@@ -40,6 +40,9 @@ public final class ChangelogAssembler {
                 .subjectType(entity.getSubjectType())
                 .subjectId(entity.getSubjectId())
                 .subjectRelation(entity.getSubjectRelation())
+                .operatorId(entity.getOperatorId())
+                .requestId(entity.getRequestId())
+                .source(entity.getSource())
                 .build();
     }
 
@@ -49,7 +52,7 @@ public final class ChangelogAssembler {
      * @param entities 变更日志实体列表
      * @return DTO 列表，entities 为 null 或空时返回空列表
      */
-    public static List<WatchChangeResultDTO> toDTOList(List<ChangelogEntity> entities) {
+    public static List<TupleChangeResultDTO> toDTOList(List<Changelog> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }

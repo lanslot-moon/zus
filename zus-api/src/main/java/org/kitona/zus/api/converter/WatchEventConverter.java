@@ -2,7 +2,7 @@ package org.kitona.zus.api.converter;
 
 import org.kitona.zus.api.response.WatchChangeEventVO;
 import org.kitona.zus.api.response.WatchTupleDataVO;
-import org.kitona.zus.service.dto.response.WatchChangeResultDTO;
+import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 
 import java.util.Collections;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Watch 事件转换器
  *
- * <p>负责 {@link WatchChangeResultDTO} 与 {@link WatchChangeEventVO} 之间的转换。
+ * <p>负责 {@link TupleChangeResultDTO} 与 {@link WatchChangeEventVO} 之间的转换。
  * <p>DDD 规范：Converter 位于用户接口层，用于 DTO 与 VO 之间的转换。
  *
  * @author kitona
@@ -23,12 +23,12 @@ public final class WatchEventConverter {
     }
 
     /**
-     * 将 WatchChangeResultDTO 转换为 WatchChangeEventVO
+     * 将 TupleChangeResultDTO 转换为 WatchChangeEventVO
      *
      * @param dto 变更结果 DTO
      * @return 变更事件 VO，dto 为 null 时返回 null
      */
-    public static WatchChangeEventVO toChangeEvent(WatchChangeResultDTO dto) {
+    public static WatchChangeEventVO toChangeEvent(TupleChangeResultDTO dto) {
         if (dto == null) {
             return null;
         }
@@ -44,7 +44,7 @@ public final class WatchEventConverter {
      * @param dtoList DTO 列表
      * @return WatchChangeEventVO 列表
      */
-    public static List<WatchChangeEventVO> toChangeEventList(List<WatchChangeResultDTO> dtoList) {
+    public static List<WatchChangeEventVO> toChangeEventList(List<TupleChangeResultDTO> dtoList) {
         if (dtoList == null || dtoList.isEmpty()) {
             return Collections.emptyList();
         }

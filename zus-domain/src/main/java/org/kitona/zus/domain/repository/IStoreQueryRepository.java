@@ -1,6 +1,6 @@
 package org.kitona.zus.domain.repository;
 
-import org.kitona.zus.domain.query.StoreView;
+import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.valueobject.CursorPageResult;
 
 import java.util.Optional;

@@ -2,7 +2,7 @@ package org.kitona.zus.service.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
@@ -15,7 +15,7 @@ import java.util.List;
  * @version 1.0.0
  * @since 2025-01-15
  */
-@Data
+@Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,7 +29,7 @@ public class ListUsersResultDTO implements Serializable {
         return ListUsersResultDTO.builder().users(List.of()).build();
     }
 
-    @Data
+    @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor

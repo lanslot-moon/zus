@@ -1,0 +1,78 @@
+package org.kitona.zus.domain.authorization.evaluation.runtime;
+
+import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
+import org.kitona.zus.domain.authorization.evaluation.specification.TupleVisibilitySpecification;
+import org.kitona.zus.domain.port.IConditionEvaluator;
+
+/**
+ * 单次授权请求的运行时上下文。
+ *
+ * <p>把一次求值过程中会重复使用的只读上下文集中起来，
+ * 避免在递归时反复构建相同的 specification 和时间快照。
+ */
+public final class EvaluationRuntime {
+
+    private final CompiledAuthorizationModel model;
+    private final EvaluationRequest request;
+    private final RecursionGuard guard;
+    private final long currentTimeMillis;
+    private final TupleVisibilitySpecification visibilitySpecification;
+
+    public EvaluationRuntime(CompiledAuthorizationModel model,
+                             EvaluationRequest request,
+                             RecursionGuard guard,
+                             long currentTimeMillis,
+                             IConditionEvaluator conditionEvaluator) {
+        this.model = model;
+        this.request = request;
+        this.guard = guard;
+        this.currentTimeMillis = currentTimeMillis;
+        // 单次请求共享同一份 tuple 可见性规则，避免在递归过程中重复构建。
+        this.visibilitySpecification = new TupleVisibilitySpecification(model, request, conditionEvaluator, currentTimeMillis);
+    }
+
+    /**
+     * 返回当前请求对应的编译模型。
+     */
+    public CompiledAuthorizationModel model() {
+        return model;
+    }
+
+    /**
+     * 返回当前递归分支使用的求值请求。
+     */
+    public EvaluationRequest request() {
+        return request;
+    }
+
+    /**
+     * 返回当前请求共享的递归保护器。
+     */
+    public RecursionGuard guard() {
+        return guard;
+    }
+
+    /**
+     * 返回本次求值固定使用的时间快照。
+     */
+    public long currentTimeMillis() {
+        return currentTimeMillis;
+    }
+
+    /**
+     * 返回 tuple 可见性判定规则。
+     */
+    public TupleVisibilitySpecification visibilitySpecification() {
+        return visibilitySpecification;
+    }
+
+    /**
+     * 派生一个替换请求但共享递归上下文的新运行时对象。
+     *
+     * <p>ListObjects / ListUsers 会频繁替换 subject 或 object，
+     * 但它们仍应共享 memo、访问路径和时间快照。
+     */
+    public EvaluationRuntime withRequest(EvaluationRequest nextRequest, IConditionEvaluator conditionEvaluator) {
+        return new EvaluationRuntime(model, nextRequest, guard, currentTimeMillis, conditionEvaluator);
+    }
+}

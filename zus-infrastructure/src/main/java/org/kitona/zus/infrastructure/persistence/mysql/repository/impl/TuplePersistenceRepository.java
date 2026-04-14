@@ -252,7 +252,7 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
     @Override
     public List<TuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
             String relation, String subjectType, String subjectId,
-            String subjectRelation, int pageSize, Long pageToken) {
+            String subjectRelation, int pageSize, Long pageToken, Long maxZookie) {
         LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
                 .eq(TuplePO::getStoreId, storeId)
                 .eq(StringUtils.isNotBlank(objectType), TuplePO::getObjectType, objectType)
@@ -261,6 +261,7 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
                 .eq(StringUtils.isNotBlank(subjectType), TuplePO::getSubjectType, subjectType)
                 .eq(StringUtils.isNotBlank(subjectId), TuplePO::getSubjectId, subjectId)
                 .eq(StringUtils.isNotBlank(subjectRelation), TuplePO::getSubjectRelation, subjectRelation)
+                .le(Objects.nonNull(maxZookie), TuplePO::getZookie, maxZookie)
                 .gt(pageToken != null, TuplePO::getId, pageToken)
                 .orderByAsc(TuplePO::getId)
                 .last("LIMIT " + pageSize);

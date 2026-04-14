@@ -3,8 +3,9 @@ package org.kitona.zus.service.dto.command;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -19,7 +20,8 @@ import java.io.Serializable;
  * @version 1.0.0
  * @since 2025-01-15
  */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -74,4 +76,9 @@ public class CheckCommand implements Serializable {
      * <p>传入后将只查询该版本之前的元组，保证一致性读取
      */
     private String consistencyToken;
+
+    /**
+     * 请求上下文（供 condition 使用）。
+     */
+    private java.util.Map<String, Object> context;
 }

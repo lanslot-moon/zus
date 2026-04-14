@@ -1,9 +1,9 @@
 package org.kitona.zus.infrastructure.persistence.mysql.converter;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import org.kitona.zus.domain.entity.RelationTupleEntity;
-import org.kitona.zus.domain.valueobject.TupleCondition;
-import org.kitona.zus.domain.valueobject.TupleKey;
+import org.kitona.zus.domain.authorization.tuple.RelationTuple;
+import org.kitona.zus.domain.authorization.tuple.TupleCondition;
+import org.kitona.zus.domain.authorization.tuple.TupleKey;
 import org.kitona.zus.domain.valueobject.Zookie;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
 
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Tuple PO 与领域实体 RelationTupleEntity 转换器
+ * Tuple PO 与领域实体 RelationTuple 转换器
  *
  * @author kitona
  */
@@ -24,7 +24,7 @@ public final class TupleConverter {
     /**
      * PO 转换为领域实体（持久化重建）
      */
-    public static RelationTupleEntity toEntity(TuplePO po) {
+    public static RelationTuple toEntity(TuplePO po) {
         if (po == null) {
             return null;
         }
@@ -36,12 +36,14 @@ public final class TupleConverter {
                 po.getSubjectId(),
                 po.getSubjectRelation()
         );
-        return RelationTupleEntity.reconstitute(
+        return RelationTuple.reconstitute(
                 po.getId(),
                 po.getStoreId(),
                 tupleKey,
                 po.getZookie() != null ? Zookie.of(po.getZookie()) : null,
-                TupleCondition.of(po.getConditionName(), po.getConditionContext()),
+                TupleCondition.of(po.getConditionDefinitionId(), po.getConditionName(), po.getConditionContext()),
+                po.getExpiresAt(),
+                Boolean.TRUE.equals(po.getIsWildcard()),
                 po.getCreateTime()
         );
     }
@@ -49,7 +51,7 @@ public final class TupleConverter {
     /**
      * 领域实体转换为 PO
      */
-    public static TuplePO toPO(RelationTupleEntity entity) {
+    public static TuplePO toPO(RelationTuple entity) {
         if (entity == null) {
             return null;
         }
@@ -63,20 +65,23 @@ public final class TupleConverter {
         po.setSubjectType(entity.getSubjectType());
         po.setSubjectId(entity.getSubjectId());
         po.setSubjectRelation(entity.getSubjectRelation());
+        po.setIsWildcard(entity.isWildcard());
         po.setZookie(entity.getZookie() != null ? entity.getZookie().getVersion() : null);
+        po.setConditionDefinitionId(entity.getConditionDefinitionId());
         po.setConditionName(entity.getConditionName());
         po.setConditionContext(entity.getConditionContext());
+        po.setExpiresAt(entity.getExpiresAt());
         return po;
     }
 
-    public static List<RelationTupleEntity> toEntityList(List<TuplePO> list) {
+    public static List<RelationTuple> toEntityList(List<TuplePO> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }
         return list.stream().map(TupleConverter::toEntity).collect(Collectors.toList());
     }
 
-    public static List<TuplePO> toPOList(List<RelationTupleEntity> list) {
+    public static List<TuplePO> toPOList(List<RelationTuple> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }

@@ -2,15 +2,16 @@ package org.kitona.zus.service.dto.command;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 创建授权模型命令
@@ -26,7 +27,8 @@ import java.util.Map;
  * @version 1.0.0
  * @since 2025-01-15
  */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -48,13 +50,13 @@ public class CreateModelCommand implements Serializable {
     private String schemaVersion;
 
     /**
-     * 类型定义列表（与 dslText 二选一）
+     * 类型定义列表（结构化模型输入）
      */
     @Valid
     private List<TypeDefinitionInput> typeDefinitions;
 
     /**
-     * 授权模型 DSL 文本（与 typeDefinitions 二选一）
+     * 授权模型 DSL 快照文本（可选导入/回显字段，不作为写侧真相）
      */
     private String dslText;
 
@@ -64,9 +66,16 @@ public class CreateModelCommand implements Serializable {
     private String description;
 
     /**
+     * 条件定义列表。
+     */
+    @Valid
+    private List<ConditionDefinitionInput> conditions;
+
+    /**
      * 类型定义输入（内部类）
      */
-    @Data
+    @Getter
+    @Setter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
@@ -80,16 +89,44 @@ public class CreateModelCommand implements Serializable {
          */
         private String type;
 
-        /**
-         * 关系名到重写表达式的映射
-         * <p>键为关系名（如 viewer、editor、owner），值为表达式字符串（如 self、self or owner）
-         */
-        private Map<String, String> relations;
+        @Valid
+        @NotEmpty(message = "relations 不能为空")
+        private List<RelationInput> relations;
+    }
 
-        /**
-         * 关系的类型限制（可选）
-         * <p>键为关系名，值为允许的主体类型列表，如 parentFolder -> ["folder"]
-         */
-        private Map<String, List<String>> relationRestrictions;
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RelationInput implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private String relationName;
+
+        private String rewriteExpression;
+
+        private List<String> allowedSubjectTypes;
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ConditionDefinitionInput implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private String name;
+
+        private String expression;
+
+        private String parameterSchema;
+
+        private String description;
     }
 }

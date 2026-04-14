@@ -4,7 +4,7 @@ import jakarta.annotation.Resource;
 import org.kitona.zus.api.converter.WatchEventConverter;
 import org.kitona.zus.api.response.WatchChangeEventVO;
 import org.kitona.zus.api.sse.SseConnectionManager;
-import org.kitona.zus.service.dto.response.WatchChangeResultDTO;
+import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 import org.kitona.zus.service.event.WatchEventPublisher;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +24,7 @@ public class WatchEventPublisherImpl implements WatchEventPublisher {
     private SseConnectionManager sseConnectionManager;
 
     @Override
-    public void publish(String storeId, WatchChangeResultDTO change) {
+    public void publish(String storeId, TupleChangeResultDTO change) {
         if (storeId == null || change == null) {
             return;
         }

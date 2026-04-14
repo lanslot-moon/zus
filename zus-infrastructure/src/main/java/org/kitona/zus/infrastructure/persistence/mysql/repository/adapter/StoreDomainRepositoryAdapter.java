@@ -1,7 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
 import jakarta.annotation.Resource;
-import org.kitona.zus.domain.aggregate.StoreAggregate;
+import org.kitona.zus.domain.authorization.store.StoreAggregate;
 import org.kitona.zus.domain.enums.StoreStatus;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.StoreConverter;

@@ -26,7 +26,7 @@
  *   <li>核心业务规则优先下沉到聚合根、值对象和领域服务</li>
  *   <li>只读场景优先依赖 QueryRepository，避免命令仓储继续膨胀</li>
  *   <li>提交后的通知使用应用事件表达，不再将这类语义混入领域事件</li>
- *   <li>外部补充查询通过 {@code domain.gateway} 下的共享协作契约接入</li>
+ *   <li>外部补充查询通过共享协作契约接入，不进入领域规则与聚合边界</li>
  * </ul>
  */
 package org.kitona.zus.service;

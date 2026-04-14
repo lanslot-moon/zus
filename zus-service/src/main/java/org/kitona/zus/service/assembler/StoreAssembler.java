@@ -1,6 +1,6 @@
 package org.kitona.zus.service.assembler;
 
-import org.kitona.zus.domain.query.StoreView;
+import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.service.dto.response.StoreResultDTO;
 
 import java.util.Collections;

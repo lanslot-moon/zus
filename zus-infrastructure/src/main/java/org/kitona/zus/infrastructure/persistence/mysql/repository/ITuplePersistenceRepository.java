@@ -17,7 +17,7 @@ import java.util.Optional;
  * {@link org.kitona.zus.domain.repository.ITupleDomainRepository} /
  * {@link org.kitona.zus.domain.repository.ITupleQueryRepository} 职责不同：
  * <ul>
- *   <li>领域层接口：操作领域实体（RelationTupleEntity），定义业务契约</li>
+ *   <li>领域层接口：操作领域实体（RelationTuple），定义业务契约</li>
  *   <li>本接口：操作持久化对象（TuplePO），定义技术契约</li>
  * </ul>
  *
@@ -139,5 +139,6 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      */
     List<TuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
                                        String relation, String subjectType, String subjectId,
-                                       String subjectRelation, int pageSize, Long pageToken);
+                                       String subjectRelation, int pageSize, Long pageToken,
+                                       Long maxZookie);
 }

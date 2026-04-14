@@ -6,8 +6,8 @@ import org.kitona.zus.api.controller.IFgaWatchApiService;
 import org.kitona.zus.api.converter.WatchEventConverter;
 import org.kitona.zus.api.response.WatchChangeEventVO;
 import org.kitona.zus.api.sse.SseConnectionManager;
-import org.kitona.zus.service.application.IWatchApplicationService;
-import org.kitona.zus.service.dto.response.WatchChangeResultDTO;
+import org.kitona.zus.service.application.ITupleWatchApplicationService;
+import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -30,7 +30,7 @@ public class FgaWatchApiService implements IFgaWatchApiService {
     private static final int HISTORICAL_CHANGE_LIMIT = 100;
 
     @Resource
-    private IWatchApplicationService watchApplicationService;
+    private ITupleWatchApplicationService watchApplicationService;
 
     @Resource
     private SseConnectionManager sseConnectionManager;
@@ -42,7 +42,8 @@ public class FgaWatchApiService implements IFgaWatchApiService {
         SseEmitter emitter = sseConnectionManager.createConnection(storeId, startAt);
 
         if (startAt != null) {
-            List<WatchChangeResultDTO> changes = watchApplicationService.getChanges(storeId, startAt, HISTORICAL_CHANGE_LIMIT);
+            List<TupleChangeResultDTO> changes =
+                    watchApplicationService.getChanges(storeId, startAt, HISTORICAL_CHANGE_LIMIT);
             List<WatchChangeEventVO> events = WatchEventConverter.toChangeEventList(changes);
             sseConnectionManager.sendChangeEvents(emitter, events);
         }

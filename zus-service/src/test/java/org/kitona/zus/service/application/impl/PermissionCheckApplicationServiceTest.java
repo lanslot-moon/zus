@@ -1,0 +1,95 @@
+package org.kitona.zus.service.application.impl;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.kitona.zus.domain.repository.IChangelogQueryRepository;
+import org.kitona.zus.domain.valueobject.PermissionCheckResult;
+import org.kitona.zus.service.application.coordinator.PermissionCheckCoordinator;
+import org.kitona.zus.service.dto.command.CheckCommand;
+import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class PermissionCheckApplicationServiceTest {
+
+    @Mock
+    private PermissionCheckCoordinator permissionCheckCoordinator;
+
+    @Mock
+    private IChangelogQueryRepository changelogQueryRepository;
+
+    private PermissionCheckApplicationService checkApplicationService;
+
+    @BeforeEach
+    void setUp() {
+        checkApplicationService = new PermissionCheckApplicationService();
+        ReflectionTestUtils.setField(Objects.requireNonNull(checkApplicationService), "permissionCheckCoordinator", permissionCheckCoordinator);
+        ReflectionTestUtils.setField(Objects.requireNonNull(checkApplicationService), "changelogQueryRepository", changelogQueryRepository);
+    }
+
+    @Test
+    void shouldMapDeniedResultToDeniedDto() {
+        when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
+                .thenReturn(PermissionCheckResult.denied());
+        when(changelogQueryRepository.getMaxZookie("store-1")).thenReturn(7L);
+
+        PermissionCheckResultDTO dto = checkApplicationService.check(buildCommand());
+
+        assertFalse(dto.isAllowed());
+        assertEquals("DENIED", dto.getDecision());
+        assertEquals("7", dto.getZookieToken());
+        assertNull(dto.getErrorMessage());
+    }
+
+    @Test
+    void shouldExposeAbnormalAuthorizationState() {
+        when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
+                .thenReturn(PermissionCheckResult.modelNotFound());
+        when(changelogQueryRepository.getMaxZookie("store-1")).thenReturn(9L);
+
+        PermissionCheckResultDTO dto = checkApplicationService.check(buildCommand());
+
+        assertFalse(dto.isAllowed());
+        assertEquals("MODEL_NOT_FOUND", dto.getDecision());
+        assertEquals("当前授权模型不存在", dto.getErrorMessage());
+        assertEquals("9", dto.getZookieToken());
+        assertTrue(dto.hasError());
+    }
+
+    @Test
+    void shouldNotQueryZookieWhenStoreMissing() {
+        when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
+                .thenReturn(PermissionCheckResult.storeNotFound());
+
+        PermissionCheckResultDTO dto = checkApplicationService.check(buildCommand());
+
+        assertEquals("STORE_NOT_FOUND", dto.getDecision());
+        assertEquals("", dto.getZookieToken());
+        verify(changelogQueryRepository, never()).getMaxZookie(any());
+    }
+
+    private CheckCommand buildCommand() {
+        return CheckCommand.builder()
+                .storeId("store-1")
+                .objectType("document")
+                .objectId("doc-1")
+                .relation("viewer")
+                .subjectType("user")
+                .subjectId("alice")
+                .build();
+    }
+}

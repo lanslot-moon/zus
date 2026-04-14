@@ -3,8 +3,9 @@ package org.kitona.zus.service.dto.query;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -19,7 +20,8 @@ import java.io.Serializable;
  * @version 1.0.0
  * @since 2025-02-06
  */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -51,4 +53,19 @@ public class ListUsersQuery implements Serializable {
      */
     @NotBlank(message = "relation 不能为空")
     private String relation;
+
+    /**
+     * 主体类型过滤（可选）。
+     */
+    private String subjectType;
+
+    /**
+     * 一致性令牌。
+     */
+    private String consistencyToken;
+
+    /**
+     * 请求上下文。
+     */
+    private java.util.Map<String, Object> context;
 }

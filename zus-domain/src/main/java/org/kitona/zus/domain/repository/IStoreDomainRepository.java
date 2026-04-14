@@ -1,6 +1,6 @@
 package org.kitona.zus.domain.repository;
 
-import org.kitona.zus.domain.aggregate.StoreAggregate;
+import org.kitona.zus.domain.authorization.store.StoreAggregate;
 import org.kitona.zus.domain.enums.StoreStatus;
 import java.util.List;
 import java.util.Optional;

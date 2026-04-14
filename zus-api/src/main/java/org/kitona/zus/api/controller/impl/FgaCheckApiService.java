@@ -8,9 +8,9 @@ import org.kitona.zus.api.response.FgaCheckResultVO;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.MapstructUtil;
-import org.kitona.zus.service.application.ICheckApplicationService;
+import org.kitona.zus.service.application.IPermissionCheckApplicationService;
 import org.kitona.zus.service.dto.command.CheckCommand;
-import org.kitona.zus.service.dto.response.CheckResultDTO;
+import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
 import org.springframework.stereotype.Service;
 
 /**
@@ -25,14 +25,14 @@ import org.springframework.stereotype.Service;
 public class FgaCheckApiService implements IFgaCheckApiService {
 
     @Resource
-    private ICheckApplicationService checkApplicationService;
+    private IPermissionCheckApplicationService checkApplicationService;
 
     @Override
     public RestResult<FgaCheckResultVO> check(String storeId, FgaCheckRequest request) {
         log.debug("FgaCheckApiService check, storeId:{}, params:{}", storeId, JacksonUtil.toJSONString(request));
         CheckCommand command = MapstructUtil.convert(request, CheckCommand.class);
         command.setStoreId(storeId);
-        CheckResultDTO dto = checkApplicationService.check(command);
+        PermissionCheckResultDTO dto = checkApplicationService.check(command);
         FgaCheckResultVO vo = MapstructUtil.convert(dto, FgaCheckResultVO.class);
         return RestResult.success(vo);
     }

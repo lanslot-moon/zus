@@ -4,16 +4,19 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.kitona.zus.domain.aggregate.AuthorizationModelAggregate;
-import org.kitona.zus.domain.entity.TypeDefinitionEntity;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.ConditionDefinition;
+import org.kitona.zus.domain.authorization.model.RelationDefinition;
+import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
-import org.kitona.zus.domain.valueobject.RelationDefinition;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.AuthorizationModelConverter;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.ConditionDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ModelRelationPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IAuthorizationModelPersistenceRepository;
+import org.kitona.zus.infrastructure.persistence.mysql.repository.IConditionDefinitionPersistenceRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IModelRelationPersistenceRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IRelationRestrictionPersistenceRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.ISubjectDefinitionPersistenceRepository;
@@ -45,6 +48,9 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     @Resource
     private IRelationRestrictionPersistenceRepository relationRestrictionPersistenceRepository;
 
+    @Resource
+    private IConditionDefinitionPersistenceRepository conditionDefinitionPersistenceRepository;
+
     @Override
     public Optional<AuthorizationModelAggregate> findByModelId(String storeId, String modelId) {
         if (StringUtils.isAnyBlank(modelId, storeId)) {
@@ -61,8 +67,9 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
             return Optional.empty();
         }
 
-        Map<String, List<TypeDefinitionEntity>> map = this.assembleTypeDefinitionEntities(storeId, Set.of(modelId));
+        Map<String, List<TypeDefinition>> map = this.assembleTypeDefinitionEntities(storeId, Set.of(modelId));
         aggregate.reconstituteTypeDefinitions(map.getOrDefault(modelId, Collections.emptyList()));
+        aggregate.reconstituteConditionDefinitions(loadConditionDefinitions(storeId, modelId));
         return Optional.of(aggregate);
     }
 
@@ -80,6 +87,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         }
 
         this.batchSaveTypeDefinitions(storeId, modelId, model.getTypeDefinitions());
+        this.batchSaveConditionDefinitions(storeId, modelId, model.getConditionDefinitions());
         return true;
     }
 
@@ -98,7 +106,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return true;
     }
 
-    private Map<String, List<TypeDefinitionEntity>> assembleTypeDefinitionEntities(String storeId, Set<String> modelIds) {
+    private Map<String, List<TypeDefinition>> assembleTypeDefinitionEntities(String storeId, Set<String> modelIds) {
         List<SubjectDefinitionPO> typeDefinitionPOs = typeDefinitionPersistenceRepository.selectByModelIdList(storeId, modelIds);
         if (CollectionUtils.isEmpty(typeDefinitionPOs)) {
             log.info("assembleTypeDefinitionEntities No TypeDefinition found for modelId: {} and storeId: {}", modelIds, storeId);
@@ -133,10 +141,10 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
                                 Collectors.toList())));
     }
 
-    private TypeDefinitionEntity buildTypeDefinitionEntity(SubjectDefinitionPO typeDefPO,
+    private TypeDefinition buildTypeDefinitionEntity(SubjectDefinitionPO typeDefPO,
                                                            Map<Long, List<ModelRelationPO>> relationsByTypeDefId,
                                                            Map<Long, List<RelationRestrictionPO>> restrictionsByRelationId) {
-        TypeDefinitionEntity typeDefEntity = TypeDefinitionEntity.reconstitute(
+        TypeDefinition typeDefEntity = TypeDefinition.reconstitute(
                 typeDefPO.getId(),
                 typeDefPO.getSubjectType(),
                 typeDefPO.getSortOrder()
@@ -166,6 +174,8 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     }
 
     private void processRelationDataFromModel(String storeId, String modelId) {
+        conditionDefinitionPersistenceRepository.deleteByModelId(storeId, modelId);
+
         List<SubjectDefinitionPO> typeDefinitions = typeDefinitionPersistenceRepository.selectByModelId(storeId, modelId);
         if (CollectionUtils.isEmpty(typeDefinitions)) {
             return;
@@ -189,10 +199,10 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     }
 
     private Map<String, Long> batchSaveSubjectDefinitions(String storeId, String modelId,
-                                                          List<TypeDefinitionEntity> typeDefinitions) {
+                                                          List<TypeDefinition> typeDefinitions) {
         List<SubjectDefinitionPO> poList = new ArrayList<>(typeDefinitions.size());
         for (int i = 0; i < typeDefinitions.size(); i++) {
-            TypeDefinitionEntity entity = typeDefinitions.get(i);
+            TypeDefinition entity = typeDefinitions.get(i);
             SubjectDefinitionPO po = new SubjectDefinitionPO();
             po.setStoreId(storeId);
             po.setModelId(modelId);
@@ -207,11 +217,11 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
                 .collect(Collectors.toMap(SubjectDefinitionPO::getSubjectType, SubjectDefinitionPO::getId));
     }
 
-    private Map<String, Long> batchSaveModelRelations(List<TypeDefinitionEntity> typeDefinitions,
+    private Map<String, Long> batchSaveModelRelations(List<TypeDefinition> typeDefinitions,
                                                       Map<String, Long> typeToIdMap) {
         List<ModelRelationPO> poList = new ArrayList<>();
 
-        for (TypeDefinitionEntity typeEntity : typeDefinitions) {
+        for (TypeDefinition typeEntity : typeDefinitions) {
             Map<String, RelationDefinition> relations = typeEntity.getRelations();
             if (relations == null || relations.isEmpty()) {
                 continue;
@@ -239,7 +249,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
                 ModelRelationPO::getId));
     }
 
-    private void batchSaveTypeDefinitions(String storeId, String modelId, List<TypeDefinitionEntity> typeDefinitions) {
+    private void batchSaveTypeDefinitions(String storeId, String modelId, List<TypeDefinition> typeDefinitions) {
         if (CollectionUtils.isEmpty(typeDefinitions)) {
             return;
         }
@@ -253,11 +263,11 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         batchSaveRelationRestrictions(typeDefinitions, relationKeyToIdMap);
     }
 
-    private void batchSaveRelationRestrictions(List<TypeDefinitionEntity> typeDefinitions,
+    private void batchSaveRelationRestrictions(List<TypeDefinition> typeDefinitions,
                                                Map<String, Long> relationKeyToIdMap) {
         List<RelationRestrictionPO> poList = new ArrayList<>();
 
-        for (TypeDefinitionEntity typeEntity : typeDefinitions) {
+        for (TypeDefinition typeEntity : typeDefinitions) {
             Map<String, RelationDefinition> relations = typeEntity.getRelations();
             if (relations == null || relations.isEmpty()) {
                 continue;
@@ -319,5 +329,36 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
             return null;
         }
         return restrictionValue.substring(relationIndex + 1);
+    }
+
+    private List<ConditionDefinition> loadConditionDefinitions(String storeId, String modelId) {
+        return conditionDefinitionPersistenceRepository.selectByModelId(storeId, modelId).stream()
+                .map(po -> ConditionDefinition.reconstitute(
+                        po.getId(),
+                        po.getConditionName(),
+                        po.getExpression(),
+                        po.getParameterSchema(),
+                        po.getDescription()))
+                .toList();
+    }
+
+    private void batchSaveConditionDefinitions(String storeId, String modelId, List<ConditionDefinition> definitions) {
+        if (CollectionUtils.isEmpty(definitions)) {
+            return;
+        }
+        List<ConditionDefinitionPO> poList = definitions.stream()
+                .map(definition -> {
+                    ConditionDefinitionPO po = new ConditionDefinitionPO();
+                    po.setId(definition.getId());
+                    po.setStoreId(storeId);
+                    po.setModelId(modelId);
+                    po.setConditionName(definition.getConditionName());
+                    po.setExpression(definition.getExpression());
+                    po.setParameterSchema(definition.getParameterSchema());
+                    po.setDescription(definition.getDescription());
+                    return po;
+                })
+                .toList();
+        conditionDefinitionPersistenceRepository.saveBatch(poList);
     }
 }

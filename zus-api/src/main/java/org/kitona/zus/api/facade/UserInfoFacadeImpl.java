@@ -8,7 +8,7 @@ import org.kitona.zus.client.service.IUserInfoFacade;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.MapstructUtil;
-import org.kitona.zus.service.application.IUserInfoApplicationService;
+import org.kitona.zus.service.application.IUserProfileApplicationService;
 import org.kitona.zus.service.dto.UserInfoDTO;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +31,7 @@ import org.springframework.stereotype.Service;
 public class UserInfoFacadeImpl implements IUserInfoFacade {
 
     @Resource
-    private IUserInfoApplicationService userInfoApplicationService;
+    private IUserProfileApplicationService userInfoApplicationService;
 
     @Override
     public Result<UserInfoFacadeDto> getUserInfo(String userId) {

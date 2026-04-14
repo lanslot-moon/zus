@@ -1,10 +1,13 @@
 package org.kitona.zus.service.dto.command;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -19,7 +22,8 @@ import java.io.Serializable;
  * @version 1.0.0
  * @since 2025-01-15
  */
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -70,7 +74,47 @@ public class WriteTupleCommand implements Serializable {
     private String conditionName;
 
     /**
+     * 条件定义ID（可选，但存在条件时必须提供）
+     */
+    @Positive(message = "conditionDefinitionId 必须大于 0")
+    private Long conditionDefinitionId;
+
+    /**
      * 条件上下文（可选，JSON 字符串）
      */
     private String conditionContext;
+
+    /**
+     * 过期时间（毫秒）。
+     */
+    private Long expiresAt;
+
+    /**
+     * 审计信息。
+     */
+    private AuditMetadataInput auditMetadata;
+
+    @Getter
+    @Setter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AuditMetadataInput implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        private String operatorId;
+
+        private String requestId;
+
+        private String source;
+    }
+
+    @AssertTrue(message = "存在条件信息时必须提供 conditionDefinitionId")
+    public boolean isConditionReferenceValid() {
+        boolean hasConditionSnapshot = (conditionName != null && !conditionName.isBlank())
+                || (conditionContext != null && !conditionContext.isBlank());
+        return !hasConditionSnapshot || conditionDefinitionId != null;
+    }
 }

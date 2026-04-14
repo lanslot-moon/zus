@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IChangelogMapper">
 
-    <!-- 通用结果映射（与 fga_changelog 表一致） -->
+    <!-- 通用结果映射（与 fga_tuple_changelog 表一致） -->
     <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
@@ -14,25 +14,29 @@
         <result column="subject_type" property="subjectType"/>
         <result column="subject_id" property="subjectId"/>
         <result column="subject_relation" property="subjectRelation"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="request_id" property="requestId"/>
+        <result column="source" property="source"/>
         <result column="operation_time" property="operationTime"/>
     </resultMap>
 
     <insert id="batchInsert">
-        INSERT INTO fga_changelog
+        INSERT INTO fga_tuple_changelog
             (id, store_id, zookie, operation, object_type, object_id, relation,
-             subject_type, subject_id, subject_relation, operation_time)
+             subject_type, subject_id, subject_relation, operator_id, request_id, source, operation_time)
         VALUES
         <foreach collection="list" item="item" separator=",">
             (#{item.id}, #{item.storeId}, #{item.zookie}, #{item.operation}, #{item.objectType}, #{item.objectId},
-             #{item.relation}, #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation}, #{item.operationTime})
+             #{item.relation}, #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation},
+             #{item.operatorId}, #{item.requestId}, #{item.source}, #{item.operationTime})
         </foreach>
     </insert>
 
     <!-- 根据 Zookie 范围查询变更日志 -->
     <select id="selectByZookieRange" resultMap="BaseResultMap">
         SELECT id, store_id, zookie, operation, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, operation_time
-        FROM fga_changelog
+               subject_type, subject_id, subject_relation, operator_id, request_id, source, operation_time
+        FROM fga_tuple_changelog
         WHERE store_id = #{storeId}
           AND zookie &gt; #{startZookie}
           <if test="endZookie != null">
@@ -47,8 +51,8 @@
     <!-- 查询指定 Zookie 之后的所有变更 -->
     <select id="selectAfterZookie" resultMap="BaseResultMap">
         SELECT id, store_id, zookie, operation, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, operation_time
-        FROM fga_changelog
+               subject_type, subject_id, subject_relation, operator_id, request_id, source, operation_time
+        FROM fga_tuple_changelog
         WHERE store_id = #{storeId}
           AND zookie &gt; #{afterZookie}
         ORDER BY zookie ASC
@@ -60,7 +64,7 @@
     <!-- 查询存储空间的最新 Zookie -->
     <select id="selectMaxZookie" resultType="java.lang.Long">
         SELECT MAX(zookie)
-        FROM fga_changelog
+        FROM fga_tuple_changelog
         WHERE store_id = #{storeId}
     </select>
 
@@ -68,7 +72,7 @@
 
     <!-- 清理过期的变更日志 -->
     <delete id="cleanupBeforeZookie">
-        DELETE FROM fga_changelog
+        DELETE FROM fga_tuple_changelog
         WHERE store_id = #{storeId}
           AND zookie &lt; #{beforeZookie}
     </delete>

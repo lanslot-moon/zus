@@ -1,9 +1,9 @@
 package org.kitona.zus.infrastructure.persistence.mysql.converter;
 
-import org.kitona.zus.domain.aggregate.StoreAggregate;
-import org.kitona.zus.domain.aggregate.StoreSnapshot;
+import org.kitona.zus.domain.authorization.store.StoreAggregate;
+import org.kitona.zus.domain.authorization.store.StoreSnapshot;
 import org.kitona.zus.domain.enums.StoreStatus;
-import org.kitona.zus.domain.query.StoreView;
+import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
 
 /**
