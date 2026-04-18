@@ -8,6 +8,8 @@ import org.kitona.zus.domain.authorization.evaluation.nodes.RewriteNode;
 import org.kitona.zus.domain.authorization.evaluation.nodes.SelfNode;
 import org.kitona.zus.domain.authorization.evaluation.nodes.TupleToUsersetNode;
 import org.kitona.zus.domain.authorization.evaluation.nodes.UnionNode;
+import org.kitona.zus.infrastructure.engine.parser.OpenFGAModelBaseVisitor;
+import org.kitona.zus.infrastructure.engine.parser.OpenFGAModelParser;
 
 /**
  * Rewrite AST 访问器。

@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS `fga_type_restriction` (
 --
 -- 示例：
 --   condition_name = 'is_working_hours'
---   expression     = 'context.current_hour >= params.start_hour && context.current_hour < params.end_hour'
+--   expression     = 'input.context.current_hour >= input.params.start_hour && input.context.current_hour < input.params.end_hour'
 --   parameter_schema = {"start_hour": "int", "end_hour": "int"}
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `fga_condition_definition` (

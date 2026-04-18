@@ -8,6 +8,7 @@ import org.kitona.zus.domain.port.IModelSnapshotRenderer;
 import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * 模型快照渲染器。
@@ -15,37 +16,72 @@ import java.util.Comparator;
 @Component
 public class ModelSnapshotRenderer implements IModelSnapshotRenderer {
 
+    private static final char NEW_LINE = '\n';
+    private static final String MODEL_PREFIX = "model ";
+    private static final String TYPE_PREFIX = "type ";
+    private static final String RELATIONS_BLOCK = "  relations";
+    private static final String DEFINE_PREFIX = "    define ";
+    private static final String DEFINE_MIDDLE = " as ";
+    private static final String CONDITION_PREFIX = "// condition ";
+    private static final String CONDITION_MIDDLE = ": ";
+    private static final String EMPTY_STRING = "";
+
     @Override
     public String render(AuthorizationModelAggregate aggregate) {
         StringBuilder builder = new StringBuilder();
-        builder.append("model ").append(aggregate.getModelId()).append('\n');
-
-        for (TypeDefinition typeDefinition : aggregate.getTypeDefinitions().stream()
-                .sorted(Comparator.comparingInt(TypeDefinition::getSortOrder))
-                .toList()) {
-            builder.append("type ").append(typeDefinition.getSubjectType()).append('\n');
-            if (typeDefinition.hasRelations()) {
-                builder.append("  relations").append('\n');
-                for (RelationDefinition relationDefinition : typeDefinition.getRelations().values()) {
-                    builder.append("    define ")
-                            .append(relationDefinition.relationName())
-                            .append(" as ")
-                            .append(relationDefinition.rewriteExpression())
-                            .append('\n');
-                }
-            }
-        }
-
-        if (!aggregate.getConditionDefinitions().isEmpty()) {
-            builder.append('\n');
-            for (ConditionDefinition definition : aggregate.getConditionDefinitions()) {
-                builder.append("// condition ")
-                        .append(definition.getConditionName())
-                        .append(": ")
-                        .append(definition.getExpression())
-                        .append('\n');
-            }
-        }
+        appendModelHeader(builder, aggregate);
+        appendTypeDefinitions(builder, aggregate);
+        appendConditionDefinitions(builder, aggregate.getConditionDefinitions());
         return builder.toString().trim();
+    }
+
+    private void appendModelHeader(StringBuilder builder, AuthorizationModelAggregate aggregate) {
+        builder.append(MODEL_PREFIX).append(aggregate.getModelId()).append(NEW_LINE);
+    }
+
+    private void appendTypeDefinitions(StringBuilder builder, AuthorizationModelAggregate aggregate) {
+        List<TypeDefinition> orderedTypes = aggregate.getTypeDefinitions().stream()
+                .sorted(Comparator.comparingInt(TypeDefinition::getSortOrder))
+                .toList();
+        for (TypeDefinition typeDefinition : orderedTypes) {
+            appendTypeDefinition(builder, typeDefinition);
+        }
+    }
+
+    private void appendTypeDefinition(StringBuilder builder, TypeDefinition typeDefinition) {
+        builder.append(TYPE_PREFIX).append(typeDefinition.getSubjectType()).append(NEW_LINE);
+        if (!typeDefinition.hasRelations()) {
+            return;
+        }
+        builder.append(RELATIONS_BLOCK).append(NEW_LINE);
+        for (RelationDefinition relationDefinition : typeDefinition.getRelations().values()) {
+            appendRelationDefinition(builder, relationDefinition);
+        }
+    }
+
+    private void appendRelationDefinition(StringBuilder builder, RelationDefinition relationDefinition) {
+        builder.append(DEFINE_PREFIX)
+                .append(relationDefinition.relationName())
+                .append(DEFINE_MIDDLE)
+                .append(relationDefinition.rewriteExpression())
+                .append(NEW_LINE);
+    }
+
+    private void appendConditionDefinitions(StringBuilder builder, List<ConditionDefinition> conditions) {
+        if (conditions.isEmpty()) {
+            return;
+        }
+        builder.append(NEW_LINE);
+        for (ConditionDefinition condition : conditions) {
+            appendConditionDefinition(builder, condition);
+        }
+    }
+
+    private void appendConditionDefinition(StringBuilder builder, ConditionDefinition condition) {
+        builder.append(CONDITION_PREFIX)
+                .append(condition.getConditionName())
+                .append(CONDITION_MIDDLE)
+                .append(condition.getExpression())
+                .append(NEW_LINE);
     }
 }
