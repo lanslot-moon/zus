@@ -30,4 +30,10 @@ public class WatchChangeEventVO {
      * 元组数据
      */
     private WatchTupleDataVO tuple;
+
+    private String operatorId;
+
+    private String requestId;
+
+    private String source;
 }

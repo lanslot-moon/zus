@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.kitona.zus.domain.authorization.audit.Changelog;
 import org.kitona.zus.domain.repository.IChangelogQueryRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.ChangelogConverter;
@@ -16,8 +15,11 @@ import java.util.List;
 @Repository
 public class ChangelogQueryRepositoryAdapter implements IChangelogQueryRepository {
 
-    @Resource
-    private IChangelogPersistenceRepository changelogPersistenceRepository;
+    private final IChangelogPersistenceRepository changelogPersistenceRepository;
+
+    public ChangelogQueryRepositoryAdapter(IChangelogPersistenceRepository changelogPersistenceRepository) {
+        this.changelogPersistenceRepository = changelogPersistenceRepository;
+    }
 
     @Override
     public List<Changelog> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit) {

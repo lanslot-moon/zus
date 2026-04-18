@@ -1,5 +1,6 @@
 package org.kitona.zus.api.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -10,17 +11,8 @@ import lombok.Data;
 @Data
 public class FgaReadRequest {
 
-    /**
-     * 资源类型（可选过滤）
-     */
-    @Size(max = 64, message = "objectType 长度不能超过 64")
-    private String objectType;
-
-    /**
-     * 资源ID（可选过滤）
-     */
-    @Size(max = 255, message = "objectId 长度不能超过 255")
-    private String objectId;
+    @Valid
+    private FgaObjectFilterRequest object;
 
     /**
      * 关系名称（可选过滤）
@@ -28,17 +20,8 @@ public class FgaReadRequest {
     @Size(max = 64, message = "relation 长度不能超过 64")
     private String relation;
 
-    /**
-     * 主体类型（可选过滤）
-     */
-    @Size(max = 64, message = "subjectType 长度不能超过 64")
-    private String subjectType;
-
-    /**
-     * 主体ID（可选过滤）
-     */
-    @Size(max = 255, message = "subjectId 长度不能超过 255")
-    private String subjectId;
+    @Valid
+    private FgaSubjectFilterRequest subject;
 
     /**
      * 每页条数

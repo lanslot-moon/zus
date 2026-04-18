@@ -2,6 +2,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +32,9 @@ import java.util.Optional;
 @Slf4j
 @Repository
 public class StorePersistenceRepository extends SoftDeleteRepository<StorePO> implements IStorePersistenceRepository {
+
+    private static final int DEFAULT_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 1000;
 
     @Resource
     private IStoreMapper storeMapper;
@@ -136,6 +140,17 @@ public class StorePersistenceRepository extends SoftDeleteRepository<StorePO> im
 
     @Override
     public List<StorePO> findPageByCursor(String pageToken, int pageSize) {
-        return storeMapper.selectPageByCursor(pageToken, pageSize);
+        LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
+                .lt(StringUtils.isNotBlank(pageToken), StorePO::getStoreId, pageToken)
+                .orderByDesc(StorePO::getStoreId);
+        Page<StorePO> page = new Page<>(1, resolvePageSize(pageSize), false);
+        return this.page(page, wrapper).getRecords();
+    }
+
+    private int resolvePageSize(int pageSize) {
+        if (pageSize <= 0) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_PAGE_SIZE);
     }
 }

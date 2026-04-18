@@ -17,26 +17,6 @@
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
-    <!-- 根据存储空间ID查询 -->
-    <select id="selectByStoreId" resultMap="BaseResultMap">
-        SELECT id, store_id, name, description, current_model_id, current_zookie, status,
-               tenant_id, create_time, update_time, is_deleted
-        FROM fga_store
-        WHERE store_id = #{storeId}
-          AND is_deleted = 0
-          AND status != 2
-    </select>
-
-    <!-- 更新当前授权模型ID -->
-    <update id="updateCurrentModelId">
-        UPDATE fga_store
-        SET current_model_id = #{modelId},
-            update_time = #{updateTime}
-        WHERE store_id = #{storeId}
-          AND is_deleted = 0
-          AND status = 0
-    </update>
-
     <!-- 原子递增 Zookie -->
     <update id="incrementZookie">
         UPDATE fga_store
@@ -46,27 +26,5 @@
           AND is_deleted = 0
           AND status = 0
     </update>
-
-    <!-- 获取当前 Zookie -->
-    <select id="selectCurrentZookie" resultType="java.lang.Long">
-        SELECT current_zookie
-        FROM fga_store
-        WHERE store_id = #{storeId}
-          AND is_deleted = 0
-          AND status = 0
-    </select>
-
-    <!-- 游标分页查询存储空间列表（仅 NORMAL 状态） -->
-    <select id="selectPageByCursor" resultMap="BaseResultMap">
-        SELECT id, store_id, name, description, current_model_id, current_zookie, status,
-               tenant_id, create_time, update_time, is_deleted
-        FROM fga_store
-        WHERE is_deleted = 0
-        <if test="pageToken != null and pageToken != ''">
-          AND store_id &lt; #{pageToken}
-        </if>
-        ORDER BY store_id DESC
-        LIMIT #{pageSize}
-    </select>
 
 </mapper>

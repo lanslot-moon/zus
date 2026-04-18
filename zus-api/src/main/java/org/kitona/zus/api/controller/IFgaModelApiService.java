@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * GET /fga/stores 列出，从响应中取得 storeId；或按业务约定使用。详见 zus-api/docs/FGA_STORE_ID.md。
  */
 @RestController
-@RequestMapping("/fga/stores/{storeId}/authorization-models")
+@RequestMapping("/fga/stores/{storeId}/models")
 public interface IFgaModelApiService {
 
     /**
@@ -29,7 +29,7 @@ public interface IFgaModelApiService {
      * 创建后模型状态为草稿(status=0)，需调用发布接口后才能在 Check 中使用。
      *
      * @param storeId 存储空间ID，来自路径
-     * @param request 创建请求，包含 schemaVersion、typeDefinitions/dslText、description
+     * @param request 创建请求，包含 schemaVersion、types、conditions、description
      * @return 创建结果
      */
     @PostMapping

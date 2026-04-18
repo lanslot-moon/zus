@@ -4,7 +4,6 @@ import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.read.criteria.TupleExistenceCriteria;
 import org.kitona.zus.domain.read.criteria.TupleKeyCriteria;
 import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
-import org.kitona.zus.domain.authorization.tuple.TupleDescriptor;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,46 +39,31 @@ public interface ITupleDomainRepository {
 
     /**
      * 检查是否存在指定的直接元组
-     * 
-     * <p>直接元组是指主体直接拥有某资源某关系的元组，不包含 userset 展开。
      *
-     * @param storeId         存储空间ID
-     * @param objectType      资源对象类型
-     * @param objectId        资源对象ID
-     * @param relation        关系名称
-     * @param subjectType     主体类型
-     * @param subjectId       主体ID
-     * @param subjectRelation 主体关系（userset 场景），普通用户为 null
-     * @param maxZookie       一致性令牌，只查询该版本之前的元组
+     * <p>条件由 {@link TupleExistenceCriteria} 显式承载，避免接口暴露过长参数列表。
+     *
+     * @param criteria 直接元组存在性条件
      * @return 存在返回 true
      */
     boolean existsTuple(TupleExistenceCriteria criteria);
 
     /**
      * 检查是否存在通配符元组
-     * 
+     *
      * <p>通配符元组表示所有用户都拥有某关系，subjectId 为 "*"。
      * 例如：{@code document:readme#viewer@user:*} 表示所有用户都是 readme 的 viewer。
      *
-     * @param storeId    存储空间ID
-     * @param objectType 资源对象类型
-     * @param objectId   资源对象ID
-     * @param relation   关系名称
-     * @param maxZookie  一致性令牌
+     * @param criteria 通配符元组存在性条件
      * @return 存在返回 true
      */
     boolean existsWildcardTuple(TupleExistenceCriteria criteria);
 
     /**
      * 根据资源对象和关系查询所有元组
-     * 
-     * <p>返回轻量级的 {@link TupleDescriptor} 用于权限检查引擎。
      *
-     * @param storeId    存储空间ID
-     * @param objectType 资源对象类型
-     * @param objectId   资源对象ID
-     * @param relation   关系名称
-     * @param maxZookie  一致性令牌
+     * <p>查询条件由 {@link TupleQueryCriteria} 承载，返回领域实体而不是轻量字符串描述。
+     *
+     * @param criteria 元组查询条件
      * @return 元组列表
      */
     List<RelationTuple> findByObjectAndRelation(TupleQueryCriteria criteria);
@@ -94,16 +78,10 @@ public interface ITupleDomainRepository {
 
     /**
      * 根据元组键精确查询（唯一性查询）
-     * 
+     *
      * <p>元组键由 object + relation + subject 组成，在同一个 store 内唯一。
      *
-     * @param storeId         存储空间ID
-     * @param objectType      资源对象类型
-     * @param objectId        资源对象ID
-     * @param relation        关系名称
-     * @param subjectType     主体类型
-     * @param subjectId       主体ID
-     * @param subjectRelation 主体关系，可为 null
+     * @param criteria 精确键查询条件
      * @return 关系元组实体，不存在返回 empty
      */
     Optional<RelationTuple> findByTupleKey(TupleExistenceCriteria criteria);
@@ -122,8 +100,7 @@ public interface ITupleDomainRepository {
      *
      * <p>通过一次数据库查询获取多个 TupleKey 对应的元组，用于批量删除场景。
      *
-     * @param storeId   存储空间ID
-     * @param tupleKeys 元组键列表
+     * @param criteria 批量元组键查询条件
      * @return 存在的关系元组实体列表
      */
     List<RelationTuple> findByTupleKeys(TupleKeyCriteria criteria);

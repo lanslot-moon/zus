@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.kitona.zus.domain.authorization.audit.Changelog;
 import org.kitona.zus.domain.repository.IChangelogDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.ChangelogConverter;
@@ -16,8 +15,11 @@ import java.util.List;
 @Repository
 public class ChangelogDomainRepositoryAdapter implements IChangelogDomainRepository {
 
-    @Resource
-    private IChangelogPersistenceRepository changelogPersistenceRepository;
+    private final IChangelogPersistenceRepository changelogPersistenceRepository;
+
+    public ChangelogDomainRepositoryAdapter(IChangelogPersistenceRepository changelogPersistenceRepository) {
+        this.changelogPersistenceRepository = changelogPersistenceRepository;
+    }
 
     @Override
     public void saveBatch(List<Changelog> changelogs) {

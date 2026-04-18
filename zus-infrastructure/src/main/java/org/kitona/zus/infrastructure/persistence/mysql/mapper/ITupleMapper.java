@@ -21,22 +21,4 @@ import java.util.List;
 public interface ITupleMapper extends BaseMapper<TuplePO> {
     int batchInsert(@Param("list") List<TuplePO> list);
 
-    /**
-     * 根据资源和关系查询元组列表
-     * 
-     * 用于 TTU（Tuple To Userset）查询，查找资源的所有关联对象。
-     * 例如：查找 document:1 的所有 parent 关系。
-     * 
-     * @param storeId    存储空间ID
-     * @param objectType 资源类型
-     * @param objectId   资源ID
-     * @param relation   关系名称
-     * @param maxZookie  最大 Zookie 版本
-     * @return 元组列表
-     */
-    List<TuplePO> selectByObjectAndRelation(@Param("storeId") String storeId,
-                                            @Param("objectType") String objectType,
-                                            @Param("objectId") String objectId,
-                                            @Param("relation") String relation,
-                                            @Param("maxZookie") Long maxZookie);
 }

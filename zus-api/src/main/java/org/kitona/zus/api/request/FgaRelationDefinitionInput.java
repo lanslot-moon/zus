@@ -12,13 +12,13 @@ import java.util.List;
 @Data
 public class FgaRelationDefinitionInput {
 
-    @NotBlank(message = "relationName 不能为空")
-    @Size(max = 64, message = "relationName 长度不能超过 64")
-    private String relationName;
+    @NotBlank(message = "name 不能为空")
+    @Size(max = 64, message = "name 长度不能超过 64")
+    private String name;
 
     @NotBlank(message = "rewriteExpression 不能为空")
     @Size(max = 512, message = "rewriteExpression 长度不能超过 512")
     private String rewriteExpression;
 
-    private List<String> allowedSubjectTypes;
+    private List<FgaTypeRestrictionInput> restrictions;
 }

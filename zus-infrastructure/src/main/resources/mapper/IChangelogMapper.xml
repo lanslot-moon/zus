@@ -32,49 +32,4 @@
         </foreach>
     </insert>
 
-    <!-- 根据 Zookie 范围查询变更日志 -->
-    <select id="selectByZookieRange" resultMap="BaseResultMap">
-        SELECT id, store_id, zookie, operation, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, operator_id, request_id, source, operation_time
-        FROM fga_tuple_changelog
-        WHERE store_id = #{storeId}
-          AND zookie &gt; #{startZookie}
-          <if test="endZookie != null">
-              AND zookie &lt;= #{endZookie}
-          </if>
-        ORDER BY zookie ASC
-        <if test="limit != null">
-            LIMIT #{limit}
-        </if>
-    </select>
-
-    <!-- 查询指定 Zookie 之后的所有变更 -->
-    <select id="selectAfterZookie" resultMap="BaseResultMap">
-        SELECT id, store_id, zookie, operation, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, operator_id, request_id, source, operation_time
-        FROM fga_tuple_changelog
-        WHERE store_id = #{storeId}
-          AND zookie &gt; #{afterZookie}
-        ORDER BY zookie ASC
-        <if test="limit != null">
-            LIMIT #{limit}
-        </if>
-    </select>
-
-    <!-- 查询存储空间的最新 Zookie -->
-    <select id="selectMaxZookie" resultType="java.lang.Long">
-        SELECT MAX(zookie)
-        FROM fga_tuple_changelog
-        WHERE store_id = #{storeId}
-    </select>
-
-
-
-    <!-- 清理过期的变更日志 -->
-    <delete id="cleanupBeforeZookie">
-        DELETE FROM fga_tuple_changelog
-        WHERE store_id = #{storeId}
-          AND zookie &lt; #{beforeZookie}
-    </delete>
-
 </mapper>

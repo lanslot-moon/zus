@@ -133,6 +133,8 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
         List<ListUsersResultDTO.UserDTO> users = permissionEvaluator.listUsers(compiledModel, request).stream()
                 .filter(subject -> StringUtils.isBlank(query.getSubjectType())
                         || StringUtils.equals(query.getSubjectType(), subject.getType()))
+                .filter(subject -> StringUtils.isBlank(query.getSubjectRelation())
+                        || StringUtils.equals(query.getSubjectRelation(), subject.getRelation()))
                 .map(subject -> ListUsersResultDTO.UserDTO.builder()
                         .type(subject.getType())
                         .id(subject.getId())

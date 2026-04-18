@@ -23,67 +23,6 @@
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
-    <!-- 根据资源和关系查询元组列表（用于 TTU） -->
-    <select id="selectByObjectAndRelation" resultMap="BaseResultMap">
-        SELECT id, store_id, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, is_wildcard,
-               zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted
-        FROM fga_relation_tuple
-        WHERE store_id = #{storeId}
-          AND object_type = #{objectType}
-          AND object_id = #{objectId}
-          AND relation = #{relation}
-          <if test="maxZookie != null">
-              AND zookie &lt;= #{maxZookie}
-          </if>
-          AND is_deleted = 0
-    </select>
-
-    <!-- 根据主体查询元组列表（用于 ListObjects） -->
-    <select id="selectBySubject" resultMap="BaseResultMap">
-        SELECT id, store_id, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, is_wildcard,
-               zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted
-        FROM fga_relation_tuple
-        WHERE store_id = #{storeId}
-          AND subject_type = #{subjectType}
-          AND subject_id = #{subjectId}
-          <if test="subjectRelation != null and subjectRelation != ''">
-              AND subject_relation = #{subjectRelation}
-          </if>
-          <if test="subjectRelation == null or subjectRelation == ''">
-              AND (subject_relation IS NULL OR subject_relation = '')
-          </if>
-          <if test="objectType != null and objectType != ''">
-              AND object_type = #{objectType}
-          </if>
-          <if test="relation != null and relation != ''">
-              AND relation = #{relation}
-          </if>
-          <if test="maxZookie != null">
-              AND zookie &lt;= #{maxZookie}
-          </if>
-          AND is_deleted = 0
-    </select>
-
-    <!-- 根据资源查询元组列表（用于 ListUsers） -->
-    <select id="selectByObject" resultMap="BaseResultMap">
-        SELECT id, store_id, object_type, object_id, relation,
-               subject_type, subject_id, subject_relation, is_wildcard,
-               zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted
-        FROM fga_relation_tuple
-        WHERE store_id = #{storeId}
-          AND object_type = #{objectType}
-          AND object_id = #{objectId}
-          <if test="relation != null and relation != ''">
-              AND relation = #{relation}
-          </if>
-          <if test="maxZookie != null">
-              AND zookie &lt;= #{maxZookie}
-          </if>
-          AND is_deleted = 0
-    </select>
-
     <!-- 批量插入元组 -->
     <insert id="batchInsert">
         INSERT INTO fga_relation_tuple
@@ -97,18 +36,5 @@
              #{item.createTime}, 0)
         </foreach>
     </insert>
-
-    <!-- 批量逻辑删除元组 -->
-    <update id="batchLogicDelete">
-        UPDATE fga_relation_tuple
-        SET is_deleted = 1,
-            update_time = #{updateTime}
-        WHERE store_id = #{storeId}
-          AND id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-          AND is_deleted = 0
-    </update>
 
 </mapper>

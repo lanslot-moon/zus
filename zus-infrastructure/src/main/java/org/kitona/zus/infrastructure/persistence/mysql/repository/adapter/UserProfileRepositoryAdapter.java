@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.domain.authorization.user.UserProfile;
 import org.kitona.zus.domain.repository.IUserProfileRepository;
@@ -19,8 +18,11 @@ import java.util.Optional;
 @Repository
 public class UserProfileRepositoryAdapter implements IUserProfileRepository {
 
-    @Resource
-    private IUserInfoPersistenceRepository userInfoPersistenceRepository;
+    private final IUserInfoPersistenceRepository userInfoPersistenceRepository;
+
+    public UserProfileRepositoryAdapter(IUserInfoPersistenceRepository userInfoPersistenceRepository) {
+        this.userInfoPersistenceRepository = userInfoPersistenceRepository;
+    }
 
     @Override
     public Optional<UserProfile> findByUserId(String userId) {

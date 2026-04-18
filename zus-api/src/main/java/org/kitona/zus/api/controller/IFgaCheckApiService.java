@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
  * 从响应中取得 storeId；或按业务约定使用（如租户ID）。详见 zus-api/docs/FGA_STORE_ID.md。
  */
 @RestController
-@RequestMapping("/fga/stores/{storeId}")
+@RequestMapping("/fga/stores/{storeId}/authorization")
 public interface IFgaCheckApiService {
 
     /**

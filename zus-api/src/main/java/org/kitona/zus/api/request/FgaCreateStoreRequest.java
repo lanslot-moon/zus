@@ -20,6 +20,6 @@ public class FgaCreateStoreRequest {
     /**
      * 存储空间描述
      */
-    @Size(max = 255, message = "description 长度不能超过 255")
+    @Size(max = 512, message = "description 长度不能超过 512")
     private String description;
 }

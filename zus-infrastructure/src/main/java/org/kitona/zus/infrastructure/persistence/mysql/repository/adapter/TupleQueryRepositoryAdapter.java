@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.port.IDirectTupleReader;
 import org.kitona.zus.domain.port.IObjectSubjectCandidateReader;
@@ -24,8 +23,13 @@ import java.util.List;
 public class TupleQueryRepositoryAdapter implements ITupleQueryRepository, IDirectTupleReader,
         ITupleLinkReader, ISubjectObjectCandidateReader, IObjectSubjectCandidateReader {
 
-    @Resource
-    private ITuplePersistenceRepository tupleRepository;
+    private static final int UNBOUNDED_PAGE_SIZE = Integer.MAX_VALUE;
+
+    private final ITuplePersistenceRepository tupleRepository;
+
+    public TupleQueryRepositoryAdapter(ITuplePersistenceRepository tupleRepository) {
+        this.tupleRepository = tupleRepository;
+    }
 
     @Override
     public List<RelationTuple> list(TupleQueryCriteria criteria) {
@@ -37,7 +41,7 @@ public class TupleQueryRepositoryAdapter implements ITupleQueryRepository, IDire
                 criteria.subjectType(),
                 criteria.subjectId(),
                 criteria.subjectRelation(),
-                criteria.effectivePageSize(Integer.MAX_VALUE),
+                criteria.effectivePageSize(UNBOUNDED_PAGE_SIZE),
                 criteria.pageToken(),
                 criteria.maxZookie()
         );
@@ -81,12 +85,12 @@ public class TupleQueryRepositoryAdapter implements ITupleQueryRepository, IDire
     @Override
     public List<RelationTuple> listObjectCandidates(String storeId, String objectType, Long maxZookie) {
         return list(TupleQueryCriteria.forPage(storeId, objectType, null, null,
-                null, null, null, Integer.MAX_VALUE, null, maxZookie));
+                null, null, null, UNBOUNDED_PAGE_SIZE, null, maxZookie));
     }
 
     @Override
     public List<RelationTuple> listSubjectCandidates(String storeId, Long maxZookie) {
         return list(TupleQueryCriteria.forPage(storeId, null, null, null,
-                null, null, null, Integer.MAX_VALUE, null, maxZookie));
+                null, null, null, UNBOUNDED_PAGE_SIZE, null, maxZookie));
     }
 }

@@ -4,9 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
-import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.infrastructure.cache.FgaCacheManager;
-import org.kitona.zus.infrastructure.cache.query.TupleExistsCacheQuery;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleExistsQuery;
@@ -35,6 +33,10 @@ import java.util.*;
 @Repository
 public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> implements ITuplePersistenceRepository {
 
+    private static final int DEFAULT_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 1000;
+    private static final String LIMIT_CLAUSE_PREFIX = "LIMIT ";
+
     @Resource
     private ITupleMapper tupleMapper;
 
@@ -46,19 +48,8 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
         if (query == null) {
             return false;
         }
-        Long maxZookie = query.getMaxZookie();
-        TupleExistsCacheQuery existsCacheQuery = MapstructUtil.convert(query, TupleExistsCacheQuery.class);
-        if (maxZookie != null) {
-            long count = this.count(buildLambdaQueryWrapper(query));
-            return count > 0;
-        }
-        // 无 Zookie 限制时先查缓存
-        Boolean cached = cacheManager.getCheckResult(existsCacheQuery);
-        if (cached != null) {
-            return cached;
-        }
+        // 由于 tuple 支持 expiresAt 动态到期，持久层存在性查询不走缓存，避免时间推移带来的脏读。
         long count = this.count(buildLambdaQueryWrapper(query));
-        cacheManager.setCheckResult(existsCacheQuery, count > 0);
         return count > 0;
     }
 
@@ -72,15 +63,19 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
                 .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
+        applyActiveTupleCondition(wrapper, currentTimestamp());
         return wrapper;
     }
 
     @Override
     public boolean existsWildcardTuple(WildcardTupleExistsQuery query) {
-        TupleExistsQuery existsQuery = MapstructUtil.convert(query, TupleExistsQuery.class);
-        if (existsQuery == null) {
-            return false;
-        }
+        TupleExistsQuery existsQuery = new TupleExistsQuery();
+        existsQuery.setStoreId(query.getStoreId());
+        existsQuery.setObjectType(query.getObjectType());
+        existsQuery.setObjectId(query.getObjectId());
+        existsQuery.setRelation(query.getRelation());
+        existsQuery.setSubjectType(query.getSubjectType());
+        existsQuery.setMaxZookie(query.getMaxZookie());
         existsQuery.setSubjectId("*");
         existsQuery.setSubjectRelation(null);
         return existsTuple(existsQuery);
@@ -89,22 +84,14 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
     @Override
     public List<TuplePO> findByObjectAndRelation(String storeId, String objectType,
             String objectId, String relation, Long maxZookie) {
-        List<TuplePO> tuples;
-        if (maxZookie != null) {
-            tuples = tupleMapper.selectByObjectAndRelation(storeId, objectType, objectId, relation, maxZookie);
-            return CollectionUtils.isEmpty(tuples) ? Collections.emptyList() : tuples;
-        }
-
-        // 无 Zookie 限制时先查缓存
-        tuples = cacheManager.getTupleQuery(storeId, objectType, objectId, relation);
-        if (tuples != null) {
-            return tuples;
-        }
-
-        tuples = tupleMapper.selectByObjectAndRelation(storeId, objectType, objectId, relation, null);
-        if (tuples != null) {
-            cacheManager.setTupleQuery(storeId, objectType, objectId, relation, tuples);
-        }
+        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(TuplePO::getStoreId, storeId)
+                .eq(TuplePO::getObjectType, objectType)
+                .eq(TuplePO::getObjectId, objectId)
+                .eq(TuplePO::getRelation, relation)
+                .le(Objects.nonNull(maxZookie), TuplePO::getZookie, maxZookie);
+        applyActiveTupleCondition(wrapper, currentTimestamp());
+        List<TuplePO> tuples = this.list(wrapper);
         return tuples != null ? tuples : Collections.emptyList();
     }
 
@@ -126,6 +113,7 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
                 .eq(TuplePO::getSubjectId, query.getSubjectId())
                 .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
+        applyActiveTupleCondition(wrapper, currentTimestamp());
         return wrapper;
     }
 
@@ -139,6 +127,7 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
                 .eq(StringUtils.isNotBlank(objectId), TuplePO::getObjectId, objectId)
                 .eq(StringUtils.isNotBlank(relation), TuplePO::getRelation, relation)
                 .le(Objects.nonNull(maxZookie), TuplePO::getZookie, maxZookie);
+        applyActiveTupleCondition(wrapper, currentTimestamp());
 
         List<TuplePO> tuples = super.list(wrapper);
 
@@ -159,6 +148,7 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
                 .eq(TuplePO::getSubjectType, query.getSubjectType())
                 .eq(TuplePO::getSubjectId, query.getSubjectId());
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
+        applyActiveTupleCondition(wrapper, currentTimestamp());
 
         return Optional.ofNullable(this.getOne(wrapper));
     }
@@ -211,7 +201,8 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
                 .eq(StringUtils.isNotBlank(relation), TuplePO::getRelation, relation)
                 .gt(pageToken != null, TuplePO::getId, pageToken)
                 .orderByAsc(TuplePO::getId)
-                .last("LIMIT " + pageSize);
+                .last(LIMIT_CLAUSE_PREFIX + resolvePageSize(pageSize));
+        applyActiveTupleCondition(wrapper, currentTimestamp());
 
         return this.list(wrapper);
     }
@@ -225,6 +216,7 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
         // 使用 OR 条件组合多个 TupleKey 查询，避免 N+1 问题
         LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
                 .eq(TuplePO::getStoreId, storeId);
+        applyActiveTupleCondition(wrapper, currentTimestamp());
 
         wrapper.and(w -> {
             for (int i = 0; i < tupleKeyQueries.size(); i++) {
@@ -264,7 +256,8 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
                 .le(Objects.nonNull(maxZookie), TuplePO::getZookie, maxZookie)
                 .gt(pageToken != null, TuplePO::getId, pageToken)
                 .orderByAsc(TuplePO::getId)
-                .last("LIMIT " + pageSize);
+                .last(LIMIT_CLAUSE_PREFIX + resolvePageSize(pageSize));
+        applyActiveTupleCondition(wrapper, currentTimestamp());
 
         return this.list(wrapper);
     }
@@ -277,5 +270,22 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
         wrapper.and(condition -> condition.isNull(TuplePO::getSubjectRelation)
                 .or()
                 .eq(TuplePO::getSubjectRelation, ""));
+    }
+
+    private void applyActiveTupleCondition(LambdaQueryWrapper<TuplePO> wrapper, long currentTimestamp) {
+        wrapper.and(condition -> condition.isNull(TuplePO::getExpiresAt)
+                .or()
+                .gt(TuplePO::getExpiresAt, currentTimestamp));
+    }
+
+    private long currentTimestamp() {
+        return System.currentTimeMillis();
+    }
+
+    private int resolvePageSize(int pageSize) {
+        if (pageSize <= 0) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_PAGE_SIZE);
     }
 }

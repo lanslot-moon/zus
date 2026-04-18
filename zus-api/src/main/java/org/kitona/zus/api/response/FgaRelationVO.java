@@ -11,19 +11,9 @@ import java.util.List;
 public class FgaRelationVO {
 
     /**
-     * 关系ID
-     */
-    private Long id;
-
-    /**
-     * 类型定义ID
-     */
-    private Long typeDefinitionId;
-
-    /**
      * 关系名称，如 viewer、editor、owner
      */
-    private String relationName;
+    private String name;
 
     /**
      * 重写表达式，如 self、self or owner
@@ -31,7 +21,7 @@ public class FgaRelationVO {
     private String rewriteExpression;
 
     /**
-     * 允许的主体类型列表
+     * 关系类型限制列表。
      */
-    private List<String> allowedTypes;
+    private List<FgaTypeRestrictionVO> restrictions;
 }

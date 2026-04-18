@@ -1,5 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
@@ -28,6 +30,7 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
         implements IChangelogPersistenceRepository {
 
     private static final int DEFAULT_LIMIT = 100;
+    private static final int MAX_LIMIT = 1000;
 
     @Resource
     private IChangelogMapper changelogMapper;
@@ -44,51 +47,71 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
     @Override
     public List<ChangelogPO> findByZookieRange(String storeId, Long startZookie,
             Long endZookie, Integer limit) {
-        if (limit == null || limit <= 0) {
-            limit = DEFAULT_LIMIT;
-        }
-        // Zookie 范围查询走 XML
-        List<ChangelogPO> logs = changelogMapper.selectByZookieRange(storeId, startZookie, endZookie, limit);
-        return logs != null ? logs : Collections.emptyList();
+        int effectiveLimit = resolveLimit(limit);
+        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(ChangelogPO::getStoreId, storeId)
+                .gt(ChangelogPO::getZookie, startZookie == null ? 0L : startZookie)
+                .le(endZookie != null, ChangelogPO::getZookie, endZookie)
+                .orderByAsc(ChangelogPO::getZookie);
+        return queryPage(wrapper, effectiveLimit);
     }
 
     @Override
     public List<ChangelogPO> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
-        if (limit == null || limit <= 0) {
-            limit = DEFAULT_LIMIT;
-        }
-        // 增量查询走 XML
-        List<ChangelogPO> logs = changelogMapper.selectAfterZookie(storeId, afterZookie, limit);
-        return logs != null ? logs : Collections.emptyList();
+        int effectiveLimit = resolveLimit(limit);
+        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(ChangelogPO::getStoreId, storeId)
+                .gt(ChangelogPO::getZookie, afterZookie == null ? 0L : afterZookie)
+                .orderByAsc(ChangelogPO::getZookie);
+        return queryPage(wrapper, effectiveLimit);
     }
 
     @Override
     public Long getMaxZookie(String storeId) {
-        Long maxZookie = changelogMapper.selectMaxZookie(storeId);
-        return maxZookie != null ? maxZookie : 0L;
+        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(ChangelogPO::getStoreId, storeId)
+                .select(ChangelogPO::getZookie)
+                .orderByDesc(ChangelogPO::getZookie);
+        List<ChangelogPO> records = queryPage(wrapper, 1);
+        if (records.isEmpty() || records.get(0).getZookie() == null) {
+            return 0L;
+        }
+        return records.get(0).getZookie();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int cleanupBeforeZookie(String storeId, Long beforeZookie) {
-        // 批量删除走 XML
-        int rows = changelogMapper.cleanupBeforeZookie(storeId, beforeZookie);
+        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(ChangelogPO::getStoreId, storeId)
+                .lt(ChangelogPO::getZookie, beforeZookie);
+        int rows = this.getBaseMapper().delete(wrapper);
         log.info("清理变更日志: storeId={}, beforeZookie={}, count={}", storeId, beforeZookie, rows);
         return rows;
     }
 
     @Override
     public List<ChangelogPO> findRecentChanges(String storeId, Integer limit) {
-        if (limit == null || limit <= 0) {
-            limit = DEFAULT_LIMIT;
-        }
+        int effectiveLimit = resolveLimit(limit);
         // 先查最大 Zookie
         Long maxZookie = getMaxZookie(storeId);
         if (maxZookie == 0) {
             return Collections.emptyList();
         }
         // 计算起始 Zookie 后走范围查询
-        long startZookie = Math.max(0, maxZookie - limit);
-        return findByZookieRange(storeId, startZookie, maxZookie, limit);
+        long startZookie = Math.max(0, maxZookie - effectiveLimit);
+        return findByZookieRange(storeId, startZookie, maxZookie, effectiveLimit);
+    }
+
+    private List<ChangelogPO> queryPage(LambdaQueryWrapper<ChangelogPO> wrapper, int pageSize) {
+        Page<ChangelogPO> page = new Page<>(1, pageSize, false);
+        return this.page(page, wrapper).getRecords();
+    }
+
+    private int resolveLimit(Integer limit) {
+        if (limit == null || limit <= 0) {
+            return DEFAULT_LIMIT;
+        }
+        return Math.min(limit, MAX_LIMIT);
     }
 }

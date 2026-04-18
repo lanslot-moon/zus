@@ -17,11 +17,8 @@ import java.util.List;
  * 创建授权模型命令
  *
  * <p>用于创建授权模型的 CQRS 命令对象。
- * <p>支持两种方式定义模型：
- * <ul>
- *   <li>通过 {@link #typeDefinitions} 结构化定义</li>
- *   <li>通过 {@link #dslText} DSL 文本定义</li>
- * </ul>
+ * <p>写侧只接受结构化 schema-first 输入，DSL 文本仅作为发布后的快照输出，
+ * 不再作为创建模型时的并列真相来源。
  *
  * @author kitona
  * @version 1.0.0
@@ -53,12 +50,8 @@ public class CreateModelCommand implements Serializable {
      * 类型定义列表（结构化模型输入）
      */
     @Valid
+    @NotEmpty(message = "typeDefinitions 不能为空")
     private List<TypeDefinitionInput> typeDefinitions;
-
-    /**
-     * 授权模型 DSL 快照文本（可选导入/回显字段，不作为写侧真相）
-     */
-    private String dslText;
 
     /**
      * 模型描述
@@ -87,6 +80,7 @@ public class CreateModelCommand implements Serializable {
         /**
          * 资源类型名，如 document、folder、user
          */
+        @NotBlank(message = "type 不能为空")
         private String type;
 
         @Valid
@@ -104,8 +98,10 @@ public class CreateModelCommand implements Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
 
+        @NotBlank(message = "relationName 不能为空")
         private String relationName;
 
+        @NotBlank(message = "rewriteExpression 不能为空")
         private String rewriteExpression;
 
         private List<String> allowedSubjectTypes;
@@ -121,8 +117,10 @@ public class CreateModelCommand implements Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
 
+        @NotBlank(message = "name 不能为空")
         private String name;
 
+        @NotBlank(message = "expression 不能为空")
         private String expression;
 
         private String parameterSchema;

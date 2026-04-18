@@ -1,6 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -8,7 +9,6 @@ import org.kitona.zus.domain.enums.ModelPublishStatus;
 import org.kitona.zus.infrastructure.cache.FgaCacheManager;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
-import org.kitona.zus.infrastructure.persistence.mysql.mapper.IAuthorizationModelMapper;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IAuthorizationModelPersistenceRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,11 +28,11 @@ import java.util.Optional;
 public class AuthorizationModelPersistenceRepository extends SoftDeleteRepository<AuthorizationModelPO>
         implements IAuthorizationModelPersistenceRepository {
 
-    @Resource
-    private FgaCacheManager cacheManager;
+    private static final int DEFAULT_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 1000;
 
     @Resource
-    private IAuthorizationModelMapper authorizationModelMapper;
+    private FgaCacheManager cacheManager;
 
     @Override
     public Optional<AuthorizationModelPO> findByModelIdAndStoreId(String storeId, String modelId) {
@@ -95,8 +95,16 @@ public class AuthorizationModelPersistenceRepository extends SoftDeleteRepositor
 
     @Override
     public Optional<AuthorizationModelPO> findLatestByStoreId(String storeId) {
-        AuthorizationModelPO model = authorizationModelMapper.selectLatestByStoreId(storeId);
-        return Optional.ofNullable(model);
+        LambdaQueryWrapper<AuthorizationModelPO> wrapper = getLambdaQueryWrapper()
+                .eq(AuthorizationModelPO::getStoreId, storeId)
+                .eq(AuthorizationModelPO::getStatus, ModelPublishStatus.PUBLISHED.getStatus())
+                .orderByDesc(AuthorizationModelPO::getCreateTime);
+        Page<AuthorizationModelPO> page = new Page<>(1, 1, false);
+        List<AuthorizationModelPO> records = this.page(page, wrapper).getRecords();
+        if (records.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(records.get(0));
     }
 
     @Override
@@ -125,6 +133,19 @@ public class AuthorizationModelPersistenceRepository extends SoftDeleteRepositor
 
     @Override
     public List<AuthorizationModelPO> findPageByCursor(String storeId, Integer status, String pageToken, int pageSize) {
-        return authorizationModelMapper.selectPageByCursor(storeId, status, pageToken, pageSize);
+        LambdaQueryWrapper<AuthorizationModelPO> wrapper = getLambdaQueryWrapper()
+                .eq(AuthorizationModelPO::getStoreId, storeId)
+                .eq(status != null, AuthorizationModelPO::getStatus, status)
+                .lt(StringUtils.isNotBlank(pageToken), AuthorizationModelPO::getModelId, pageToken)
+                .orderByDesc(AuthorizationModelPO::getModelId);
+        Page<AuthorizationModelPO> page = new Page<>(1, resolvePageSize(pageSize), false);
+        return this.page(page, wrapper).getRecords();
+    }
+
+    private int resolvePageSize(int pageSize) {
+        if (pageSize <= 0) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_PAGE_SIZE);
     }
 }

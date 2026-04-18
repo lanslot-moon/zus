@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
@@ -19,8 +18,11 @@ import java.util.Optional;
 @Repository
 public class StoreQueryRepositoryAdapter implements IStoreQueryRepository {
 
-    @Resource
-    private IStorePersistenceRepository storePersistenceRepository;
+    private final IStorePersistenceRepository storePersistenceRepository;
+
+    public StoreQueryRepositoryAdapter(IStorePersistenceRepository storePersistenceRepository) {
+        this.storePersistenceRepository = storePersistenceRepository;
+    }
 
     @Override
     public Optional<StoreView> findViewByStoreId(String storeId) {

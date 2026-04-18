@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.domain.repository.IAuthorizationModelQueryRepository;
@@ -19,8 +18,12 @@ import java.util.Optional;
 @Repository
 public class AuthorizationModelQueryRepositoryAdapter implements IAuthorizationModelQueryRepository {
 
-    @Resource
-    private IAuthorizationModelPersistenceRepository authorizationModelPersistenceRepository;
+    private final IAuthorizationModelPersistenceRepository authorizationModelPersistenceRepository;
+
+    public AuthorizationModelQueryRepositoryAdapter(
+            IAuthorizationModelPersistenceRepository authorizationModelPersistenceRepository) {
+        this.authorizationModelPersistenceRepository = authorizationModelPersistenceRepository;
+    }
 
     @Override
     public CursorPageResult<AuthorizationModelView> findPageViewByCursor(String storeId, Integer status, String pageToken, int pageSize) {

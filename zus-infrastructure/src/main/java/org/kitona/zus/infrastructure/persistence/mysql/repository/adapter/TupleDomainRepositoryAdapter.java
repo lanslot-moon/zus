@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.read.criteria.TupleExistenceCriteria;
 import org.kitona.zus.domain.read.criteria.TupleKeyCriteria;
@@ -27,34 +26,20 @@ import java.util.stream.Collectors;
 @Repository
 public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
 
-    @Resource
-    private ITuplePersistenceRepository tupleRepository;
+    private final ITuplePersistenceRepository tupleRepository;
+
+    public TupleDomainRepositoryAdapter(ITuplePersistenceRepository tupleRepository) {
+        this.tupleRepository = tupleRepository;
+    }
 
     @Override
     public boolean existsTuple(TupleExistenceCriteria criteria) {
-        TupleExistsQuery query = TupleExistsQuery.builder()
-                .storeId(criteria.storeId())
-                .objectType(criteria.objectType())
-                .objectId(criteria.objectId())
-                .relation(criteria.relation())
-                .subjectType(criteria.subjectType())
-                .subjectId(criteria.subjectId())
-                .subjectRelation(criteria.subjectRelation())
-                .maxZookie(criteria.maxZookie())
-                .build();
-        return tupleRepository.existsTuple(query);
+        return tupleRepository.existsTuple(toExistsQuery(criteria));
     }
 
     @Override
     public boolean existsWildcardTuple(TupleExistenceCriteria criteria) {
-        WildcardTupleExistsQuery query = WildcardTupleExistsQuery.builder()
-                .storeId(criteria.storeId())
-                .objectType(criteria.objectType())
-                .objectId(criteria.objectId())
-                .relation(criteria.relation())
-                .maxZookie(criteria.maxZookie())
-                .build();
-        return tupleRepository.existsWildcardTuple(query);
+        return tupleRepository.existsWildcardTuple(toWildcardQuery(criteria));
     }
 
     @Override
@@ -77,15 +62,7 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
 
     @Override
     public Optional<RelationTuple> findByTupleKey(TupleExistenceCriteria criteria) {
-        TupleKeyQuery query = new TupleKeyQuery();
-        query.setStoreId(criteria.storeId());
-        query.setObjectType(criteria.objectType());
-        query.setObjectId(criteria.objectId());
-        query.setRelation(criteria.relation());
-        query.setSubjectType(criteria.subjectType());
-        query.setSubjectId(criteria.subjectId());
-        query.setSubjectRelation(criteria.subjectRelation());
-        return tupleRepository.findByTupleKey(query).map(TupleConverter::toEntity);
+        return tupleRepository.findByTupleKey(toKeyQuery(criteria)).map(TupleConverter::toEntity);
     }
 
     @Override
@@ -100,20 +77,57 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
         }
 
         List<TupleKeyQuery> queries = criteria.tupleKeys().stream()
-                .map(key -> {
-                    TupleKeyQuery query = new TupleKeyQuery();
-                    query.setStoreId(criteria.storeId());
-                    query.setObjectType(key.getObjectType());
-                    query.setObjectId(key.getObjectId());
-                    query.setRelation(key.getRelation());
-                    query.setSubjectType(key.getSubjectType());
-                    query.setSubjectId(key.getSubjectId());
-                    query.setSubjectRelation(key.getSubjectRelation());
-                    return query;
-                })
+                .map(key -> toKeyQuery(criteria.storeId(), key))
                 .collect(Collectors.toList());
 
         List<TuplePO> poList = tupleRepository.findByTupleKeys(criteria.storeId(), queries);
         return TupleConverter.toEntityList(poList);
+    }
+
+    private TupleExistsQuery toExistsQuery(TupleExistenceCriteria criteria) {
+        return TupleExistsQuery.builder()
+                .storeId(criteria.storeId())
+                .objectType(criteria.objectType())
+                .objectId(criteria.objectId())
+                .relation(criteria.relation())
+                .subjectType(criteria.subjectType())
+                .subjectId(criteria.subjectId())
+                .subjectRelation(criteria.subjectRelation())
+                .maxZookie(criteria.maxZookie())
+                .build();
+    }
+
+    private WildcardTupleExistsQuery toWildcardQuery(TupleExistenceCriteria criteria) {
+        return WildcardTupleExistsQuery.builder()
+                .storeId(criteria.storeId())
+                .objectType(criteria.objectType())
+                .objectId(criteria.objectId())
+                .relation(criteria.relation())
+                .maxZookie(criteria.maxZookie())
+                .build();
+    }
+
+    private TupleKeyQuery toKeyQuery(TupleExistenceCriteria criteria) {
+        TupleKeyQuery query = new TupleKeyQuery();
+        query.setStoreId(criteria.storeId());
+        query.setObjectType(criteria.objectType());
+        query.setObjectId(criteria.objectId());
+        query.setRelation(criteria.relation());
+        query.setSubjectType(criteria.subjectType());
+        query.setSubjectId(criteria.subjectId());
+        query.setSubjectRelation(criteria.subjectRelation());
+        return query;
+    }
+
+    private TupleKeyQuery toKeyQuery(String storeId, org.kitona.zus.domain.authorization.tuple.TupleKey key) {
+        TupleKeyQuery query = new TupleKeyQuery();
+        query.setStoreId(storeId);
+        query.setObjectType(key.getObjectType());
+        query.setObjectId(key.getObjectId());
+        query.setRelation(key.getRelation());
+        query.setSubjectType(key.getSubjectType());
+        query.setSubjectId(key.getSubjectId());
+        query.setSubjectRelation(key.getSubjectRelation());
+        return query;
     }
 }

@@ -60,6 +60,11 @@ public class ListUsersQuery implements Serializable {
     private String subjectType;
 
     /**
+     * 主体关系过滤（可选）。
+     */
+    private String subjectRelation;
+
+    /**
      * 一致性令牌。
      */
     private String consistencyToken;

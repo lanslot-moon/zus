@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.Map;
+
 /**
  * FGA 条件定义输入对象。
  */
@@ -18,8 +20,7 @@ public class FgaConditionDefinitionInput {
     @Size(max = 1024, message = "expression 长度不能超过 1024")
     private String expression;
 
-    @Size(max = 4096, message = "parameterSchema 长度不能超过 4096")
-    private String parameterSchema;
+    private Map<String, String> parameterSchema;
 
     @Size(max = 256, message = "description 长度不能超过 256")
     private String description;

@@ -26,7 +26,7 @@ public interface IFgaReadApiService {
      *
      * @param storeId 存储空间ID，来自路径，由调用方传入
      */
-    @PostMapping("/read")
+    @PostMapping("/tuples/query")
     RestResult<PageResponseVO<FgaTupleVO>> read(@PathVariable String storeId,
                                                 @Valid @RequestBody FgaReadRequest request);
 
@@ -35,7 +35,7 @@ public interface IFgaReadApiService {
      *
      * @param storeId 存储空间ID，来自路径，由调用方传入
      */
-    @PostMapping("/list-objects")
+    @PostMapping("/authorization/list-objects")
     RestResult<FgaListObjectsResponseVO> listObjects(@PathVariable String storeId,
                                                      @Valid @RequestBody FgaListObjectsRequest request);
 
@@ -44,7 +44,7 @@ public interface IFgaReadApiService {
      *
      * @param storeId 存储空间ID，来自路径，由调用方传入
      */
-    @PostMapping("/list-users")
+    @PostMapping("/authorization/list-users")
     RestResult<FgaListUsersResponseVO> listUsers(@PathVariable String storeId,
                                                  @Valid @RequestBody FgaListUsersRequest request);
 }

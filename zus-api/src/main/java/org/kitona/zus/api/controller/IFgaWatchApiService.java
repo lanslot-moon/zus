@@ -11,7 +11,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * GET /fga/stores 列出，从响应中取得 storeId；或按业务约定使用。详见 zus-api/docs/FGA_STORE_ID.md。
  */
 @RestController
-@RequestMapping("/fga/stores/{storeId}")
+@RequestMapping("/fga/stores/{storeId}/tuples")
 public interface IFgaWatchApiService {
 
     /**

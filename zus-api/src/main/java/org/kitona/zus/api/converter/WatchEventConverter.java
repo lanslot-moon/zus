@@ -35,7 +35,13 @@ public final class WatchEventConverter {
         String object = buildObjectRef(dto.getObjectType(), dto.getObjectId());
         String subject = buildSubjectRef(dto.getSubjectType(), dto.getSubjectId(), dto.getSubjectRelation());
         WatchTupleDataVO tuple = new WatchTupleDataVO(object, dto.getRelation(), subject);
-        return new WatchChangeEventVO(dto.getZookie(), dto.getOperation(), tuple);
+        return new WatchChangeEventVO(
+                dto.getZookie(),
+                dto.getOperation(),
+                tuple,
+                dto.getOperatorId(),
+                dto.getRequestId(),
+                dto.getSource());
     }
 
     /**

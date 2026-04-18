@@ -1,6 +1,5 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import jakarta.annotation.Resource;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
 import org.kitona.zus.domain.enums.StoreStatus;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
@@ -20,8 +19,11 @@ import java.util.Optional;
 @Repository
 public class StoreDomainRepositoryAdapter implements IStoreDomainRepository {
 
-    @Resource
-    private IStorePersistenceRepository storeRepository;
+    private final IStorePersistenceRepository storeRepository;
+
+    public StoreDomainRepositoryAdapter(IStorePersistenceRepository storeRepository) {
+        this.storeRepository = storeRepository;
+    }
 
     @Override
     public Optional<StoreAggregate> findByStoreId(String storeId) {
