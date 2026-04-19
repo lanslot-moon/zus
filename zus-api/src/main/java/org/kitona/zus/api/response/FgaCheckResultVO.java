@@ -1,9 +1,11 @@
 package org.kitona.zus.api.response;
 
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
 
 /**
  * FGA 权限检查结果 VO
@@ -18,6 +20,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@AutoMapper(target = PermissionCheckResultDTO.class)
 public class FgaCheckResultVO {
 
     /**

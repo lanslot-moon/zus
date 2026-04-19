@@ -9,7 +9,6 @@ import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 import org.kitona.zus.domain.authorization.model.ConditionDefinition;
-import org.kitona.zus.domain.authorization.model.RelationDefinition;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.domain.read.view.StoreView;
@@ -22,12 +21,12 @@ import org.kitona.zus.domain.port.IModelSnapshotRenderer;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
 import org.kitona.zus.service.application.IAuthorizationModelApplicationService;
 import org.kitona.zus.service.assembler.AuthorizationModelAssembler;
+import org.kitona.zus.service.assembler.AuthorizationTypeDefinitionAssembler;
 import org.kitona.zus.service.dto.command.CreateModelCommand;
 import org.kitona.zus.service.dto.query.ListModelsQuery;
 import org.kitona.zus.service.dto.response.AuthorizationModelResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.exception.ApplicationException;
-import org.kitona.zus.service.factory.AuthorizationModelDraftFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,24 +70,70 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean createModel(CreateModelCommand command) {
+    public AuthorizationModelResultDTO createModel(CreateModelCommand command) {
         ValidationUtil.validate(command);
         String storeId = command.getStoreId();
-        ensureStoreActive(storeId, "createModel");
+        ensureStoreActive(storeId);
 
-        AuthorizationModelAggregate modelAggregate = AuthorizationModelDraftFactory.create(command);
-
+        AuthorizationModelAggregate modelAggregate = assembleDraft(command);
         log.info("AuthorizationModelApplicationService.createModel 创建授权模型: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
-
-        if (CollectionUtils.isEmpty(command.getTypeDefinitions())) {
-            modelDomainRepository.saveOrUpdateModel(modelAggregate);
-            log.info("AuthorizationModelApplicationService.createModel 无关系定义,创建授权模型成功: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
-            return true;
-        }
 
         modelDomainRepository.saveOrUpdateModel(modelAggregate);
         log.info("AuthorizationModelApplicationService.createModel 创建授权模型成功: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
-        return true;
+
+        String currentModelId = getCurrentModelId(storeId);
+        return AuthorizationModelAssembler.toDTO(modelAggregate, currentModelId);
+    }
+
+    /**
+     * 依据 {@link CreateModelCommand} 组装草稿态授权模型聚合：
+     * 生成模型 ID、装配类型定义与条件定义。调用方负责后续持久化与状态流转。
+     */
+    private AuthorizationModelAggregate assembleDraft(CreateModelCommand command) {
+        AuthorizationModelAggregate aggregate = AuthorizationModelAggregate.createWithGeneratedId(
+                command.getStoreId(),
+                command.getSchemaVersion(),
+                command.getDescription()
+        );
+        aggregate.addTypeDefinitions(buildTypeDefinitions(command.getTypeDefinitions()));
+        aggregate.replaceConditionDefinitions(buildConditionDefinitions(command.getConditions()));
+        return aggregate;
+    }
+
+    /**
+     * 根据输入的类型定义列表构建类型定义对象列表
+     *
+     * @param inputs 包含类型定义和关系的输入列表
+     * @return 构建好的类型定义列表，如果输入为空则返回空列表
+     */
+    private List<TypeDefinition> buildTypeDefinitions(List<CreateModelCommand.TypeDefinitionInput> inputs) {
+        if (CollectionUtils.isEmpty(inputs)) {
+            return List.of();
+        }
+
+        // 每个输入都被映射为TypeDefinition对象，并处理其关系定义
+        return inputs.stream()
+                .map(input -> TypeDefinition.createWithRelations(input.getType(),
+                        AuthorizationTypeDefinitionAssembler.toRelationDefinitions(input.getRelations())))
+                .toList();
+    }
+
+    /**
+     * 根据输入的条件定义列表构建条件定义对象列表
+     * @param inputs 包含条件定义信息的输入列表
+     * @return 构建好的条件定义对象列表，如果输入为空则返回空列表
+     */
+    private List<ConditionDefinition> buildConditionDefinitions(List<CreateModelCommand.ConditionDefinitionInput> inputs) {
+        if (CollectionUtils.isEmpty(inputs)) {
+            return List.of();
+        }
+        return inputs.stream()
+                .map(input -> ConditionDefinition.create(
+                        input.getName(),
+                        input.getExpression(),
+                        input.getParameterSchema(),
+                        input.getDescription()))
+                .toList();
     }
 
 
@@ -109,6 +154,26 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     @Override
+    public AuthorizationModelResultDTO getCurrentModel(String storeId) {
+        if (StringUtils.isBlank(storeId)) {
+            return null;
+        }
+        log.info("AuthorizationModelApplicationService.getCurrentModel 查询当前授权模型: storeId={}", storeId);
+        String currentModelId = getCurrentModelId(storeId);
+        if (StringUtils.isBlank(currentModelId)) {
+            log.info("AuthorizationModelApplicationService.getCurrentModel Store 未绑定模型: storeId={}", storeId);
+            return null;
+        }
+
+        Optional<AuthorizationModelAggregate> optional = modelDomainRepository.findByModelId(storeId, currentModelId);
+        if (optional.isEmpty()) {
+            log.warn("AuthorizationModelApplicationService.getCurrentModel 查询授权模型失败, modelId={}", currentModelId);
+            return null;
+        }
+        return AuthorizationModelAssembler.toDTO(optional.get(), currentModelId);
+    }
+
+    @Override
     public PageResultDTO<AuthorizationModelResultDTO> listModels(ListModelsQuery query) {
         ValidationUtil.validate(query);
 
@@ -125,8 +190,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         }
 
         String currentModelId = getCurrentModelId(query.getStoreId());
-        List<AuthorizationModelResultDTO> resultList =
-                AuthorizationModelAssembler.toViewDTOList(pageResult.data(), currentModelId);
+        List<AuthorizationModelResultDTO> resultList = AuthorizationModelAssembler.toViewDTOList(pageResult.data(), currentModelId);
         return PageResultDTO.of(resultList, pageResult.nextPageToken());
     }
 
@@ -136,11 +200,10 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         if (StringUtils.isAnyBlank(storeId, modelId)) {
             return false;
         }
-        ensureStoreActive(storeId, "publishModel");
-        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "publishModel");
+        ensureStoreActive(storeId);
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
 
         model.publish(modelSnapshotRenderer.render(model));
-
         boolean result = modelDomainRepository.saveOrUpdateModel(model);
         if (!result) {
             log.info("发布授权模型失败: storeId={}, modelId={}", storeId, modelId);
@@ -157,12 +220,12 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         if (StringUtils.isAnyBlank(storeId, modelId)) {
             return false;
         }
-        StoreAggregate store = ensureStoreActive(storeId, "activateModel");
-        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "activateModel");
+        StoreAggregate store = ensureStoreActive(storeId);
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
+        log.info("AuthorizationModelApplicationService.activateModel 激活授权模型: storeId={}, modelId={}, status={}", storeId, modelId, model.getStatus());
 
         if (!model.isPublished()) {
-            log.warn("AuthorizationModelApplicationService.activateModel 只能激活已发布的模型: storeId={}, modelId={}, status={}",
-                    storeId, modelId, model.getStatus());
+            log.warn("AuthorizationModelApplicationService.activateModel 只能激活已发布的模型");
             throw new ApplicationException(IError.DATA_STATUS_ERROR);
         }
 
@@ -188,11 +251,10 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         if (StringUtils.isAnyBlank(storeId, modelId)) {
             return false;
         }
-        ensureStoreActive(storeId, "deprecateModel");
-        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "deprecateModel");
+        ensureStoreActive(storeId);
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
 
         model.deprecate();
-
         boolean result = modelDomainRepository.saveOrUpdateModel(model);
         if (!result) {
             log.info("废弃授权模型失败: storeId={}, modelId={}", storeId, modelId);
@@ -208,8 +270,8 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         if (StringUtils.isBlank(storeId) || StringUtils.isBlank(modelId)) {
             return false;
         }
-        ensureStoreActive(storeId, "deleteModel");
-        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId, "deleteModel");
+        ensureStoreActive(storeId);
+        AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
 
         if (!model.isDraft()) {
             log.warn("只能删除草稿状态的模型: storeId={}, modelId={}, status={}", storeId, modelId, model.getStatus());
@@ -223,30 +285,43 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
      * 获取 Store 当前生效的模型ID
      */
     private String getCurrentModelId(String storeId) {
-        return storeQueryRepository.findViewByStoreId(storeId)
-                .map(StoreView::currentModelId)
-                .orElse(null);
+        Optional<StoreView> optional = storeQueryRepository.findViewByStoreId(storeId);
+        return optional.map(StoreView::currentModelId).orElse(null);
     }
 
-    private StoreAggregate ensureStoreActive(String storeId, String action) {
+    /**
+     * 确保商店处于激活状态
+     * @param storeId 商店ID
+     * @return 激活状态的StoreAggregate对象
+     * @throws ApplicationException 当商店不存在或未激活时抛出
+     */
+    private StoreAggregate ensureStoreActive(String storeId) {
         StoreAggregate storeAggregate = storeDomainRepository.findByStoreId(storeId).orElse(null);
         if (storeAggregate == null) {
-            log.warn("{} Store不存在: storeId={}", action, storeId);
+            log.warn("Store不存在: storeId={}", storeId);
             throw new ApplicationException(IError.DATA_NOT_EXIST);
         }
         if (!storeAggregate.isActive()) {
-            log.warn("{} Store 未激活，无法操作模型,模型信息:{}", action, JacksonUtil.toJSONString(storeAggregate));
+            log.warn("Store 未激活，无法操作模型,模型信息:{}", JacksonUtil.toJSONString(storeAggregate));
             throw new ApplicationException(IError.DATA_STATUS_ERROR);
         }
         return storeAggregate;
     }
 
-    private AuthorizationModelAggregate loadModelOrThrow(String storeId, String modelId, String action) {
+    /**
+     * 根据店铺ID和模型ID加载授权模型聚合，如果不存在则抛出异常
+     *
+     * @param storeId 店铺ID，标识特定的店铺
+     * @param modelId 模型ID，标识特定的授权模型
+     * @return AuthorizationModelAggregate 返回找到的授权模型聚合
+     * @throws ApplicationException 当查询不到对应的授权模型时抛出异常
+     */
+    private AuthorizationModelAggregate loadModelOrThrow(String storeId, String modelId) {
         AuthorizationModelAggregate model = modelDomainRepository.findByModelId(storeId, modelId).orElse(null);
         if (model != null) {
             return model;
         }
-        log.warn("AuthorizationModelApplicationService.{} 查询授权模型失败: storeId={}, modelId={}", action, storeId, modelId);
+        log.warn("AuthorizationModelApplicationService. 查询授权模型失败: storeId={}, modelId={}", storeId, modelId);
         throw new ApplicationException(IError.DATA_NOT_EXIST);
     }
 }

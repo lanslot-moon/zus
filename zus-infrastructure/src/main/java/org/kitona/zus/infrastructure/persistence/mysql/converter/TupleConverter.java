@@ -78,13 +78,13 @@ public final class TupleConverter {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }
-        return list.stream().map(TupleConverter::toEntity).collect(Collectors.toList());
+        return list.stream().map(TupleConverter::toEntity).toList();
     }
 
     public static List<TuplePO> toPOList(List<RelationTuple> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }
-        return list.stream().map(TupleConverter::toPO).collect(Collectors.toList());
+        return list.stream().map(TupleConverter::toPO).toList();
     }
 }

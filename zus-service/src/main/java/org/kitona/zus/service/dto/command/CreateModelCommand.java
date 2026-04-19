@@ -98,6 +98,9 @@ public class CreateModelCommand implements Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
 
+        /**
+         * viewer,editer,owner
+         */
         @NotBlank(message = "relationName 不能为空")
         private String relationName;
 

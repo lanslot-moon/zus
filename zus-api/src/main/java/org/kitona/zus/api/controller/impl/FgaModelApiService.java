@@ -44,7 +44,7 @@ public class FgaModelApiService implements IFgaModelApiService {
     private IAuthorizationModelApplicationService modelApplicationService;
 
     @Override
-    public RestResult<Boolean> createModel(String storeId, FgaCreateModelRequest request) {
+    public RestResult<FgaModelVO> createModel(String storeId, FgaCreateModelRequest request) {
         if (request == null) {
             return RestResult.fail("请求不能为空");
         }
@@ -57,8 +57,8 @@ public class FgaModelApiService implements IFgaModelApiService {
                 .conditions(convertConditions(request.getConditions()))
                 .build();
 
-        boolean result = modelApplicationService.createModel(command);
-        return RestResult.success(result);
+        AuthorizationModelResultDTO model = modelApplicationService.createModel(command);
+        return RestResult.success(toModelVO(model));
     }
 
     private List<CreateModelCommand.TypeDefinitionInput> convertTypeDefinitions(List<FgaTypeDefinitionInput> inputList) {

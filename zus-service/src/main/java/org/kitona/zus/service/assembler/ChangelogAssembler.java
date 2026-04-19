@@ -43,6 +43,7 @@ public final class ChangelogAssembler {
                 .operatorId(entity.getOperatorId())
                 .requestId(entity.getRequestId())
                 .source(entity.getSource())
+                .operationTime(entity.getOperationTime())
                 .build();
     }
 

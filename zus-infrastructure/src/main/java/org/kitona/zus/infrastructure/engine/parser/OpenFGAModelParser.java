@@ -1183,7 +1183,7 @@ public class OpenFGAModelParser extends Parser {
 			setState(170);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,17,_ctx);
-			while ( _alt!=1 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
+			while ( _alt!=1 && _alt!= ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1+1 ) {
 					{
 					{

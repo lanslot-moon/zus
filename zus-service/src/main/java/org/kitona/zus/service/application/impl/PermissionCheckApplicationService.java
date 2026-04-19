@@ -52,8 +52,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         ObjectRef object = ObjectRef.of(request.getObjectType(), request.getObjectId());
         Subject subject = buildSubject(request);
 
-        PermissionCheckResult result = permissionCheckCoordinator.execute(
-                request.getStoreId(), object, request.getRelation(), subject, zookie, request.getContext());
+        PermissionCheckResult result = permissionCheckCoordinator.execute(request.getStoreId(), object, request.getRelation(), subject, zookie, request.getContext());
 
         String zookieToken = resolveZookieToken(request.getStoreId(), result);
         long duration = System.currentTimeMillis() - startTime;

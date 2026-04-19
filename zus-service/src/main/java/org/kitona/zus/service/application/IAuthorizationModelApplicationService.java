@@ -17,11 +17,13 @@ public interface IAuthorizationModelApplicationService {
     /**
      * 创建授权模型
      *
-     * 创建后模型状态为草稿(status=0)
+     * <p>创建后模型状态为草稿(status=0)。返回创建后的模型 DTO，
+     * 调用方可据此直接拿到自动生成的 {@code modelId}，无需额外查询。
+     *
      * @param command 创建命令
-     * @return 创建结果，含生成的 modelId
+     * @return 新创建的模型 DTO
      */
-    boolean createModel(CreateModelCommand command);
+    AuthorizationModelResultDTO createModel(CreateModelCommand command);
 
     /**
      * 获取授权模型
@@ -31,6 +33,16 @@ public interface IAuthorizationModelApplicationService {
      * @return 模型详情
      */
     AuthorizationModelResultDTO getModel(String storeId, String modelId);
+
+    /**
+     * 获取 Store 当前激活的授权模型
+     *
+     * <p>若 Store 未绑定任何模型，返回 {@code null}。
+     *
+     * @param storeId 存储空间ID
+     * @return 当前激活模型 DTO；未绑定返回 null
+     */
+    AuthorizationModelResultDTO getCurrentModel(String storeId);
 
     /**
      * 列出存储空间下的授权模型（支持分页和状态筛选）

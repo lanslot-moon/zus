@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * <p>负责 {@link TypeDefinition} 与 DTO/Command 之间的双向转换。
  * <p>DDD 规范：Assembler 位于应用服务层，用于领域对象与 DTO/Command 之间的转换。
  * <p>类型定义的结构化输入（type + relations + relationRestrictions）在
- * {@link org.kitona.zus.service.dto.command.CreateModelCommand.TypeDefinitionInput} 与
+ * {@link CreateModelCommand.TypeDefinitionInput} 与
  * {@link org.kitona.zus.service.dto.command.AddTypeDefinitionCommand} 中一致，
  * 本类提供统一的「从该结构构建 TypeDefinition」的方法供创建模型、添加类型定义等用例复用。
  *

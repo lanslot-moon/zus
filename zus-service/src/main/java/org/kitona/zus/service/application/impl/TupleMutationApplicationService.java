@@ -66,8 +66,7 @@ public class TupleMutationApplicationService implements ITupleMutationApplicatio
             return;
         }
         log.debug("TupleMutationApplicationService.write 写入变更日志(WRITE): storeId={}, count={}", storeId, result.writtenKeys().size());
-        eventPublisher.publishEvent(new TupleWrittenApplicationEvent(
-                storeId, result.writtenKeys(), result.zookie(), result.auditMetadata()));
+        eventPublisher.publishEvent(new TupleWrittenApplicationEvent(storeId, result.writtenKeys(), result.zookie(), result.auditMetadata()));
     }
 
     @Override
@@ -85,7 +84,6 @@ public class TupleMutationApplicationService implements ITupleMutationApplicatio
             return;
         }
         log.debug("TupleMutationApplicationService.delete 写入变更日志(DELETE): storeId={}, count={}", storeId, result.deletedKeys().size());
-        eventPublisher.publishEvent(new TupleDeletedApplicationEvent(
-                storeId, result.deletedKeys(), result.zookie(), result.auditMetadata()));
+        eventPublisher.publishEvent(new TupleDeletedApplicationEvent(storeId, result.deletedKeys(), result.zookie(), result.auditMetadata()));
     }
 }

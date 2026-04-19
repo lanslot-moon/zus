@@ -35,4 +35,9 @@ public class TupleChangeResultDTO implements Serializable {
     private String operatorId;
     private String requestId;
     private String source;
+
+    /**
+     * 操作时间（毫秒时间戳）
+     */
+    private Long operationTime;
 }

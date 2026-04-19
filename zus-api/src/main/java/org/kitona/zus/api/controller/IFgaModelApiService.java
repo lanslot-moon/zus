@@ -33,7 +33,7 @@ public interface IFgaModelApiService {
      * @return 创建结果
      */
     @PostMapping
-    RestResult<Boolean> createModel(@PathVariable String storeId, @Valid @RequestBody FgaCreateModelRequest request);
+    RestResult<FgaModelVO> createModel(@PathVariable String storeId, @Valid @RequestBody FgaCreateModelRequest request);
 
     /**
      * 获取授权模型

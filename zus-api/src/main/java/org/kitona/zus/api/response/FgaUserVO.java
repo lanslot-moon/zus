@@ -1,11 +1,14 @@
 package org.kitona.zus.api.response;
 
+import io.github.linpeilie.annotations.AutoMapper;
 import lombok.Data;
+import org.kitona.zus.service.dto.response.ListUsersResultDTO;
 
 /**
  * FGA 用户 VO
  */
 @Data
+@AutoMapper(target = ListUsersResultDTO.UserDTO.class)
 public class FgaUserVO {
 
     /**

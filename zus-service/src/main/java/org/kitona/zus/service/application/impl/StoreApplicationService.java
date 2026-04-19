@@ -29,7 +29,7 @@ import java.util.Optional;
  *
  * <p>
  * 状态流转：
- * 
+ *
  * <pre>
  *     NORMAL ←──enable()/disable()──→ DISABLE ──delete()──→ (删除)
  * </pre>
@@ -117,21 +117,18 @@ public class StoreApplicationService implements IStoreApplicationService {
         StoreAggregate store = optional.get();
         store.checkDeletable();
         boolean deleted = storeRepository.deleteByStoreId(storeId);
-        if (deleted) {
-            log.info("删除存储空间: storeId={}", storeId);
-        }
+        log.info("deleteStore 删除存储空间: deleted:{}, storeId={}", deleted, storeId);
         return deleted;
     }
 
     @Override
     public PageResultDTO<StoreResultDTO> listStores(ListStoresQuery query) {
-        if (query == null) {
-            query = ListStoresQuery.builder().build();
-        }
+        query = Optional.ofNullable(query).orElse(ListStoresQuery.builder().build());
+
         ValidationUtil.validate(query);
-        CursorPageResult<StoreView> pageResult = storeQueryRepository.findPageViewByCursor(
-                query.getPageToken(),
+        CursorPageResult<StoreView> pageResult = storeQueryRepository.findPageViewByCursor(query.getPageToken(),
                 query.getEffectivePageSize());
+
         if (pageResult.isEmpty()) {
             log.info("StoreApplicationService.listStores 查询存储空间列表为空");
             return PageResultDTO.empty();

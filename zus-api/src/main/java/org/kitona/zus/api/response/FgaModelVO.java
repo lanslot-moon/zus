@@ -5,9 +5,14 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * FGA 授权模型 VO
- * 
- * 对应数据库表 fga_authorization_model
+ * FGA 授权模型 VO —— 对应数据库表 {@code fga_auth_model}
+ *
+ * <p>详情视图支持三种粒度（通过 Controller 的 {@code view} 参数控制）：
+ * <ul>
+ *   <li>{@code DSL}    — 只返回 {@code dslText}</li>
+ *   <li>{@code SCHEMA} — 只返回结构化 {@code types / conditions}</li>
+ *   <li>{@code FULL}   — 两者兼具（默认）</li>
+ * </ul>
  */
 @Data
 public class FgaModelVO {
@@ -28,7 +33,7 @@ public class FgaModelVO {
     private String dslText;
 
     /**
-     * 模型状态: 0-草稿, 1-已发布, 2-已废弃
+     * 模型状态：0-草稿, 1-已发布, 2-已废弃
      */
     private Integer status;
 
@@ -43,9 +48,14 @@ public class FgaModelVO {
     private String description;
 
     /**
-     * 类型定义列表（从 fga_type_definition 等表解析）
+     * 类型定义列表（对应 {@code fga_type_definition} + 下挂的 relation / restriction）
      */
     private List<FgaTypeDefinitionVO> types;
+
+    /**
+     * 条件定义列表（对应 {@code fga_condition_definition}）
+     */
+    private List<FgaConditionVO> conditions;
 
     /**
      * 创建时间（毫秒时间戳）
@@ -53,8 +63,12 @@ public class FgaModelVO {
     private Long createTime;
 
     /**
-     * 是否为当前生效模型
-     * <p>true 表示该模型是 Store 当前使用的模型
+     * 发布时间（毫秒时间戳）；DRAFT 时为 {@code null}
+     */
+    private Long publishTime;
+
+    /**
+     * 是否为 Store 当前激活模型
      */
     private Boolean isCurrent;
 }

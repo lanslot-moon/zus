@@ -42,6 +42,10 @@ public final class TupleAssembler {
                 .subjectType(entity.getSubjectType())
                 .subjectId(entity.getSubjectId())
                 .subjectRelation(entity.getSubjectRelation())
+                .zookie(entity.getZookie() != null ? entity.getZookie().toString() : null)
+                .conditionName(entity.getConditionName())
+                .conditionContext(entity.getConditionContext())
+                .expiresAt(entity.getExpiresAt())
                 .build();
     }
 

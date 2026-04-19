@@ -32,9 +32,6 @@ public class FgaStoreApiService implements IFgaStoreApiService {
 
     @Override
     public RestResult<FgaStoreVO> createStore(FgaCreateStoreRequest request) {
-        if (request == null || request.getName() == null || request.getName().isBlank()) {
-            return RestResult.fail("名称为空");
-        }
         log.info("FgaStoreApiService createStore, name:{}", request.getName());
         StoreResultDTO dto = storeApplicationService.createStore(request.getName(), request.getDescription());
         FgaStoreVO convert = MapstructUtil.convert(dto, FgaStoreVO.class);
@@ -50,17 +47,17 @@ public class FgaStoreApiService implements IFgaStoreApiService {
     }
 
     @Override
-    public RestResult<Void> disableStore(String storeId) {
-        log.info("禁用存储空间: storeId={}", storeId);
-        boolean success = storeApplicationService.disableStore(storeId);
-        return success ? RestResult.success(null) : RestResult.fail("禁用失败，Store不存在或状态不允许");
-    }
-
-    @Override
     public RestResult<Void> enableStore(String storeId) {
         log.info("启用存储空间: storeId={}", storeId);
         boolean success = storeApplicationService.enableStore(storeId);
         return success ? RestResult.success(null) : RestResult.fail("启用失败，Store不存在或状态不允许");
+    }
+
+    @Override
+    public RestResult<Void> disableStore(String storeId) {
+        log.info("禁用存储空间: storeId={}", storeId);
+        boolean success = storeApplicationService.disableStore(storeId);
+        return success ? RestResult.success(null) : RestResult.fail("禁用失败，Store不存在或状态不允许");
     }
 
     @Override

@@ -2,39 +2,40 @@ package org.kitona.zus.api.response;
 
 import lombok.Data;
 
+import java.util.Map;
+
 /**
- * FGA 元组 VO
+ * FGA 元组 VO —— 对应 {@code fga_relation_tuple}
+ *
+ * <p>相比旧版，补齐了 Read / Watch 所需的完整字段：条件绑定、过期时间、zookie 等。
  */
 @Data
 public class FgaTupleVO {
 
-    /**
-     * 资源类型
-     */
     private String objectType;
-
-    /**
-     * 资源ID
-     */
     private String objectId;
-
-    /**
-     * 关系名称
-     */
     private String relation;
-
-    /**
-     * 主体类型
-     */
     private String subjectType;
-
-    /**
-     * 主体ID
-     */
     private String subjectId;
+    private String subjectRelation;
 
     /**
-     * 主体关系（用户集时使用）
+     * 绑定的条件名（ABAC）
      */
-    private String subjectRelation;
+    private String conditionName;
+
+    /**
+     * 绑定时固化的条件上下文
+     */
+    private Map<String, Object> conditionContext;
+
+    /**
+     * 过期时间（毫秒时间戳）
+     */
+    private Long expiresAt;
+
+    /**
+     * 写入时的 Zookie 版本
+     */
+    private String zookie;
 }

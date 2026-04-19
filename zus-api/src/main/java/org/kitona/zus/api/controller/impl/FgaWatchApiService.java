@@ -36,8 +36,8 @@ public class FgaWatchApiService implements IFgaWatchApiService {
     private SseConnectionManager sseConnectionManager;
 
     @Override
-    public SseEmitter watch(String storeId, Long startAt) {
-        log.info("FgaWatchApiService watch, storeId:{}, startAt:{}", storeId, startAt);
+    public SseEmitter watch(String storeId, Long startAt, String type) {
+        log.info("FgaWatchApiService watch, storeId:{}, startAt:{}, type:{}", storeId, startAt, type);
 
         SseEmitter emitter = sseConnectionManager.createConnection(storeId, startAt);
 

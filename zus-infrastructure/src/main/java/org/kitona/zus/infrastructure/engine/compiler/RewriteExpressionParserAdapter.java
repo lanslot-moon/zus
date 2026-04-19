@@ -21,6 +21,12 @@ import java.util.Objects;
 final class RewriteExpressionParserAdapter {
 
     /**
+     * 单例实例，用于全局共享同一个错误监听器。
+     */
+    private static final FailFastErrorListener LISTENER_INSTANCE = new FailFastErrorListener();
+
+
+    /**
      * 将 rewrite 表达式解析为领域 AST 节点。
      *
      * @param resourceType 当前关系所属资源类型
@@ -34,11 +40,11 @@ final class RewriteExpressionParserAdapter {
         try {
             OpenFGAModelLexer lexer = new OpenFGAModelLexer(CharStreams.fromString(expression));
             lexer.removeErrorListeners();
-            lexer.addErrorListener(FailFastErrorListener.INSTANCE);
+            lexer.addErrorListener(LISTENER_INSTANCE);
 
             OpenFGAModelParser parser = new OpenFGAModelParser(new CommonTokenStream(lexer));
             parser.removeErrorListeners();
-            parser.addErrorListener(FailFastErrorListener.INSTANCE);
+            parser.addErrorListener(LISTENER_INSTANCE);
             parser.setErrorHandler(new BailErrorStrategy());
 
             return new RewriteNodeAstVisitor(resourceType).visit(parser.rewrite());
@@ -51,11 +57,6 @@ final class RewriteExpressionParserAdapter {
      * 语法错误即失败，避免默认恢复导致"看似成功但语义错误"的编译结果。
      */
     private static final class FailFastErrorListener extends BaseErrorListener {
-
-        /**
-         * 单例实例，用于全局共享同一个错误监听器。
-         */
-        private static final FailFastErrorListener INSTANCE = new FailFastErrorListener();
 
         /**
          * 当语法错误发生时被调用。

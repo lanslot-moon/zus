@@ -1,10 +1,12 @@
 package org.kitona.zus.service.assembler;
 
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.ConditionDefinition;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.service.dto.response.AuthorizationModelResultDTO;
 import org.kitona.zus.service.dto.response.AuthorizationTypeDefinitionResultDTO;
+import org.kitona.zus.service.dto.response.ConditionDefinitionResultDTO;
 
 import java.util.Collections;
 import java.util.List;
@@ -55,6 +57,7 @@ public final class AuthorizationModelAssembler {
                 .status(aggregate.getStatusValue())
                 .description(aggregate.getDescription())
                 .typeDefinitions(convertTypeDefinitions(aggregate.getTypeDefinitions()))
+                .conditionDefinitions(convertConditionDefinitions(aggregate.getConditionDefinitions()))
                 .createTime(aggregate.getCreateTime())
                 .isCurrent(isCurrent)
                 .build();
@@ -107,7 +110,7 @@ public final class AuthorizationModelAssembler {
         }
         return aggregates.stream()
                 .map(agg -> toDTO(agg, currentModelId))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -123,7 +126,7 @@ public final class AuthorizationModelAssembler {
         }
         return views.stream()
                 .map(view -> toDTO(view, currentModelId))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -137,5 +140,23 @@ public final class AuthorizationModelAssembler {
             return Collections.emptyList();
         }
         return AuthorizationTypeDefinitionAssembler.toDTOList(typeDefinitions);
+    }
+
+    /**
+     * 转换条件定义列表
+     */
+    private static List<ConditionDefinitionResultDTO> convertConditionDefinitions(List<ConditionDefinition> conditionDefinitions) {
+        if (conditionDefinitions == null || conditionDefinitions.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return conditionDefinitions.stream()
+                .map(def -> ConditionDefinitionResultDTO.builder()
+                        .id(def.getId())
+                        .name(def.getConditionName())
+                        .expression(def.getExpression())
+                        .parameterSchema(def.getParameterSchema())
+                        .description(def.getDescription())
+                        .build())
+                .toList();
     }
 }

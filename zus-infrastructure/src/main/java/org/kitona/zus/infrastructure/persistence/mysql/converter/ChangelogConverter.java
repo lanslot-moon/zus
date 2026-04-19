@@ -6,7 +6,6 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Changelog PO 与领域实体 Changelog 转换器
@@ -71,13 +70,13 @@ public final class ChangelogConverter {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }
-        return list.stream().map(ChangelogConverter::toEntity).collect(Collectors.toList());
+        return list.stream().map(ChangelogConverter::toEntity).toList();
     }
 
     public static List<ChangelogPO> toPOList(List<Changelog> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }
-        return list.stream().map(ChangelogConverter::toPO).collect(Collectors.toList());
+        return list.stream().map(ChangelogConverter::toPO).toList();
     }
 }

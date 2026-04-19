@@ -29,6 +29,7 @@ import org.kitona.zus.service.dto.response.TupleResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Read / ListObjects / ListUsers 应用服务
@@ -51,7 +52,7 @@ import java.util.List;
  * @author kitona
  * @version 1.0.0
  * @since 2025-01-15
- * @see org.kitona.zus.domain.authorization.tuple.RelationTuple
+ * @see RelationTuple
  */
 @Service
 public class AuthorizationReadApplicationService implements IAuthorizationReadApplicationService {
@@ -132,9 +133,9 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
         );
         List<ListUsersResultDTO.UserDTO> users = permissionEvaluator.listUsers(compiledModel, request).stream()
                 .filter(subject -> StringUtils.isBlank(query.getSubjectType())
-                        || StringUtils.equals(query.getSubjectType(), subject.getType()))
+                        || Objects.equals(query.getSubjectType(), subject.getType()))
                 .filter(subject -> StringUtils.isBlank(query.getSubjectRelation())
-                        || StringUtils.equals(query.getSubjectRelation(), subject.getRelation()))
+                        || Objects.equals(query.getSubjectRelation(), subject.getRelation()))
                 .map(subject -> ListUsersResultDTO.UserDTO.builder()
                         .type(subject.getType())
                         .id(subject.getId())

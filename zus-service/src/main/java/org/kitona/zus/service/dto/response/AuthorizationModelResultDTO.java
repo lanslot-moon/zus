@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.kitona.zus.common.utils.JacksonUtil;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -59,6 +58,12 @@ public class AuthorizationModelResultDTO implements Serializable {
      */
     @JsonIgnore
     private List<AuthorizationTypeDefinitionResultDTO> typeDefinitions;
+
+    /**
+     * 条件定义列表（ABAC，内部使用，不参与 JSON 序列化）
+     */
+    @JsonIgnore
+    private List<ConditionDefinitionResultDTO> conditionDefinitions;
 
     /**
      * 创建时间（毫秒时间戳）

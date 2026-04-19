@@ -4,6 +4,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 import org.kitona.zus.domain.authorization.model.ConditionDefinition;
@@ -90,6 +91,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean saveOrUpdateModel(AuthorizationModelAggregate model) {
+        log.info("saveOrUpdateModel 参数为: {}", JacksonUtil.toJSONString(model));
         String storeId = model.getStoreId();
         String modelId = model.getModelId();
 
@@ -97,7 +99,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         if (existing.isEmpty()) {
             authorizationModelPersistenceRepository.createModel(AuthorizationModelConverter.toPO(model));
         } else {
-            deleteModelStructure(storeId, modelId);
+            // 已存在：更新模型本身（status / description / dslText 等）并清理关联结构后重建
+            AuthorizationModelPO updatePO = AuthorizationModelConverter.toPO(model);
+            updatePO.setId(existing.get().getId());
+            authorizationModelPersistenceRepository.updateModel(updatePO);
+            this.deleteModelAssociateStructure(storeId, modelId);
+            log.info("saveOrUpdateModel 模型关联结构已删除,storeId:{}, modelId:{}", storeId, modelId);
         }
 
         saveTypeDefinitions(storeId, modelId, model.getTypeDefinitions());
@@ -123,7 +130,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         if (!deleted) {
             return false;
         }
-        deleteModelStructure(storeId, modelId);
+        this.deleteModelAssociateStructure(storeId, modelId);
         return true;
     }
 
@@ -240,12 +247,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     }
 
     /**
-     * 删除模型结构（包括类型定义、关系定义和关系限制）
+     * 删除模型关联结构（包括类型定义、关系定义和关系限制,不删除Model本身）
      *
      * @param storeId 门店ID
      * @param modelId 模型ID
      */
-    private void deleteModelStructure(String storeId, String modelId) {
+    private void deleteModelAssociateStructure(String storeId, String modelId) {
         conditionDefinitionPersistenceRepository.deleteByModelId(storeId, modelId);
 
         List<SubjectDefinitionPO> typeDefinitions = subjectDefinitionPersistenceRepository.selectByModelId(storeId, modelId);
@@ -288,7 +295,6 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         }
 
         subjectDefinitionPersistenceRepository.saveBatch(poList);
-
         return poList.stream()
                 .collect(Collectors.toMap(SubjectDefinitionPO::getSubjectType, SubjectDefinitionPO::getId));
     }
