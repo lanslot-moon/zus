@@ -3,6 +3,7 @@ package org.kitona.zus.api.converter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.kitona.zus.api.enums.FgaRelationType;
 import org.kitona.zus.api.request.model.FgaConditionDefinitionInput;
 import org.kitona.zus.api.request.model.FgaRelationDefinitionInput;
 import org.kitona.zus.api.request.model.FgaTypeDefinitionInput;
@@ -14,6 +15,7 @@ import org.kitona.zus.api.response.FgaRelationVO;
 import org.kitona.zus.api.response.FgaTypeDefinitionVO;
 import org.kitona.zus.api.response.FgaTypeRestrictionVO;
 import org.kitona.zus.common.utils.JacksonUtil;
+import org.kitona.zus.domain.enums.ModelPublishStatus;
 import org.kitona.zus.service.dto.command.CreateModelCommand;
 import org.kitona.zus.service.dto.query.ListModelsQuery;
 import org.kitona.zus.service.dto.response.AuthorizationModelResultDTO;
@@ -48,6 +50,12 @@ import java.util.Map;
  * @since 2026-04-18
  */
 public final class FgaModelConverter {
+
+    private static final String DEFAULT_SCHEMA_VERSION = "1.1";
+    private static final String UNKNOWN_STATUS_DESC = "UNKNOWN";
+    private static final String RESTRICTION_CONDITION_SEPARATOR = " with ";
+    private static final String TYPE_WILDCARD_SUFFIX = ":*";
+    private static final String USERSET_RELATION_SEPARATOR = "#";
 
     private static final TypeReference<Map<String, String>> PARAMETER_SCHEMA_TYPE =
             new TypeReference<>() {
@@ -87,7 +95,7 @@ public final class FgaModelConverter {
 
     private static String resolveSchemaVersion(FgaWriteAuthorizationModelRequest request) {
         if (request == null || StringUtils.isBlank(request.getSchemaVersion())) {
-            return "1.1";
+            return DEFAULT_SCHEMA_VERSION;
         }
         return request.getSchemaVersion();
     }
@@ -149,14 +157,14 @@ public final class FgaModelConverter {
         }
         String base;
         if (Boolean.TRUE.equals(r.getWildcard())) {
-            base = r.getType() + ":*";
+            base = r.getType() + TYPE_WILDCARD_SUFFIX;
         } else if (StringUtils.isNotBlank(r.getRelation())) {
-            base = r.getType() + "#" + r.getRelation();
+            base = r.getType() + USERSET_RELATION_SEPARATOR + r.getRelation();
         } else {
             base = r.getType();
         }
         if (StringUtils.isNotBlank(r.getCondition())) {
-            return base + " with " + r.getCondition();
+            return base + RESTRICTION_CONDITION_SEPARATOR + r.getCondition();
         }
         return base;
     }
@@ -236,7 +244,7 @@ public final class FgaModelConverter {
             FgaRelationVO vo = new FgaRelationVO();
             vo.setName(e.getKey());
             vo.setRewriteExpression(e.getValue());
-            vo.setRelationType(deriveRelationType(e.getValue()));
+            vo.setRelationType(FgaRelationType.deriveCode(e.getValue()));
             if (restrictions != null) {
                 vo.setRestrictions(decodeRestrictions(restrictions.get(e.getKey())));
             }
@@ -269,17 +277,17 @@ public final class FgaModelConverter {
         }
         String core = raw;
         String condition = null;
-        int withIdx = raw.indexOf(" with ");
+        int withIdx = raw.indexOf(RESTRICTION_CONDITION_SEPARATOR);
         if (withIdx > 0) {
             core = raw.substring(0, withIdx).trim();
-            condition = raw.substring(withIdx + " with ".length()).trim();
+            condition = raw.substring(withIdx + RESTRICTION_CONDITION_SEPARATOR.length()).trim();
         }
         FgaTypeRestrictionVO.FgaTypeRestrictionVOBuilder builder = FgaTypeRestrictionVO.builder()
                 .condition(StringUtils.isBlank(condition) ? null : condition);
-        if (core.endsWith(":*")) {
-            builder.type(core.substring(0, core.length() - 2)).wildcard(Boolean.TRUE);
+        if (core.endsWith(TYPE_WILDCARD_SUFFIX)) {
+            builder.type(core.substring(0, core.length() - TYPE_WILDCARD_SUFFIX.length())).wildcard(Boolean.TRUE);
         } else {
-            int idx = core.indexOf('#');
+            int idx = core.indexOf(USERSET_RELATION_SEPARATOR);
             if (idx > 0) {
                 builder.type(core.substring(0, idx)).relation(core.substring(idx + 1));
             } else {
@@ -289,44 +297,18 @@ public final class FgaModelConverter {
         return builder.build();
     }
 
-    /**
-     * 依据重写表达式粗判 relationType：
-     * <ul>
-     *   <li>包含 " from " → ttu(2)</li>
-     *   <li>包含 " or " / " and " / " but not " → composite(3)</li>
-     *   <li>等于 self 或包含 self 标识 → direct_only(0)</li>
-     *   <li>其余（单个标识符）→ computed_userset(1)</li>
-     * </ul>
-     */
-    private static Integer deriveRelationType(String rewrite) {
-        if (StringUtils.isBlank(rewrite)) {
-            return null;
-        }
-        String expr = rewrite.trim();
-        if (expr.contains(" from ")) {
-            return 2;
-        }
-        if (expr.contains(" or ") || expr.contains(" and ") || expr.contains(" but not ")) {
-            return 3;
-        }
-        if ("self".equals(expr)) {
-            return 0;
-        }
-        return 1;
-    }
-
     private static List<FgaConditionVO> toConditionVOList(List<ConditionDefinitionResultDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
         List<FgaConditionVO> out = new ArrayList<>(list.size());
         for (ConditionDefinitionResultDTO dto : list) {
-            out.add(FgaConditionVO.builder()
-                    .name(dto.getName())
-                    .expression(dto.getExpression())
-                    .parameterSchema(parseParameterSchema(dto.getParameterSchema()))
-                    .description(dto.getDescription())
-                    .build());
+            FgaConditionVO vo = new FgaConditionVO();
+            vo.setName(dto.getName());
+            vo.setExpression(dto.getExpression());
+            vo.setParameterSchema(parseParameterSchema(dto.getParameterSchema()));
+            vo.setDescription(dto.getDescription());
+            out.add(vo);
         }
         return out;
     }
@@ -346,11 +328,7 @@ public final class FgaModelConverter {
         if (status == null) {
             return null;
         }
-        return switch (status) {
-            case 0 -> "DRAFT";
-            case 1 -> "PUBLISHED";
-            case 2 -> "ABANDONED";
-            default -> "UNKNOWN";
-        };
+        ModelPublishStatus publishStatus = ModelPublishStatus.fromStatus(status);
+        return publishStatus != null ? publishStatus.name() : UNKNOWN_STATUS_DESC;
     }
 }

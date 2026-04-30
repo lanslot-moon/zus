@@ -142,13 +142,8 @@ public final class FgaTupleConverter {
             return null;
         }
         FgaTupleVO vo = new FgaTupleVO();
-        vo.setObjectType(dto.getObjectType());
-        vo.setObjectId(dto.getObjectId());
-        vo.setRelation(dto.getRelation());
-        vo.setSubjectType(dto.getSubjectType());
-        vo.setSubjectId(dto.getSubjectId());
-        vo.setSubjectRelation(dto.getSubjectRelation());
-        vo.setZookie(dto.getZookie());
+        populateTupleView(vo, dto.getObjectType(), dto.getObjectId(), dto.getRelation(),
+                dto.getSubjectType(), dto.getSubjectId(), dto.getSubjectRelation(), dto.getZookie());
         vo.setConditionName(dto.getConditionName());
         vo.setConditionContext(parseJsonContext(dto.getConditionContext()));
         vo.setExpiresAt(dto.getExpiresAt());
@@ -189,5 +184,19 @@ public final class FgaTupleConverter {
         } catch (Exception ex) {
             return null;
         }
+    }
+
+    static void populateTupleView(FgaTupleVO tupleView, String objectType, String objectId, String relation,
+                                  String subjectType, String subjectId, String subjectRelation, String zookie) {
+        if (tupleView == null) {
+            return;
+        }
+        tupleView.setObjectType(objectType);
+        tupleView.setObjectId(objectId);
+        tupleView.setRelation(relation);
+        tupleView.setSubjectType(subjectType);
+        tupleView.setSubjectId(subjectId);
+        tupleView.setSubjectRelation(subjectRelation);
+        tupleView.setZookie(zookie);
     }
 }

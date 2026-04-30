@@ -46,17 +46,50 @@ public final class PermissionEvaluator {
 
     private static final int DEFAULT_MAX_DEPTH = 32;
 
+    /**
+     * 主体匹配规则
+     */
     private static final SubjectMatchSpecification SUBJECT_MATCH_SPECIFICATION = new SubjectMatchSpecification();
-    private static final RelationRestrictionSpecification RELATION_RESTRICTION_SPECIFICATION =
-            new RelationRestrictionSpecification();
 
+    /**
+     * 关系类型限制规则关系类型限制规则
+     */
+    private static final RelationRestrictionSpecification RELATION_RESTRICTION_SPECIFICATION = new RelationRestrictionSpecification();
+
+    /**
+     * 直接 tuple 读取端口
+     */
     private final IDirectTupleReader directTupleReader;
+
+    /**
+     * TTU 链接 tuple 读取端口
+     */
     private final ITupleLinkReader tupleLinkReader;
+
+    /**
+     * 从 subject 反查 object 候选端口
+     */
     private final ISubjectObjectCandidateReader subjectObjectCandidateReader;
+
+    /**
+     * 从 object 反查 subject 候选端口。
+     */
     private final IObjectSubjectCandidateReader objectSubjectCandidateReader;
+
+    /**
+     * 条件求值端口
+     */
     private final IConditionEvaluator conditionEvaluator;
+
     private final int maxDepth;
+    /**
+     * 递归求值模板
+     */
     private final RecursiveEvaluationTemplate recursiveEvaluationTemplate;
+
+    /**
+     * 节点策略回调接口
+     */
     private final RewriteNodeEvaluationSupport evaluationSupport;
 
     public PermissionEvaluator(IDirectTupleReader directTupleReader,

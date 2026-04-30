@@ -27,13 +27,8 @@ public final class FgaChangelogConverter {
             return null;
         }
         FgaTupleVO tuple = new FgaTupleVO();
-        tuple.setObjectType(dto.getObjectType());
-        tuple.setObjectId(dto.getObjectId());
-        tuple.setRelation(dto.getRelation());
-        tuple.setSubjectType(dto.getSubjectType());
-        tuple.setSubjectId(dto.getSubjectId());
-        tuple.setSubjectRelation(dto.getSubjectRelation());
-        tuple.setZookie(dto.getZookie());
+        FgaTupleConverter.populateTupleView(tuple, dto.getObjectType(), dto.getObjectId(), dto.getRelation(),
+                dto.getSubjectType(), dto.getSubjectId(), dto.getSubjectRelation(), dto.getZookie());
 
         return FgaTupleChangeVO.builder()
                 .zookie(dto.getZookie())

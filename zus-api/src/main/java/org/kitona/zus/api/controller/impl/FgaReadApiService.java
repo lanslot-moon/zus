@@ -3,15 +3,17 @@ package org.kitona.zus.api.controller.impl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.api.controller.IFgaReadApiService;
+import org.kitona.zus.api.converter.FgaRelationQueryConverter;
+import org.kitona.zus.api.converter.FgaTupleConverter;
 import org.kitona.zus.api.request.FgaListObjectsRequest;
 import org.kitona.zus.api.request.FgaListUsersRequest;
 import org.kitona.zus.api.request.FgaReadRequest;
 import org.kitona.zus.api.response.FgaListObjectsResponseVO;
 import org.kitona.zus.api.response.FgaListUsersResponseVO;
 import org.kitona.zus.api.response.FgaTupleVO;
-import org.kitona.zus.api.response.FgaUserVO;
 import org.kitona.zus.api.response.PageResponseVO;
 import org.kitona.zus.api.response.RestResult;
+import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
 import org.kitona.zus.service.dto.query.ListUsersQuery;
@@ -57,9 +59,7 @@ public class FgaReadApiService implements IFgaReadApiService {
                 .build();
         PageResultDTO<TupleResultDTO> result = readApplicationService.read(storeId, query);
 
-        List<FgaTupleVO> tuples = result.getData().stream()
-                .map(this::toTupleVO)
-                .toList();
+        List<FgaTupleVO> tuples = FgaTupleConverter.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(tuples, result.getContinuationToken(), result.isHasMore()));
     }
 
@@ -83,9 +83,7 @@ public class FgaReadApiService implements IFgaReadApiService {
                 .build();
 
         ListObjectsResultDTO result = readApplicationService.listObjects(query);
-        FgaListObjectsResponseVO vo = new FgaListObjectsResponseVO();
-        vo.setObjects(result.getObjects() != null ? result.getObjects() : Collections.emptyList());
-        return RestResult.success(vo);
+        return RestResult.success(FgaRelationQueryConverter.toListObjectsVO(result));
     }
 
     @Override
@@ -107,30 +105,10 @@ public class FgaReadApiService implements IFgaReadApiService {
                 .build();
 
         ListUsersResultDTO result = readApplicationService.listUsers(query);
-        List<FgaUserVO> users = result.getUsers() == null ? Collections.emptyList() : result.getUsers().stream()
-                .map(this::toUserVO)
-                .toList();
         FgaListUsersResponseVO vo = new FgaListUsersResponseVO();
-        vo.setUsers(users != null ? users : Collections.emptyList());
+        vo.setUsers(result == null || result.getUsers() == null
+                ? Collections.emptyList()
+                : MapstructUtil.convert(result.getUsers(), org.kitona.zus.api.response.FgaUserVO.class));
         return RestResult.success(vo);
-    }
-
-    private FgaTupleVO toTupleVO(TupleResultDTO dto) {
-        FgaTupleVO tuple = new FgaTupleVO();
-        tuple.setObjectType(dto.getObjectType());
-        tuple.setObjectId(dto.getObjectId());
-        tuple.setRelation(dto.getRelation());
-        tuple.setSubjectType(dto.getSubjectType());
-        tuple.setSubjectId(dto.getSubjectId());
-        tuple.setSubjectRelation(dto.getSubjectRelation());
-        return tuple;
-    }
-
-    private FgaUserVO toUserVO(ListUsersResultDTO.UserDTO dto) {
-        FgaUserVO user = new FgaUserVO();
-        user.setType(dto.getType());
-        user.setId(dto.getId());
-        user.setRelation(dto.getRelation());
-        return user;
     }
 }

@@ -4,6 +4,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.api.controller.IFgaModelApiService;
+import org.kitona.zus.api.converter.FgaModelConverter;
 import org.kitona.zus.api.request.FgaConditionDefinitionInput;
 import org.kitona.zus.api.request.FgaCreateModelRequest;
 import org.kitona.zus.api.request.FgaRelationDefinitionInput;
@@ -24,10 +25,7 @@ import org.kitona.zus.service.dto.response.AuthorizationTypeDefinitionResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * FGA 授权模型 API 实现
@@ -58,7 +56,7 @@ public class FgaModelApiService implements IFgaModelApiService {
                 .build();
 
         AuthorizationModelResultDTO model = modelApplicationService.createModel(command);
-        return RestResult.success(toModelVO(model));
+        return RestResult.success(FgaModelConverter.toVO(model));
     }
 
     private List<CreateModelCommand.TypeDefinitionInput> convertTypeDefinitions(List<FgaTypeDefinitionInput> inputList) {
@@ -128,7 +126,7 @@ public class FgaModelApiService implements IFgaModelApiService {
 
         AuthorizationModelResultDTO model = modelApplicationService.getModel(storeId, modelId);
         log.info("FgaModelApiService.getModel 获取响应结果为:{}", JacksonUtil.toJSONString(model));
-        return RestResult.success(toModelVO(model));
+        return RestResult.success(FgaModelConverter.toVO(model));
     }
 
     @Override
@@ -142,10 +140,7 @@ public class FgaModelApiService implements IFgaModelApiService {
                 .status(status)
                 .build();
         PageResultDTO<AuthorizationModelResultDTO> result = modelApplicationService.listModels(query);
-
-        List<FgaModelVO> voList = result.getData().stream()
-                .map(this::toModelVO)
-                .toList();
+        List<FgaModelVO> voList = FgaModelConverter.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(voList, result.getContinuationToken(), result.isHasMore()));
     }
 
@@ -175,74 +170,5 @@ public class FgaModelApiService implements IFgaModelApiService {
         log.info("FgaModelApiService deleteModel, storeId:{}, modelId:{}", storeId, modelId);
         modelApplicationService.deleteModel(storeId, modelId);
         return RestResult.success(null);
-    }
-
-    private FgaModelVO toModelVO(AuthorizationModelResultDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        FgaModelVO model = new FgaModelVO();
-        model.setModelId(dto.getModelId());
-        model.setSchemaVersion(dto.getSchemaVersion());
-        model.setDslText(dto.getDslText());
-        model.setStatus(dto.getStatus());
-        model.setDescription(dto.getDescription());
-        model.setCreateTime(dto.getCreateTime());
-        model.setIsCurrent(dto.getIsCurrent());
-        model.setTypes(convertTypes(dto.getTypeDefinitions()));
-        return model;
-    }
-
-    private List<FgaTypeDefinitionVO> convertTypes(List<AuthorizationTypeDefinitionResultDTO> types) {
-        if (CollectionUtils.isEmpty(types)) {
-            return Collections.emptyList();
-        }
-        return types.stream().map(this::toTypeVO).toList();
-    }
-
-    private FgaTypeDefinitionVO toTypeVO(AuthorizationTypeDefinitionResultDTO dto) {
-        FgaTypeDefinitionVO type = new FgaTypeDefinitionVO();
-        type.setType(dto.getType());
-        type.setRelations(toRelationVOs(dto.getRelations(), dto.getRelationRestrictions()));
-        return type;
-    }
-
-    private List<FgaRelationVO> toRelationVOs(Map<String, String> relations, Map<String, List<String>> restrictions) {
-        if (relations == null || relations.isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<FgaRelationVO> relationVOs = new ArrayList<>(relations.size());
-        for (Map.Entry<String, String> relation : relations.entrySet()) {
-            FgaRelationVO relationVO = new FgaRelationVO();
-            relationVO.setName(relation.getKey());
-            relationVO.setRewriteExpression(relation.getValue());
-            relationVO.setRestrictions(toRestrictionVOs(restrictions == null ? null : restrictions.get(relation.getKey())));
-            relationVOs.add(relationVO);
-        }
-        return relationVOs;
-    }
-
-    private List<FgaTypeRestrictionVO> toRestrictionVOs(List<String> restrictions) {
-        if (CollectionUtils.isEmpty(restrictions)) {
-            return Collections.emptyList();
-        }
-        return restrictions.stream()
-                .map(this::toRestrictionVO)
-                .toList();
-    }
-
-    private FgaTypeRestrictionVO toRestrictionVO(String restrictionValue) {
-        FgaTypeRestrictionVO restriction = new FgaTypeRestrictionVO();
-        if (restrictionValue == null || restrictionValue.isBlank()) {
-            return restriction;
-        }
-        int separatorIndex = restrictionValue.indexOf('#');
-        if (separatorIndex < 0) {
-            restriction.setType(restrictionValue);
-            return restriction;
-        }
-        restriction.setType(restrictionValue.substring(0, separatorIndex));
-        restriction.setRelation(restrictionValue.substring(separatorIndex + 1));
-        return restriction;
     }
 }
