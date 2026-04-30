@@ -4,6 +4,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.domain.authorization.audit.AuditMetadata;
 import org.kitona.zus.domain.authorization.tuple.TupleKey;
+import org.kitona.zus.service.conv.model.TupleChangeResultConv;
 import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 import org.kitona.zus.service.event.WatchEventPublisher;
 import org.kitona.zus.service.event.application.TupleDeletedApplicationEvent;
@@ -86,20 +87,41 @@ public class TupleChangeEventListener {
         }
     }
 
+    /**
+     * 构建变更结果DTO对象的方法
+     *
+     * @param tupleKey      包含对象和主体信息的键值对象
+     * @param operation     操作类型
+     * @param zookie        版本标识
+     * @param auditMetadata 审计元数据信息
+     * @return 返回构建好的TupleChangeResultDTO对象
+     */
     private TupleChangeResultDTO buildChangeDTO(TupleKey tupleKey, String operation, String zookie,
                                                 AuditMetadata auditMetadata) {
         return TupleChangeResultDTO.builder()
+                // 设置对象类型
                 .objectType(tupleKey.getObjectType())
+                // 设置对象ID
                 .objectId(tupleKey.getObjectId())
+                // 设置关系
                 .relation(tupleKey.getRelation())
+                // 设置主体类型
                 .subjectType(tupleKey.getSubjectType())
+                // 设置主体ID
                 .subjectId(tupleKey.getSubjectId())
+                // 设置主体关系
                 .subjectRelation(tupleKey.getSubjectRelation())
+                // 设置操作者ID
                 .operatorId(auditMetadata.operatorId())
+                // 设置请求ID
                 .requestId(auditMetadata.requestId())
+                // 设置来源
                 .source(auditMetadata.source())
+                // 设置操作类型
                 .operation(operation)
+                // 设置版本标识
                 .zookie(zookie)
+                // 构建并返回对象
                 .build();
     }
 }

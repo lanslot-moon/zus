@@ -1,4 +1,4 @@
-package org.kitona.zus.service.assembler;
+package org.kitona.zus.service.conv.assembler;
 
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.service.dto.response.ListUsersResultDTO;

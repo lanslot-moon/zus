@@ -1,6 +1,6 @@
 package org.kitona.zus.domain.authorization.evaluation.runtime;
 
-import java.util.function.Supplier;
+import java.util.function.BooleanSupplier;
 
 /**
  * 递归求值模板。
@@ -16,7 +16,7 @@ public final class RecursiveEvaluationTemplate {
      * <p>执行顺序固定为：深度检查 -> memo 命中 -> 环检测 -> 执行真实求值 -> 回填 memo。
      * 这样调用方只需要提供具体的求值逻辑，不需要重复写这些横切控制。
      */
-    public boolean execute(EvaluationRuntime runtime, EvaluationMemoKey memoKey, int depth, Supplier<Boolean> evaluator) {
+    public boolean execute(EvaluationRuntime runtime, EvaluationMemoKey memoKey, int depth, BooleanSupplier evaluator) {
         // 检查当前递归深度是否超过最大允许深度，防止无限递归
         if (depth > runtime.guard().maxDepth()) {
             return false;
@@ -34,7 +34,7 @@ public final class RecursiveEvaluationTemplate {
 
         // 先登记访问路径，再执行真实求值，避免递归回边再次进入同一个节点。
         runtime.guard().enter(memoKey);
-        boolean result = evaluator.get();
+        boolean result = evaluator.getAsBoolean();
         // 求值结束后及时移出访问路径，并把结果写入 memo，供后续分支复用。
         runtime.guard().exit(memoKey);
         runtime.guard().putMemo(memoKey, result);

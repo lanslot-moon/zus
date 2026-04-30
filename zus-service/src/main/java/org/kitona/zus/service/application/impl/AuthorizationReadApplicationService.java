@@ -18,7 +18,7 @@ import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
 import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
-import org.kitona.zus.service.assembler.TupleAssembler;
+import org.kitona.zus.service.conv.assembler.TupleAssembler;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
 import org.kitona.zus.service.dto.query.ListUsersQuery;
 import org.kitona.zus.service.dto.query.TupleReadQuery;

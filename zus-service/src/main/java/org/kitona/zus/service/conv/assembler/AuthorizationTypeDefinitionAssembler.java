@@ -1,4 +1,4 @@
-package org.kitona.zus.service.assembler;
+package org.kitona.zus.service.conv.assembler;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.domain.authorization.model.RelationDefinition;

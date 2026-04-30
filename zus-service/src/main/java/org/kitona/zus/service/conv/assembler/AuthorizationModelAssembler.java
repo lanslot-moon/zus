@@ -1,4 +1,4 @@
-package org.kitona.zus.service.assembler;
+package org.kitona.zus.service.conv.assembler;
 
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 import org.kitona.zus.domain.authorization.model.ConditionDefinition;
@@ -10,7 +10,6 @@ import org.kitona.zus.service.dto.response.ConditionDefinitionResultDTO;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 授权模型聚合根 Assembler

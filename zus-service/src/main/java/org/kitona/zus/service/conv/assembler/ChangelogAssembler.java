@@ -1,4 +1,4 @@
-package org.kitona.zus.service.assembler;
+package org.kitona.zus.service.conv.assembler;
 
 import org.kitona.zus.domain.authorization.audit.Changelog;
 import org.kitona.zus.service.dto.response.TupleChangeResultDTO;

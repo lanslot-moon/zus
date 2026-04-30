@@ -13,7 +13,7 @@ import org.kitona.zus.domain.authorization.model.RelationDefinition;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.service.application.IAuthorizationModelSchemaApplicationService;
-import org.kitona.zus.service.assembler.AuthorizationTypeDefinitionAssembler;
+import org.kitona.zus.service.conv.assembler.AuthorizationTypeDefinitionAssembler;
 import org.kitona.zus.service.dto.command.AddRelationCommand;
 import org.kitona.zus.service.dto.command.AddTypeDefinitionCommand;
 import org.kitona.zus.service.dto.response.AuthorizationRelationResultDTO;

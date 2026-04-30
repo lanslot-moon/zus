@@ -10,7 +10,7 @@ import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.domain.authorization.user.UserProfile;
 import org.kitona.zus.domain.repository.IUserProfileRepository;
 import org.kitona.zus.service.application.IUserProfileApplicationService;
-import org.kitona.zus.service.assembler.UserProfileAssembler;
+import org.kitona.zus.service.conv.assembler.UserProfileAssembler;
 import org.kitona.zus.service.dto.UserInfoDTO;
 import org.springframework.stereotype.Service;
 

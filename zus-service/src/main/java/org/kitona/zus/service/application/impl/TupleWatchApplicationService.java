@@ -5,7 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.domain.authorization.audit.Changelog;
 import org.kitona.zus.domain.repository.IChangelogQueryRepository;
 import org.kitona.zus.service.application.ITupleWatchApplicationService;
-import org.kitona.zus.service.assembler.ChangelogAssembler;
+import org.kitona.zus.service.conv.assembler.ChangelogAssembler;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 import org.springframework.stereotype.Service;

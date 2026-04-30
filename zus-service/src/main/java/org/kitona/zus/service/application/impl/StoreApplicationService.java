@@ -11,7 +11,7 @@ import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
 import org.kitona.zus.domain.valueobject.CursorPageResult;
 import org.kitona.zus.service.application.IStoreApplicationService;
-import org.kitona.zus.service.assembler.StoreAssembler;
+import org.kitona.zus.service.conv.assembler.StoreAssembler;
 import org.kitona.zus.service.dto.query.ListStoresQuery;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.StoreResultDTO;

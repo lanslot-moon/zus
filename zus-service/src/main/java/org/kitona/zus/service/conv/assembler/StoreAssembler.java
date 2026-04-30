@@ -1,4 +1,4 @@
-package org.kitona.zus.service.assembler;
+package org.kitona.zus.service.conv.assembler;
 
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.service.dto.response.StoreResultDTO;
