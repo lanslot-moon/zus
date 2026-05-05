@@ -30,18 +30,33 @@ import java.util.Optional;
 @Component
 public class PermissionCheckCoordinator {
 
+    /**
+     * Store 查询仓储，用于加载当前 store 视图和当前模型指针。
+     */
     @Resource
     private IStoreQueryRepository storeQueryRepository;
 
+    /**
+     * 授权模型仓储，用于加载当前激活模型聚合。
+     */
     @Resource
     private IAuthorizationModelDomainRepository modelRepository;
 
+    /**
+     * 编译模型端口，用于把结构化模型聚合编译为 evaluator 可执行模型。
+     */
     @Resource
     private ICompiledModelCompiler compiledModelCompiler;
 
+    /**
+     * 编译模型缓存，用于复用同一 store/model 下的编译产物。
+     */
     @Resource
     private ICompiledModelCache compiledModelCache;
 
+    /**
+     * 权限求值领域服务，承载 Check/ListObjects/ListUsers 的统一执行内核。
+     */
     @Resource
     private PermissionEvaluator permissionEvaluator;
 

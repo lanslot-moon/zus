@@ -1,17 +1,11 @@
 package org.kitona.zus.domain.valueobject;
 
-import java.util.Objects;
-
 /**
  * 鉴权结果值对象
  *
  * <p>用于表达一次鉴权用例的最终语义结果。
  */
 public record PermissionCheckResult(PermissionCheckStatus status) {
-
-    public PermissionCheckResult {
-        status = Objects.requireNonNull(status, "status 不能为空");
-    }
 
     public static PermissionCheckResult allowed() {
         return new PermissionCheckResult(PermissionCheckStatus.ALLOWED);

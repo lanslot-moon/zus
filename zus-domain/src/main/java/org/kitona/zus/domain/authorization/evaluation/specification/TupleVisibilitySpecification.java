@@ -1,6 +1,7 @@
 package org.kitona.zus.domain.authorization.evaluation.specification;
 
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.runtime.TupleMatchContext;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
@@ -19,17 +20,32 @@ public record TupleVisibilitySpecification(CompiledAuthorizationModel model, Eva
      * 判断 tuple 在当前请求上下文下是否不可见。
      */
     public boolean isNotSatisfiedBy(RelationTuple tuple) {
+        return evaluate(tuple).isNotSatisfied();
+    }
+
+    /**
+     * 评估 tuple 在当前请求上下文下的可见性。
+     *
+     * <p>该方法是 tuple 可见性规则的唯一事实来源。过期过滤、条件定义查找和条件表达式求值
+     * 都应该通过这里完成，避免 evaluator 或 strategy 复制同一套规则后产生语义漂移。
+     *
+     * @param tuple 待判断的关系事实
+     * @return 结构化可见性判断结果
+     */
+    public TupleVisibilityDecision evaluate(RelationTuple tuple) {
         // 先做过期时间过滤，避免无效 tuple 继续参与条件求值。
         if (tuple.isExpired(currentTimeMillis)) {
-            return true;
+            return TupleVisibilityDecision.tupleRejected(EvaluationExplainReason.TUPLE_EXPIRED);
         }
         // 没有条件定义时，该 tuple 只要未过期就可直接参与计算。
         if (!tuple.hasCondition()) {
-            return false;
+            return TupleVisibilityDecision.visible();
         }
         // 条件 tuple 需要先找到对应条件定义，再由条件求值器决定是否命中。
         return model.findCondition(tuple.getConditionDefinitionId())
-                .map(definition -> !conditionEvaluator.evaluate(definition, new TupleMatchContext(request, tuple)))
-                .orElse(true);
+                .map(definition -> conditionEvaluator.evaluate(definition, new TupleMatchContext(request, tuple))
+                        ? TupleVisibilityDecision.conditionPassed()
+                        : TupleVisibilityDecision.conditionRejected(EvaluationExplainReason.CONDITION_FAILED))
+                .orElse(TupleVisibilityDecision.conditionRejected(EvaluationExplainReason.CONDITION_DEFINITION_MISSING));
     }
 }

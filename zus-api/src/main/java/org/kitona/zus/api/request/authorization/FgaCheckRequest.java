@@ -21,7 +21,7 @@ import java.util.Map;
  *   <li>按 rewrite 规则递归展开并匹配 {@code fga_relation_tuple}</li>
  *   <li>元组若绑定了 condition_definition_id，加载表达式 + {@link #context} 求值</li>
  *   <li>检查 {@code expires_at} 与 {@code is_wildcard}</li>
- *   <li>返回 allowed + 可选 resolution 树（仅当 {@link #trace} = true）</li>
+ *   <li>返回 allowed；证明路径请使用独立 Explain API</li>
  * </ol>
  *
  * @author kitona
@@ -56,9 +56,4 @@ public class FgaCheckRequest {
      */
     @Valid
     private FgaConsistencyOptions consistency;
-
-    /**
-     * 是否返回解析过程（调试用，性能略低）
-     */
-    private Boolean trace;
 }

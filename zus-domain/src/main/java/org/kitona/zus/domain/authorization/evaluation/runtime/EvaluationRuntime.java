@@ -1,6 +1,7 @@
 package org.kitona.zus.domain.authorization.evaluation.runtime;
 
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTraceCollector;
 import org.kitona.zus.domain.authorization.evaluation.specification.TupleVisibilitySpecification;
 import org.kitona.zus.domain.port.IConditionEvaluator;
 
@@ -12,21 +13,55 @@ import org.kitona.zus.domain.port.IConditionEvaluator;
  */
 public final class EvaluationRuntime {
 
+    /**
+     * 编译后的授权模型
+     */
     private final CompiledAuthorizationModel model;
+
+    /**
+     * 评估请求
+     */
     private final EvaluationRequest request;
+
+    /**
+     * 递归保护器，防止无限递归
+     */
     private final RecursionGuard guard;
+
+    /**
+     * 当前时间戳，用于固定时间点评估
+     */
     private final long currentTimeMillis;
+
+    /**
+     * 元组可见性规范
+     */
     private final TupleVisibilitySpecification visibilitySpecification;
+
+    /**
+     * 评估追踪收集器
+     */
+    private final EvaluationTraceCollector traceCollector;
 
     public EvaluationRuntime(CompiledAuthorizationModel model,
                              EvaluationRequest request,
                              RecursionGuard guard,
                              long currentTimeMillis,
                              IConditionEvaluator conditionEvaluator) {
+        this(model, request, guard, currentTimeMillis, conditionEvaluator, null);
+    }
+
+    public EvaluationRuntime(CompiledAuthorizationModel model,
+                             EvaluationRequest request,
+                             RecursionGuard guard,
+                             long currentTimeMillis,
+                             IConditionEvaluator conditionEvaluator,
+                             EvaluationTraceCollector traceCollector) {
         this.model = model;
         this.request = request;
         this.guard = guard;
         this.currentTimeMillis = currentTimeMillis;
+        this.traceCollector = traceCollector;
         // 单次请求共享同一份 tuple 可见性规则，避免在递归过程中重复构建。
         this.visibilitySpecification = new TupleVisibilitySpecification(model, request, conditionEvaluator, currentTimeMillis);
     }
@@ -67,12 +102,19 @@ public final class EvaluationRuntime {
     }
 
     /**
+     * 返回当前 explain 收集器；普通 check 场景下为空。
+     */
+    public EvaluationTraceCollector traceCollector() {
+        return traceCollector;
+    }
+
+    /**
      * 派生一个替换请求但共享递归上下文的新运行时对象。
      *
      * <p>ListObjects / ListUsers 会频繁替换 subject 或 object，
      * 但它们仍应共享 memo、访问路径和时间快照。
      */
     public EvaluationRuntime withRequest(EvaluationRequest nextRequest, IConditionEvaluator conditionEvaluator) {
-        return new EvaluationRuntime(model, nextRequest, guard, currentTimeMillis, conditionEvaluator);
+        return new EvaluationRuntime(model, nextRequest, guard, currentTimeMillis, conditionEvaluator, traceCollector);
     }
 }

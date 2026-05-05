@@ -50,4 +50,11 @@ public record EvaluationRequest(String storeId, EvaluationSubject subject, Evalu
     public EvaluationRequest withSubject(Subject nextSubject) {
         return new EvaluationRequest(storeId, EvaluationSubject.from(nextSubject), object, relation, zookie, context);
     }
+
+    /**
+     * 派生一个仅替换一致性令牌的新请求。
+     */
+    public EvaluationRequest withZookie(Zookie nextZookie) {
+        return new EvaluationRequest(storeId, subject, object, relation, nextZookie, context);
+    }
 }

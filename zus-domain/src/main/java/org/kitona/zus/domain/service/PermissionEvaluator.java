@@ -1,8 +1,14 @@
 package org.kitona.zus.domain.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledRelation;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationDecision;
+import org.kitona.zus.domain.enums.EvaluationNodeType;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTraceCollector;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTraceRecorder;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationMemoKey;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRuntime;
@@ -11,6 +17,7 @@ import org.kitona.zus.domain.authorization.evaluation.specification.RelationRest
 import org.kitona.zus.domain.authorization.evaluation.runtime.RecursiveEvaluationTemplate;
 import org.kitona.zus.domain.authorization.evaluation.nodes.RewriteNode;
 import org.kitona.zus.domain.authorization.evaluation.specification.SubjectMatchSpecification;
+import org.kitona.zus.domain.authorization.evaluation.specification.TupleVisibilityDecision;
 import org.kitona.zus.domain.authorization.evaluation.strategy.RewriteNodeEvaluationStrategy;
 import org.kitona.zus.domain.authorization.evaluation.strategy.RewriteNodeEvaluationSupport;
 import org.kitona.zus.domain.authorization.evaluation.strategy.RewriteNodeStrategyFactory;
@@ -42,19 +49,10 @@ import java.util.Set;
  *   <li>把具体 rewrite 节点分发给策略对象处理</li>
  * </ul>
  */
+@Slf4j
 public final class PermissionEvaluator {
 
     private static final int DEFAULT_MAX_DEPTH = 32;
-
-    /**
-     * 主体匹配规则
-     */
-    private static final SubjectMatchSpecification SUBJECT_MATCH_SPECIFICATION = new SubjectMatchSpecification();
-
-    /**
-     * 关系类型限制规则关系类型限制规则
-     */
-    private static final RelationRestrictionSpecification RELATION_RESTRICTION_SPECIFICATION = new RelationRestrictionSpecification();
 
     /**
      * 直接 tuple 读取端口
@@ -81,7 +79,11 @@ public final class PermissionEvaluator {
      */
     private final IConditionEvaluator conditionEvaluator;
 
+    /**
+     * 最大递归深度
+     */
     private final int maxDepth;
+
     /**
      * 递归求值模板
      */
@@ -92,13 +94,17 @@ public final class PermissionEvaluator {
      */
     private final RewriteNodeEvaluationSupport evaluationSupport;
 
+    /**
+     * Explain 记录适配器，集中处理可选 trace collector 的写入细节。
+     */
+    private final EvaluationTraceRecorder traceRecorder;
+
     public PermissionEvaluator(IDirectTupleReader directTupleReader,
                                ITupleLinkReader tupleLinkReader,
                                ISubjectObjectCandidateReader subjectObjectCandidateReader,
                                IObjectSubjectCandidateReader objectSubjectCandidateReader,
                                IConditionEvaluator conditionEvaluator) {
-        this(directTupleReader, tupleLinkReader, subjectObjectCandidateReader, objectSubjectCandidateReader,
-                conditionEvaluator, DEFAULT_MAX_DEPTH);
+        this(directTupleReader, tupleLinkReader, subjectObjectCandidateReader, objectSubjectCandidateReader, conditionEvaluator, DEFAULT_MAX_DEPTH);
     }
 
     public PermissionEvaluator(IDirectTupleReader directTupleReader,
@@ -112,9 +118,10 @@ public final class PermissionEvaluator {
         this.subjectObjectCandidateReader = subjectObjectCandidateReader;
         this.objectSubjectCandidateReader = objectSubjectCandidateReader;
         this.conditionEvaluator = conditionEvaluator;
-        this.maxDepth = maxDepth;
         this.recursiveEvaluationTemplate = new RecursiveEvaluationTemplate();
         this.evaluationSupport = new EvaluatorSupport();
+        this.traceRecorder = new EvaluationTraceRecorder();
+        this.maxDepth = maxDepth;
     }
 
     /**
@@ -126,6 +133,19 @@ public final class PermissionEvaluator {
     public boolean check(CompiledAuthorizationModel model, EvaluationRequest request) {
         EvaluationRuntime runtime = createRuntime(model, request, new RecursionGuard(maxDepth));
         return evaluateRelation(runtime, request.subject().toSubject(), request.object().toObjectRef(), request.relation(), 0);
+    }
+
+    /**
+     * Check explain 语义入口。
+     *
+     * <p>该入口复用普通 check 的同一套递归与策略逻辑，只是在运行时挂载 collector
+     * 记录证明路径，因此不会产生“解释链路”和“真实鉴权链路”语义漂移。
+     */
+    public EvaluationDecision checkWithExplain(CompiledAuthorizationModel model, EvaluationRequest request) {
+        EvaluationTraceCollector collector = EvaluationTraceCollector.enabled(request.zookie().toToken());
+        EvaluationRuntime runtime = createRuntime(model, request, new RecursionGuard(maxDepth), collector);
+        boolean allowed = evaluateRelation(runtime, request.subject().toSubject(), request.object().toObjectRef(), request.relation(), 0);
+        return new EvaluationDecision(allowed, collector.toTrace(allowed));
     }
 
     /**
@@ -171,10 +191,19 @@ public final class PermissionEvaluator {
      */
     private boolean evaluateRelation(EvaluationRuntime runtime, Subject subject, ObjectRef object, String relation, int depth) {
         EvaluationMemoKey memoKey = EvaluationMemoKey.of(runtime.request(), subject, object, relation);
-        return recursiveEvaluationTemplate.execute(runtime, memoKey, depth, () -> {
+        traceRecorder.enter(runtime, EvaluationNodeType.RELATION, subject, object, relation);
+        boolean result = recursiveEvaluationTemplate.execute(runtime, memoKey, depth, () -> {
             Optional<CompiledRelation> relationOpt = runtime.model().findRelation(object.getType(), relation);
-            return relationOpt.filter(compiledRelation -> evaluateNode(runtime, compiledRelation, compiledRelation.rewriteNode(), subject, object, relation, depth)).isPresent();
+            if (relationOpt.isEmpty()) {
+                log.info("PermissionEvaluator evaluateRelation not find relation definition: subject={}, object={}, relation={}", subject, object, relation);
+                traceRecorder.mark(runtime, false, EvaluationExplainReason.NO_RELATION_DEFINITION);
+                return false;
+            }
+            CompiledRelation compiledRelation = relationOpt.get();
+            return evaluateNode(runtime, compiledRelation, compiledRelation.rewriteNode(), subject, object, relation, depth);
         });
+        traceRecorder.leave(runtime, result, result ? EvaluationExplainReason.RELATION_ALLOWED : EvaluationExplainReason.RELATION_DENIED);
+        return result;
     }
 
     /**
@@ -182,11 +211,14 @@ public final class PermissionEvaluator {
      *
      * <p>不同 rewrite 节点的求值逻辑通过策略对象分发，避免把所有分支堆在一个超长方法里。
      */
+    @SuppressWarnings("all")
     private boolean evaluateNode(EvaluationRuntime runtime, CompiledRelation compiledRelation, RewriteNode node,
                                  Subject subject, ObjectRef object, String relation, int depth) {
-        RewriteNodeEvaluationStrategy<RewriteNode> strategy =
-                castStrategy(RewriteNodeStrategyFactory.getStrategy(node.getClass()));
-        return strategy.evaluate(node, compiledRelation, runtime, subject, object, relation, depth, evaluationSupport);
+        traceRecorder.enter(runtime, node.explainNodeType(), subject, object, relation);
+        RewriteNodeEvaluationStrategy<RewriteNode> strategy = (RewriteNodeEvaluationStrategy<RewriteNode>) RewriteNodeStrategyFactory.getStrategy(node.getClass());
+        boolean result = strategy.evaluate(node, compiledRelation, runtime, subject, object, relation, depth, evaluationSupport);
+        traceRecorder.leave(runtime, result, result ? EvaluationExplainReason.NODE_ALLOWED : EvaluationExplainReason.NODE_DENIED);
+        return result;
     }
 
     /**
@@ -202,9 +234,11 @@ public final class PermissionEvaluator {
 
         for (RelationTuple tuple : tuples) {
             if (matchesSelfTuple(compiledRelation, tuple, subject, runtime)) {
+                traceRecorder.recordTuple(runtime, tuple, true, EvaluationExplainReason.DIRECT_TUPLE_MATCHED);
                 return true;
             }
         }
+        traceRecorder.mark(runtime, false, EvaluationExplainReason.NO_TUPLE_MATCHED);
         return false;
     }
 
@@ -213,13 +247,20 @@ public final class PermissionEvaluator {
      */
     private boolean matchesSelfTuple(CompiledRelation compiledRelation, RelationTuple tuple, Subject subject,
                                      EvaluationRuntime runtime) {
-        if (!RELATION_RESTRICTION_SPECIFICATION.isSatisfiedBy(compiledRelation, tuple)) {
+        if (!RelationRestrictionSpecification.isSatisfiedBy(compiledRelation, tuple)) {
+            traceRecorder.recordTuple(runtime, tuple, false, EvaluationExplainReason.RELATION_RESTRICTION_FAILED);
             return false;
         }
-        if (runtime.visibilitySpecification().isNotSatisfiedBy(tuple)) {
+        TupleVisibilityDecision visibilityDecision = runtime.visibilitySpecification().evaluate(tuple);
+        traceRecorder.recordVisibility(runtime, tuple, visibilityDecision);
+        if (visibilityDecision.isNotSatisfied()) {
             return false;
         }
-        return SUBJECT_MATCH_SPECIFICATION.isSatisfiedBy(tuple, subject);
+        boolean matched = SubjectMatchSpecification.isSatisfiedBy(tuple, subject);
+        if (!matched) {
+            traceRecorder.recordTuple(runtime, tuple, false, EvaluationExplainReason.SUBJECT_NOT_MATCHED);
+        }
+        return matched;
     }
 
     /**
@@ -227,6 +268,11 @@ public final class PermissionEvaluator {
      */
     private EvaluationRuntime createRuntime(CompiledAuthorizationModel model, EvaluationRequest request, RecursionGuard guard) {
         return new EvaluationRuntime(model, request, guard, System.currentTimeMillis(), conditionEvaluator);
+    }
+
+    private EvaluationRuntime createRuntime(CompiledAuthorizationModel model, EvaluationRequest request,
+                                            RecursionGuard guard, EvaluationTraceCollector collector) {
+        return new EvaluationRuntime(model, request, guard, System.currentTimeMillis(), conditionEvaluator, collector);
     }
 
     /**
@@ -252,12 +298,6 @@ public final class PermissionEvaluator {
                 .map(RelationTuple::getSubject)
                 .distinct()
                 .toList();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static RewriteNodeEvaluationStrategy<RewriteNode> castStrategy(
-            RewriteNodeEvaluationStrategy<? extends RewriteNode> strategy) {
-        return (RewriteNodeEvaluationStrategy<RewriteNode>) strategy;
     }
 
     /**

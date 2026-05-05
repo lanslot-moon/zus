@@ -2,6 +2,10 @@ package org.kitona.zus.domain.service;
 
 import org.junit.jupiter.api.Test;
 import org.kitona.zus.domain.authorization.model.ConditionDefinition;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationDecision;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainNode;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTrace;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.authorization.tuple.TupleCondition;
 import org.kitona.zus.domain.authorization.tuple.TupleKey;
@@ -37,6 +41,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PermissionEvaluatorTest {
@@ -217,6 +222,80 @@ class PermissionEvaluatorTest {
                 ObjectRef.of("document", "doc-1"), "public_viewer")));
     }
 
+    @Test
+    void shouldExplainDirectTupleMatchAndKeepSameDecisionAsCheck() {
+        InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
+                tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice"))
+        ));
+        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        CompiledAuthorizationModel model = model(Map.of(
+                relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
+        ), Map.of());
+        EvaluationRequest request = request("store", Subject.user("user", "alice"),
+                ObjectRef.of("document", "doc-1"), "viewer");
+
+        EvaluationDecision decision = evaluator.checkWithExplain(model, request);
+
+        assertEquals(evaluator.check(model, request), decision.allowed());
+        assertTrue(decision.allowed());
+        assertNotNull(decision.trace());
+        assertEquals(EvaluationExplainReason.RELATION_ALLOWED, decision.trace().root().reason());
+        assertTrue(hasReason(decision.trace().root(), EvaluationExplainReason.DIRECT_TUPLE_MATCHED));
+    }
+
+    @Test
+    void shouldExplainTupleToUsersetPropagationPath() {
+        InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
+                tuple("store", "document", "doc-1", "parent", Subject.user("folder", "folder-1")),
+                tuple("store", "folder", "folder-1", "viewer", Subject.user("user", "alice"))
+        ));
+        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        CompiledAuthorizationModel model = model(Map.of(
+                relationKey("document", "parent"), relation("document", "parent", new SelfNode()),
+                relationKey("document", "viewer"), relation("document", "viewer",
+                        new TupleToUsersetNode("parent", "viewer")),
+                relationKey("folder", "viewer"), relation("folder", "viewer", new SelfNode())
+        ), Map.of());
+
+        EvaluationDecision decision = evaluator.checkWithExplain(model, request("store", Subject.user("user", "alice"),
+                ObjectRef.of("document", "doc-1"), "viewer"));
+
+        assertTrue(decision.allowed());
+        assertTrue(hasReason(decision.trace().root(), EvaluationExplainReason.TUPLE_TO_USERSET_LINK_MATCHED));
+        assertTrue(hasTarget(decision.trace().root(), "folder:folder-1#viewer"));
+    }
+
+    @Test
+    void shouldExplainConditionFailureAndDepthLimit() {
+        long now = System.currentTimeMillis();
+        InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
+                tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice"),
+                        TupleCondition.of(OFFICE_HOURS_CONDITION_ID, "office_hours", "{\"required\":true}"), now + 60_000L)
+        ));
+        PermissionEvaluator evaluator = evaluator(tupleRepository, new RequestFlagConditionEvaluator(), 1);
+        CompiledAuthorizationModel conditionalModel = model(Map.of(
+                relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
+        ), Map.of(
+                OFFICE_HOURS_CONDITION_ID,
+                ConditionDefinition.reconstitute(OFFICE_HOURS_CONDITION_ID, "office_hours", "context.allow == true", "{\"required\":true}", "test")
+        ));
+        CompiledAuthorizationModel deepModel = model(Map.of(
+                relationKey("document", "viewer"), relation("document", "viewer", new DirectRelationReferenceNode("editor")),
+                relationKey("document", "editor"), relation("document", "editor", new DirectRelationReferenceNode("owner")),
+                relationKey("document", "owner"), relation("document", "owner", new SelfNode())
+        ), Map.of());
+
+        EvaluationDecision conditionDecision = evaluator.checkWithExplain(conditionalModel,
+                request("store", Subject.user("user", "alice"), ObjectRef.of("document", "doc-1"), "viewer"));
+        EvaluationDecision depthDecision = evaluator.checkWithExplain(deepModel,
+                request("store", Subject.user("user", "alice"), ObjectRef.of("document", "doc-1"), "viewer"));
+
+        assertFalse(conditionDecision.allowed());
+        assertTrue(hasReason(conditionDecision.trace().root(), EvaluationExplainReason.CONDITION_FAILED));
+        assertFalse(depthDecision.allowed());
+        assertTrue(hasReason(depthDecision.trace().root(), EvaluationExplainReason.DEPTH_LIMIT_EXCEEDED));
+    }
+
     private static EvaluationRequest request(String storeId, Subject subject, ObjectRef object, String relation) {
         return request(storeId, subject, object, relation, Map.of());
     }
@@ -248,6 +327,20 @@ class PermissionEvaluatorTest {
 
     private static String relationKey(String resourceType, String relationName) {
         return resourceType + "#" + relationName;
+    }
+
+    private static boolean hasReason(EvaluationExplainNode node, EvaluationExplainReason reason) {
+        if (node.reason() == reason) {
+            return true;
+        }
+        return node.children().stream().anyMatch(child -> hasReason(child, reason));
+    }
+
+    private static boolean hasTarget(EvaluationExplainNode node, String target) {
+        if (target.equals(node.target())) {
+            return true;
+        }
+        return node.children().stream().anyMatch(child -> hasTarget(child, target));
     }
 
     private static RelationTuple tuple(String storeId, String objectType, String objectId,
