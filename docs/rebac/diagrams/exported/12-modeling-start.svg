@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="420" viewBox="0 0 1080 420">
+  <style>
+    .title{font:700 20px "Virgil","Comic Sans MS",sans-serif;fill:#222}
+    .text{font:600 16px "Virgil","Comic Sans MS",sans-serif;fill:#222}
+    .sub{font:14px "Virgil","Comic Sans MS",sans-serif;fill:#333}
+    .line{fill:none;stroke:#444;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  </style>
+  <rect width="1080" height="420" fill="#fffdf8"/>
+  <text x="540" y="42" text-anchor="middle" class="title">建模起点关系示意图</text>
+
+  <path d="M110 84 C120 70, 262 70, 272 86 C282 102, 280 150, 268 160 C256 170, 124 170, 112 158 C102 146, 100 98, 110 84 Z" fill="#dff1ff" class="line"/>
+  <path d="M334 84 C344 70, 486 70, 496 86 C506 102, 504 150, 492 160 C480 170, 348 170, 336 158 C326 146, 324 98, 334 84 Z" fill="#e7f7de" class="line"/>
+  <path d="M558 84 C568 70, 700 70, 710 86 C720 102, 718 150, 706 160 C694 170, 572 170, 560 158 C550 146, 548 98, 558 84 Z" fill="#fff3cf" class="line"/>
+  <path d="M782 84 C792 70, 934 70, 944 86 C954 102, 952 150, 940 160 C928 170, 796 170, 784 158 C774 146, 772 98, 782 84 Z" fill="#ffe3dd" class="line"/>
+
+  <path d="M210 258 C220 244, 342 244, 352 260 C362 276, 360 324, 348 334 C336 344, 224 344, 212 332 C202 320, 200 272, 210 258 Z" fill="#efe5ff" class="line"/>
+  <path d="M470 258 C480 244, 602 244, 612 260 C622 276, 620 324, 608 334 C596 344, 484 344, 472 332 C462 320, 460 272, 470 258 Z" fill="#dff1ff" class="line"/>
+
+  <text x="190" y="124" text-anchor="middle" class="text">organization</text>
+  <text x="414" y="124" text-anchor="middle" class="text">project</text>
+  <text x="634" y="124" text-anchor="middle" class="text">folder</text>
+  <text x="858" y="124" text-anchor="middle" class="text">document</text>
+  <text x="280" y="298" text-anchor="middle" class="text">group</text>
+  <text x="540" y="298" text-anchor="middle" class="text">user</text>
+
+  <path d="M272 122 H334" class="line"/>
+  <path d="M496 122 H558" class="line"/>
+  <path d="M710 122 H782" class="line"/>
+  <path d="M352 286 H470" class="line"/>
+  <path d="M340 258 C406 220, 562 186, 782 146" class="line"/>
+  <polygon points="334,122 322,116 322,128" fill="#444"/>
+  <polygon points="558,122 546,116 546,128" fill="#444"/>
+  <polygon points="782,122 770,116 770,128" fill="#444"/>
+  <polygon points="470,286 458,280 458,292" fill="#444"/>
+  <polygon points="782,146 768,140 770,154" fill="#444"/>
+
+  <text x="302" y="112" text-anchor="middle" class="sub">contains</text>
+  <text x="526" y="112" text-anchor="middle" class="sub">contains</text>
+  <text x="746" y="112" text-anchor="middle" class="sub">contains</text>
+  <text x="412" y="274" text-anchor="middle" class="sub">member</text>
+  <text x="596" y="202" text-anchor="middle" class="sub">shared with</text>
+
+  <text x="540" y="382" text-anchor="middle" class="sub">先把业务对象和稳定关系画出来，再决定哪些关系需要传播，哪些条件放到上下文层。</text>
+</svg>

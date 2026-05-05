@@ -43,3 +43,4 @@ node_modules/
 
 ### Cursor
 .cursor/
+.codex-local-build

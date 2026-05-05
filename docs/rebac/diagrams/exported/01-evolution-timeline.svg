@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="260" viewBox="0 0 1120 260">
+  <style>.t{font:600 18px sans-serif;fill:#222}.s{font:14px sans-serif;fill:#333}.box{rx:14;ry:14;stroke-width:2}</style>
+  <rect width="1120" height="260" fill="#ffffff"/>
+  <rect x="30" y="90" width="150" height="80" class="box" fill="#dae8fc" stroke="#6c8ebf"/><text x="105" y="120" text-anchor="middle" class="t">ACL</text><text x="105" y="145" text-anchor="middle" class="s">直接对象授权</text>
+  <rect x="230" y="90" width="150" height="80" class="box" fill="#d5e8d4" stroke="#82b366"/><text x="305" y="120" text-anchor="middle" class="t">RBAC</text><text x="305" y="145" text-anchor="middle" class="s">角色复用</text>
+  <rect x="430" y="90" width="150" height="80" class="box" fill="#fff2cc" stroke="#d6b656"/><text x="505" y="120" text-anchor="middle" class="t">ABAC</text><text x="505" y="145" text-anchor="middle" class="s">属性与上下文</text>
+  <rect x="630" y="90" width="150" height="80" class="box" fill="#f8cecc" stroke="#b85450"/><text x="705" y="120" text-anchor="middle" class="t">ReBAC</text><text x="705" y="145" text-anchor="middle" class="s">关系图与传播</text>
+  <rect x="850" y="80" width="240" height="100" class="box" fill="#e1d5e7" stroke="#9673a6"/><text x="970" y="115" text-anchor="middle" class="t">FGA 平台化</text><text x="970" y="140" text-anchor="middle" class="s">模型、事实、引擎、一致性</text>
+  <g stroke="#555" stroke-width="2" fill="none"><path d="M180 130H230"/><path d="M380 130H430"/><path d="M580 130H630"/><path d="M780 130H850"/></g>
+  <g fill="#555"><polygon points="230,130 220,124 220,136"/><polygon points="430,130 420,124 420,136"/><polygon points="630,130 620,124 620,136"/><polygon points="850,130 840,124 840,136"/></g>
+</svg>

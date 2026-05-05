@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="250" viewBox="0 0 1280 250">
+  <style>.t{font:600 16px sans-serif;fill:#222}.box{rx:12;ry:12;stroke-width:2}</style>
+  <rect width="1280" height="250" fill="#fff"/>
+  <rect x="40" y="95" width="130" height="60" class="box" fill="#dae8fc" stroke="#6c8ebf"/><text x="105" y="130" text-anchor="middle" class="t">DSL</text>
+  <rect x="230" y="95" width="130" height="60" class="box" fill="#d5e8d4" stroke="#82b366"/><text x="295" y="130" text-anchor="middle" class="t">Parser</text>
+  <rect x="420" y="95" width="150" height="60" class="box" fill="#fff2cc" stroke="#d6b656"/><text x="495" y="130" text-anchor="middle" class="t">结构化模型</text>
+  <rect x="630" y="95" width="150" height="60" class="box" fill="#f8cecc" stroke="#b85450"/><text x="705" y="130" text-anchor="middle" class="t">Rewrite AST</text>
+  <rect x="840" y="95" width="170" height="60" class="box" fill="#e1d5e7" stroke="#9673a6"/><text x="925" y="130" text-anchor="middle" class="t">Compiled Model</text>
+  <rect x="1070" y="95" width="150" height="60" class="box" fill="#ffe6cc" stroke="#d79b00"/><text x="1145" y="130" text-anchor="middle" class="t">Evaluator</text>
+  <g stroke="#555" stroke-width="2" fill="none"><path d="M170 125H230"/><path d="M360 125H420"/><path d="M570 125H630"/><path d="M780 125H840"/><path d="M1010 125H1070"/></g>
+  <g fill="#555"><polygon points="230,125 220,119 220,131"/><polygon points="420,125 410,119 410,131"/><polygon points="630,125 620,119 620,131"/><polygon points="840,125 830,119 830,131"/><polygon points="1070,125 1060,119 1060,131"/></g>
+</svg>

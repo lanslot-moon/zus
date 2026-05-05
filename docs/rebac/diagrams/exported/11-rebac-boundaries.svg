@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="420" viewBox="0 0 1180 420">
+  <style>
+    .title{font:700 20px "Virgil","Comic Sans MS",sans-serif;fill:#222}
+    .text{font:600 16px "Virgil","Comic Sans MS",sans-serif;fill:#222}
+    .sub{font:14px "Virgil","Comic Sans MS",sans-serif;fill:#333}
+    .line{fill:none;stroke:#444;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  </style>
+  <rect width="1180" height="420" fill="#fffdf8"/>
+  <text x="590" y="42" text-anchor="middle" class="title">ReBAC 适用边界示意图</text>
+
+  <path d="M70 110 C90 82, 286 84, 302 108 C316 132, 316 292, 300 314 C284 336, 92 338, 74 314 C58 290, 56 134, 70 110 Z" fill="#e8f5e6" class="line"/>
+  <path d="M878 110 C896 82, 1094 84, 1110 108 C1124 132, 1124 292, 1108 314 C1092 336, 898 338, 880 314 C864 290, 864 134, 878 110 Z" fill="#fff0df" class="line"/>
+  <text x="186" y="138" text-anchor="middle" class="text">更适合 ReBAC</text>
+  <text x="994" y="138" text-anchor="middle" class="text">不必强上 ReBAC</text>
+
+  <path d="M466 92 C480 74, 696 74, 710 94 C722 112, 722 314, 708 330 C694 346, 480 346, 466 328 C454 310, 454 110, 466 92 Z" fill="#fffaf0" class="line"/>
+  <text x="588" y="62" text-anchor="middle" class="sub">判断分界线</text>
+
+  <path d="M492 100 C502 88, 642 88, 652 102 C662 116, 660 154, 648 164 C636 174, 504 174, 492 162 C482 150, 482 114, 492 100 Z" fill="#dff2d8" class="line"/>
+  <path d="M492 188 C502 176, 642 176, 652 190 C662 204, 660 242, 648 252 C636 262, 504 262, 492 250 C482 238, 482 202, 492 188 Z" fill="#dff2d8" class="line"/>
+  <path d="M492 276 C502 264, 642 264, 652 278 C662 292, 660 330, 648 340 C636 350, 504 350, 492 338 C482 326, 482 290, 492 276 Z" fill="#dff2d8" class="line"/>
+
+  <text x="572" y="126" text-anchor="middle" class="text">协作关系复杂</text>
+  <text x="572" y="214" text-anchor="middle" class="text">层级传播明显</text>
+  <text x="572" y="302" text-anchor="middle" class="text">列表语义很关键</text>
+
+  <path d="M302 202 C366 180, 420 152, 492 126" class="line"/>
+  <path d="M302 210 C368 210, 422 210, 492 214" class="line"/>
+  <path d="M302 222 C368 244, 424 270, 492 302" class="line"/>
+  <path d="M878 202 C812 180, 758 152, 652 126" class="line"/>
+  <path d="M878 210 C812 210, 758 210, 652 214" class="line"/>
+  <path d="M878 222 C812 244, 758 270, 652 302" class="line"/>
+
+  <polygon points="492,126 478,120 482,134" fill="#444"/>
+  <polygon points="492,214 478,208 478,220" fill="#444"/>
+  <polygon points="492,302 480,292 476,306" fill="#444"/>
+  <polygon points="652,126 666,120 662,134" fill="#444"/>
+  <polygon points="652,214 666,208 666,220" fill="#444"/>
+  <polygon points="652,302 664,292 668,306" fill="#444"/>
+
+  <text x="994" y="126" text-anchor="middle" class="text">静态后台权限</text>
+  <text x="994" y="214" text-anchor="middle" class="text">简单动作授权</text>
+  <text x="994" y="302" text-anchor="middle" class="text">低关系复杂度系统</text>
+
+  <text x="186" y="374" text-anchor="middle" class="sub">更适合建设统一关系模型、传播规则与列表求值</text>
+  <text x="994" y="374" text-anchor="middle" class="sub">更适合轻量权限表、岗位表或局部策略判断</text>
+</svg>

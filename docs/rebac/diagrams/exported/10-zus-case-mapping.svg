@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1320" height="420" viewBox="0 0 1320 420">
+  <style>
+    .t{font:600 16px "Virgil","Comic Sans MS",sans-serif;fill:#222}
+    .s{font:14px "Virgil","Comic Sans MS",sans-serif;fill:#333}
+    .box{fill:#fffdf8;stroke:#444;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+    .line{fill:none;stroke:#444;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  </style>
+  <rect width="1320" height="420" fill="#fffdf8"/>
+  <text x="660" y="40" text-anchor="middle" class="t">ZUS 当前 ReBAC 架构映射总览</text>
+  <rect x="44" y="168" width="150" height="72" rx="14" ry="14" fill="#dff1ff" class="box"/><text x="119" y="210" text-anchor="middle" class="t">Schema</text>
+  <rect x="248" y="158" width="230" height="92" rx="14" ry="14" fill="#e7f7de" class="box"/><text x="363" y="198" text-anchor="middle" class="t">DSL / Structured Model</text><text x="363" y="222" text-anchor="middle" class="s">模型定义与限制</text>
+  <rect x="548" y="108" width="190" height="72" rx="14" ry="14" fill="#fff3cf" class="box"/><text x="643" y="150" text-anchor="middle" class="t">Compiled Model</text>
+  <rect x="548" y="248" width="190" height="72" rx="14" ry="14" fill="#ffe3dd" class="box"/><text x="643" y="290" text-anchor="middle" class="t">Tuple Facts</text>
+  <rect x="826" y="156" width="230" height="106" rx="16" ry="16" fill="#efe5ff" class="box"/><text x="941" y="196" text-anchor="middle" class="t">PermissionEvaluator</text><text x="941" y="222" text-anchor="middle" class="s">统一语义内核</text>
+  <rect x="1120" y="154" width="164" height="110" rx="16" ry="16" fill="#ffe9cf" class="box"/><text x="1202" y="192" text-anchor="middle" class="t">Check</text><text x="1202" y="216" text-anchor="middle" class="t">ListObjects</text><text x="1202" y="240" text-anchor="middle" class="t">ListUsers</text>
+
+  <path d="M194 204 H248" class="line"/><polygon points="248,204 236,198 236,210" fill="#444"/>
+  <path d="M478 184 C510 184, 522 150, 548 144" class="line"/><polygon points="548,144 536,138 536,150" fill="#444"/>
+  <path d="M478 224 C514 248, 520 274, 548 284" class="line"/><polygon points="548,284 536,278 536,290" fill="#444"/>
+  <path d="M738 144 C772 144, 788 182, 826 182" class="line"/><polygon points="826,182 814,176 814,188" fill="#444"/>
+  <path d="M738 284 C780 284, 794 236, 826 236" class="line"/><polygon points="826,236 814,230 814,242" fill="#444"/>
+  <path d="M1056 209 H1120" class="line"/><polygon points="1120,209 1108,203 1108,215" fill="#444"/>
+
+  <text x="506" y="170" class="s">compile</text>
+  <text x="506" y="252" class="s">write / read tuple</text>
+  <text x="768" y="132" class="s">model semantics</text>
+  <text x="754" y="298" class="s">runtime facts</text>
+  <text x="1078" y="198" class="s">unified answers</text>
+</svg>
