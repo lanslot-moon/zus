@@ -30,16 +30,7 @@ public class CompiledAuthorizationModelCompiler implements ICompiledModelCompile
      * 构造函数，初始化表达式解析器适配器
      */
     public CompiledAuthorizationModelCompiler() {
-        this(new RewriteExpressionParserAdapter());
-    }
-
-    /**
-     * 带参构造函数，注入表达式解析器适配器
-     *
-     * @param rewriteExpressionParser 表达式解析器适配器
-     */
-    CompiledAuthorizationModelCompiler(RewriteExpressionParserAdapter rewriteExpressionParser) {
-        this.rewriteExpressionParser = rewriteExpressionParser;
+        this.rewriteExpressionParser = new RewriteExpressionParserAdapter();
     }
 
     /**

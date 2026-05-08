@@ -16,5 +16,7 @@ public sealed interface RewriteNode permits SelfNode, DirectRelationReferenceNod
      *
      * @return explain 树节点类型
      */
-    EvaluationNodeType explainNodeType();
+    default EvaluationNodeType explainNodeType() {
+        return EvaluationNodeType.UNSUPPORTED;
+    }
 }

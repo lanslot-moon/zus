@@ -188,20 +188,28 @@ public final class PermissionEvaluator {
      *
      * <p>这里负责处理所有节点共享的横切关注点：
      * 递归深度保护、循环检测、单次请求内 memoization，以及关系定义缺失的快速失败。
+     * 该方法是权限评估的核心递归入口，处理所有节点共享的横切关注点。
      */
     private boolean evaluateRelation(EvaluationRuntime runtime, Subject subject, ObjectRef object, String relation, int depth) {
+        // 创建评估记忆键，用于单次请求内的memoization优化
         EvaluationMemoKey memoKey = EvaluationMemoKey.of(runtime.request(), subject, object, relation);
+        // 进入关系评估的跟踪记录
         traceRecorder.enter(runtime, EvaluationNodeType.RELATION, subject, object, relation);
+        // 使用递归评估模板执行实际的评估逻辑
         boolean result = recursiveEvaluationTemplate.execute(runtime, memoKey, depth, () -> {
+            // 在模型中查找关系定义
             Optional<CompiledRelation> relationOpt = runtime.model().findRelation(object.getType(), relation);
             if (relationOpt.isEmpty()) {
                 log.info("PermissionEvaluator evaluateRelation not find relation definition: subject={}, object={}, relation={}", subject, object, relation);
                 traceRecorder.mark(runtime, false, EvaluationExplainReason.NO_RELATION_DEFINITION);
                 return false;
             }
+            // 获取编译后的关系定义
             CompiledRelation compiledRelation = relationOpt.get();
+            // 评估关系节点
             return evaluateNode(runtime, compiledRelation, compiledRelation.rewriteNode(), subject, object, relation, depth);
         });
+        // 离开关系评估的跟踪记录，根据结果记录相应的解释原因
         traceRecorder.leave(runtime, result, result ? EvaluationExplainReason.RELATION_ALLOWED : EvaluationExplainReason.RELATION_DENIED);
         return result;
     }

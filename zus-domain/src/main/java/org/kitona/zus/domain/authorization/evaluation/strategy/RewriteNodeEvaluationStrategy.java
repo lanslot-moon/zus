@@ -11,6 +11,7 @@ import org.kitona.zus.domain.valueobject.Subject;
  *
  * @param <T> 节点类型
  */
+@SuppressWarnings("java:S107")
 public interface RewriteNodeEvaluationStrategy<T extends RewriteNode> {
 
     /**
