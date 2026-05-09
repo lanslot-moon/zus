@@ -4,6 +4,8 @@ import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
+import org.kitona.zus.domain.authorization.evaluation.runtime.ListObjectsEvaluationRequest;
+import org.kitona.zus.domain.authorization.evaluation.runtime.ListSubjectsEvaluationRequest;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.port.ICompiledModelCache;
@@ -29,7 +31,6 @@ import org.kitona.zus.service.dto.response.TupleResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -52,8 +53,8 @@ import java.util.Optional;
  *
  * @author kitona
  * @version 1.0.0
- * @since 2025-01-15
  * @see RelationTuple
+ * @since 2025-01-15
  */
 @Service
 public class AuthorizationReadApplicationService implements IAuthorizationReadApplicationService {
@@ -109,8 +110,7 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
         CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId());
 
         Subject subject = buildSubject(query.getSubjectType(), query.getSubjectId(), query.getSubjectRelation());
-        List<String> objects = permissionSearchEvaluator.listObjects(
-                compiledModel,
+        ListObjectsEvaluationRequest evaluationRequest = ListObjectsEvaluationRequest.of(
                 query.getStoreId(),
                 subject,
                 query.getRelation(),
@@ -118,33 +118,26 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
                 query.getContext(),
                 query.getObjectType()
         );
-        return ListObjectsResultDTO.builder().objects(objects).build();
+        List<ObjectRef> objects = permissionSearchEvaluator.listObjects(compiledModel, evaluationRequest);
+        List<String> stringList = objects.stream().map(ObjectRef::toString).toList();
+        return ListObjectsResultDTO.builder().objects(stringList).build();
     }
 
     @Override
     public ListSubjectsResultDTO listSubjects(ListSubjectsQuery query) {
         ValidationUtil.validate(query);
         CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId());
-
-        List<ListSubjectsResultDTO.SubjectDTO> subjects = permissionSearchEvaluator.listSubjects(
-                compiledModel,
+        ListSubjectsEvaluationRequest evaluationRequest = ListSubjectsEvaluationRequest.of(
                 query.getStoreId(),
                 ObjectRef.of(query.getObjectType(), query.getObjectId()),
                 query.getRelation(),
                 Zookie.parse(query.getConsistencyToken()),
                 query.getContext()
-        ).stream()
-                .filter(subject -> StringUtils.isBlank(query.getSubjectType())
-                        || Objects.equals(query.getSubjectType(), subject.getType()))
-                .filter(subject -> StringUtils.isBlank(query.getSubjectRelation())
-                        || Objects.equals(query.getSubjectRelation(), subject.getRelation()))
-                .map(subject -> ListSubjectsResultDTO.SubjectDTO.builder()
-                        .type(subject.getType())
-                        .id(subject.getId())
-                        .relation(subject.getRelation())
-                        .build())
-                .toList();
-        return ListSubjectsResultDTO.builder().subjects(subjects).build();
+        );
+
+        List<Subject> listedSubjects = permissionSearchEvaluator.listSubjects(compiledModel, evaluationRequest);
+        List<String> stringList = listedSubjects.stream().map(Subject::toString).toList();
+        return ListSubjectsResultDTO.builder().subjects(stringList).build();
     }
 
     private CompiledAuthorizationModel loadCompiledModel(String storeId) {
@@ -178,7 +171,6 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
         }
         return Subject.userset(subjectType, subjectId, subjectRelation);
     }
-
 
 
     private String buildNextPageToken(List<RelationTuple> tuples, int pageSize) {

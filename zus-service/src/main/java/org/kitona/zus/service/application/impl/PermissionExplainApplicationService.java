@@ -56,16 +56,6 @@ public class PermissionExplainApplicationService implements IPermissionExplainAp
             return PermissionExplainResultDTO.of(outcome.isAllowed(), outcome.status().name(), zookieToken,
                     durationMs, resolution);
         }
-        return PermissionExplainResultDTO.error(outcome.status().name(), buildErrorMessage(outcome.status()), durationMs);
-    }
-
-    private String buildErrorMessage(PermissionCheckStatus status) {
-        return switch (status) {
-            case STORE_NOT_FOUND -> "store 不存在";
-            case MODEL_NOT_BOUND -> "store 未绑定授权模型";
-            case MODEL_NOT_FOUND -> "当前授权模型不存在";
-            case MODEL_INVALID -> "当前授权模型无效";
-            case ALLOWED, DENIED -> "";
-        };
+        return PermissionExplainResultDTO.error(outcome.status().name(), outcome.status().getDesc(), durationMs);
     }
 }

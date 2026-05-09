@@ -58,7 +58,11 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         long duration = System.currentTimeMillis() - startTime;
         PermissionCheckResultDTO response = toPermissionCheckResultDTO(result, zookieToken, duration);
 
-        logCheckResult(request, result, duration);
+        if (Objects.equals(PermissionCheckStatus.ALLOWED, result.status()) || Objects.equals(PermissionCheckStatus.DENIED, result.status())) {
+            log.info("权限检查完成: params:{}, result={}, duration={}ms", JacksonUtil.toJSONString(request), result.status(), duration);
+            return response;
+        }
+        log.warn("权限检查未能产出权限判定: params:{}, result={}, duration={}ms", JacksonUtil.toJSONString(request), result.status(), duration);
         return response;
     }
 
@@ -74,6 +78,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         return Subject.userset(request.getSubjectType(), request.getSubjectId(), request.getSubjectRelation());
     }
 
+
     private String resolveZookieToken(String storeId, PermissionCheckResult result) {
         if (PermissionCheckStatus.STORE_NOT_FOUND == result.status()) {
             return "";
@@ -81,6 +86,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         Long version = changelogQueryRepository.getMaxZookie(storeId);
         return Zookie.of(version).toToken();
     }
+
 
     private PermissionCheckResultDTO toPermissionCheckResultDTO(PermissionCheckResult result, String zookieToken,
                                                                 long duration) {
@@ -90,28 +96,6 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         if (result.isDenied()) {
             return PermissionCheckResultDTO.denied(zookieToken, duration);
         }
-        return PermissionCheckResultDTO.error(result.status().name(), buildErrorMessage(result.status()),
-                zookieToken, duration);
-    }
-
-    private String buildErrorMessage(PermissionCheckStatus status) {
-        return switch (status) {
-            case STORE_NOT_FOUND -> "store 不存在";
-            case MODEL_NOT_BOUND -> "store 未绑定授权模型";
-            case MODEL_NOT_FOUND -> "当前授权模型不存在";
-            case MODEL_INVALID -> "当前授权模型无效";
-            case ALLOWED, DENIED -> "";
-        };
-    }
-
-    private void logCheckResult(CheckCommand request, PermissionCheckResult result, long duration) {
-        if (Objects.equals(PermissionCheckStatus.ALLOWED, result.status())
-                || Objects.equals(PermissionCheckStatus.DENIED, result.status())) {
-            log.info("权限检查完成: params:{}, result={}, duration={}ms",
-                    JacksonUtil.toJSONString(request), result.status(), duration);
-            return;
-        }
-        log.warn("权限检查未能产出权限判定: params:{}, result={}, duration={}ms",
-                JacksonUtil.toJSONString(request), result.status(), duration);
+        return PermissionCheckResultDTO.error(result.status().name(), result.status().getDesc(), zookieToken, duration);
     }
 }

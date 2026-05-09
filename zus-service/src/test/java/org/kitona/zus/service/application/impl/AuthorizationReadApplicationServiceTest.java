@@ -3,6 +3,7 @@ package org.kitona.zus.service.application.impl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
+import org.kitona.zus.domain.authorization.evaluation.runtime.ListSubjectsEvaluationRequest;
 import org.kitona.zus.domain.port.ICompiledModelCache;
 import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.view.StoreView;
@@ -65,7 +66,7 @@ class AuthorizationReadApplicationServiceTest {
                 .thenReturn(Optional.of(new StoreView("store-1", "demo", "desc", "model-1", null, null, null)));
         when(compiledModelCache.get("store-1", "model-1"))
                 .thenReturn(Optional.of(compiledModel));
-        when(permissionSearchEvaluator.listSubjects(eq(compiledModel), eq("store-1"), any(), eq("viewer"), any(), any()))
+        when(permissionSearchEvaluator.listSubjects(eq(compiledModel), any(ListSubjectsEvaluationRequest.class)))
                 .thenReturn(List.of(
                         Subject.user("user", "alice"),
                         Subject.userset("group", "eng", "member")

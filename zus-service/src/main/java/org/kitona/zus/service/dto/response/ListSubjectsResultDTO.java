@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -21,22 +22,12 @@ import java.util.List;
 @AllArgsConstructor
 public class ListSubjectsResultDTO implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<SubjectDTO> subjects;
+    private List<String> subjects;
 
     public static ListSubjectsResultDTO empty() {
         return ListSubjectsResultDTO.builder().subjects(List.of()).build();
-    }
-
-    @Getter
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SubjectDTO implements Serializable {
-        private static final long serialVersionUID = 1L;
-        private String type;
-        private String id;
-        private String relation;
     }
 }

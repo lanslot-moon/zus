@@ -11,7 +11,6 @@ import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Watch 应用服务：通过 IChangelogQueryRepository 查询变更日志供 API 层 SSE 推送。
@@ -63,7 +62,7 @@ public class TupleWatchApplicationService implements ITupleWatchApplicationServi
 
         List<Changelog> filtered = StringUtils.isBlank(objectTypeFilter) ? raw : raw.stream()
                 .filter(change -> objectTypeFilter.equals(change.getObjectType()))
-                .collect(Collectors.toList());
+                .toList();
 
         if (filtered.size() > effectiveSize) {
             filtered = filtered.subList(0, effectiveSize);

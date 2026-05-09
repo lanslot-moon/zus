@@ -2,6 +2,8 @@ package org.kitona.zus.domain.service;
 
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
+import org.kitona.zus.domain.authorization.evaluation.runtime.ListObjectsEvaluationRequest;
+import org.kitona.zus.domain.authorization.evaluation.runtime.ListSubjectsEvaluationRequest;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.port.IObjectSubjectCandidateReader;
 import org.kitona.zus.domain.port.ISubjectObjectCandidateReader;
@@ -12,7 +14,6 @@ import org.kitona.zus.domain.valueobject.Zookie;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -60,23 +61,18 @@ public final class PermissionSearchEvaluator {
      * <p>该方法不会构造 {@code object:*} 之类的占位对象。只有从候选端口取到真实 object 后，
      * 才会构造完整 {@link EvaluationRequest} 并交给 Check 内核证明。
      *
-     * @param model      编译后的授权模型
-     * @param storeId    store 标识
-     * @param subject    查询主体
-     * @param relation   查询关系
-     * @param zookie     一致性令牌
-     * @param context    条件求值上下文
-     * @param objectType 可选 object 类型过滤
+     * @param model   编译后的授权模型
+     * @param request ListObjects 求值请求
      * @return 主体可访问的 object type:id 列表
      */
-    public List<String> listObjects(CompiledAuthorizationModel model, String storeId, Subject subject, String relation,
-                                    Zookie zookie, Map<String, Object> context, String objectType) {
-        Set<String> objects = new LinkedHashSet<>();
-        Zookie effectiveZookie = effectiveZookie(zookie);
-        for (ObjectRef candidate : collectObjectCandidates(storeId, objectType, effectiveZookie)) {
-            EvaluationRequest request = EvaluationRequest.of(storeId, subject, candidate, relation, effectiveZookie, context);
-            if (permissionCheckEvaluator.check(model, request)) {
-                objects.add(candidate.toString());
+    public List<ObjectRef> listObjects(CompiledAuthorizationModel model, ListObjectsEvaluationRequest request) {
+        Set<ObjectRef> objects = new LinkedHashSet<>();
+        Zookie effectiveZookie = effectiveZookie(request.zookie());
+        for (ObjectRef candidate : collectObjectCandidates(request.storeId(), request.objectType(), effectiveZookie)) {
+            EvaluationRequest checkRequest = EvaluationRequest.of(request.storeId(), request.subject(), candidate,
+                    request.relation(), effectiveZookie, request.context());
+            if (permissionCheckEvaluator.check(model, checkRequest)) {
+                objects.add(candidate);
             }
         }
         return List.copyOf(objects);
@@ -88,21 +84,17 @@ public final class PermissionSearchEvaluator {
      * <p>该方法不会构造 {@code subject:*} 之类的占位主体。只有从候选端口取到真实 subject 后，
      * 才会构造完整 {@link EvaluationRequest} 并交给 Check 内核证明。
      *
-     * @param model    编译后的授权模型
-     * @param storeId  store 标识
-     * @param object   查询对象
-     * @param relation 查询关系
-     * @param zookie   一致性令牌
-     * @param context  条件求值上下文
+     * @param model   编译后的授权模型
+     * @param request ListSubjects 求值请求
      * @return 对指定 object relation 具备权限的主体列表
      */
-    public List<Subject> listSubjects(CompiledAuthorizationModel model, String storeId, ObjectRef object,
-                                      String relation, Zookie zookie, Map<String, Object> context) {
+    public List<Subject> listSubjects(CompiledAuthorizationModel model, ListSubjectsEvaluationRequest request) {
         List<Subject> result = new ArrayList<>();
-        Zookie effectiveZookie = effectiveZookie(zookie);
-        for (Subject subject : collectSubjectCandidates(storeId, effectiveZookie)) {
-            EvaluationRequest request = EvaluationRequest.of(storeId, subject, object, relation, effectiveZookie, context);
-            if (permissionCheckEvaluator.check(model, request)) {
+        Zookie effectiveZookie = effectiveZookie(request.zookie());
+        for (Subject subject : collectSubjectCandidates(request.storeId(), effectiveZookie)) {
+            EvaluationRequest checkRequest = EvaluationRequest.of(request.storeId(), subject, request.object(),
+                    request.relation(), effectiveZookie, request.context());
+            if (permissionCheckEvaluator.check(model, checkRequest)) {
                 result.add(subject);
             }
         }

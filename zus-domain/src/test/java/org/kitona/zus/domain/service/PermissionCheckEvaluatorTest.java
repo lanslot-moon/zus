@@ -14,6 +14,8 @@ import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledRelation;
 import org.kitona.zus.domain.authorization.evaluation.nodes.ComputedUsersetNode;
 import org.kitona.zus.domain.authorization.evaluation.nodes.DirectRelationReferenceNode;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
+import org.kitona.zus.domain.authorization.evaluation.runtime.ListObjectsEvaluationRequest;
+import org.kitona.zus.domain.authorization.evaluation.runtime.ListSubjectsEvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.nodes.ExclusionNode;
 import org.kitona.zus.domain.authorization.evaluation.nodes.IntersectionNode;
 import org.kitona.zus.domain.authorization.evaluation.nodes.RewriteNode;
@@ -183,10 +185,12 @@ class PermissionCheckEvaluatorTest {
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of());
 
-        List<String> objects = searchEvaluator.listObjects(model, "store", Subject.user("user", "alice"),
-                "viewer", Zookie.EMPTY, Map.of(), "document");
-        List<Subject> subjects = searchEvaluator.listSubjects(model, "store", ObjectRef.of("document", "doc-1"),
-                "viewer", Zookie.EMPTY, Map.of());
+        List<String> objects = searchEvaluator.listObjects(model,
+                ListObjectsEvaluationRequest.of("store", Subject.user("user", "alice"),
+                        "viewer", Zookie.EMPTY, Map.of(), "document"));
+        List<Subject> subjects = searchEvaluator.listSubjects(model,
+                ListSubjectsEvaluationRequest.of("store", ObjectRef.of("document", "doc-1"),
+                        "viewer", Zookie.EMPTY, Map.of()));
 
         assertIterableEquals(List.of("document:doc-1", "document:doc-3"), objects);
         assertEquals(List.of(Subject.user("user", "alice")), subjects);
@@ -204,14 +208,9 @@ class PermissionCheckEvaluatorTest {
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of());
 
-        List<String> objects = searchEvaluator.listObjects(
-                model,
-                "store",
-                Subject.user("user", "alice"),
-                "viewer",
-                Zookie.of(1L),
-                Map.of(),
-                "document");
+        List<String> objects = searchEvaluator.listObjects(model,
+                ListObjectsEvaluationRequest.of("store", Subject.user("user", "alice"),
+                        "viewer", Zookie.of(1L), Map.of(), "document"));
 
         assertIterableEquals(List.of("document:doc-1"), objects);
     }
