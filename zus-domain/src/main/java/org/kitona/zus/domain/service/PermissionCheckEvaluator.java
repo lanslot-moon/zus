@@ -6,7 +6,8 @@ import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthoriza
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledRelation;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationDecision;
 import org.kitona.zus.domain.enums.EvaluationNodeType;
-import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTraceCollector;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTraceRecorder;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
@@ -148,7 +149,7 @@ public final class PermissionCheckEvaluator {
             Optional<CompiledRelation> relationOpt = runtime.model().findRelation(object.getType(), relation);
             if (relationOpt.isEmpty()) {
                 log.info("PermissionCheckEvaluator evaluateRelation not find relation definition: subject={}, object={}, relation={}", subject, object, relation);
-                traceRecorder.mark(runtime, false, EvaluationExplainReason.NO_RELATION_DEFINITION);
+                traceRecorder.mark(runtime, false, BusinessEvidenceReason.NO_RELATION_DEFINITION);
                 return false;
             }
             // 获取编译后的关系定义
@@ -157,7 +158,7 @@ public final class PermissionCheckEvaluator {
             return evaluateNode(runtime, compiledRelation, compiledRelation.rewriteNode(), subject, object, relation, depth);
         });
         // 离开关系评估的跟踪记录，根据结果记录相应的解释原因
-        traceRecorder.leave(runtime, result, result ? EvaluationExplainReason.RELATION_ALLOWED : EvaluationExplainReason.RELATION_DENIED);
+        traceRecorder.leave(runtime, result, NodeCompletionReason.resolve(EvaluationNodeType.RELATION, result));
         return result;
     }
 
@@ -172,7 +173,7 @@ public final class PermissionCheckEvaluator {
         traceRecorder.enter(runtime, node.explainNodeType(), subject, object, relation);
         RewriteNodeEvaluationStrategy<RewriteNode> strategy = (RewriteNodeEvaluationStrategy<RewriteNode>) RewriteNodeStrategyFactory.getStrategy(node.getClass());
         boolean result = strategy.evaluate(node, compiledRelation, runtime, subject, object, relation, depth, evaluationSupport);
-        traceRecorder.leave(runtime, result, result ? EvaluationExplainReason.NODE_ALLOWED : EvaluationExplainReason.NODE_DENIED);
+        traceRecorder.leave(runtime, result, NodeCompletionReason.resolve(node.explainNodeType(), result));
         return result;
     }
 
@@ -189,11 +190,11 @@ public final class PermissionCheckEvaluator {
 
         for (RelationTuple tuple : tuples) {
             if (matchesSelfTuple(compiledRelation, tuple, subject, runtime)) {
-                traceRecorder.recordTuple(runtime, tuple, true, EvaluationExplainReason.DIRECT_TUPLE_MATCHED);
+                traceRecorder.recordTuple(runtime, tuple, true, BusinessEvidenceReason.DIRECT_TUPLE_MATCHED);
                 return true;
             }
         }
-        traceRecorder.mark(runtime, false, EvaluationExplainReason.NO_TUPLE_MATCHED);
+        traceRecorder.mark(runtime, false, BusinessEvidenceReason.NO_TUPLE_MATCHED);
         return false;
     }
 
@@ -203,7 +204,7 @@ public final class PermissionCheckEvaluator {
     private boolean matchesSelfTuple(CompiledRelation compiledRelation, RelationTuple tuple, Subject subject,
                                      EvaluationRuntime runtime) {
         if (!RelationRestrictionSpecification.isSatisfiedBy(compiledRelation, tuple)) {
-            traceRecorder.recordTuple(runtime, tuple, false, EvaluationExplainReason.RELATION_RESTRICTION_FAILED);
+            traceRecorder.recordTuple(runtime, tuple, false, BusinessEvidenceReason.RELATION_RESTRICTION_FAILED);
             return false;
         }
         TupleVisibilityDecision visibilityDecision = runtime.visibilitySpecification().evaluate(tuple);
@@ -213,7 +214,7 @@ public final class PermissionCheckEvaluator {
         }
         boolean matched = SubjectMatchSpecification.isSatisfiedBy(tuple, subject);
         if (!matched) {
-            traceRecorder.recordTuple(runtime, tuple, false, EvaluationExplainReason.SUBJECT_NOT_MATCHED);
+            traceRecorder.recordTuple(runtime, tuple, false, BusinessEvidenceReason.SUBJECT_NOT_MATCHED);
         }
         return matched;
     }

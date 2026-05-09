@@ -1,7 +1,7 @@
 package org.kitona.zus.domain.authorization.evaluation.specification;
 
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
-import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.runtime.TupleMatchContext;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
@@ -35,7 +35,7 @@ public record TupleVisibilitySpecification(CompiledAuthorizationModel model, Eva
     public TupleVisibilityDecision evaluate(RelationTuple tuple) {
         // 先做过期时间过滤，避免无效 tuple 继续参与条件求值。
         if (tuple.isExpired(currentTimeMillis)) {
-            return TupleVisibilityDecision.tupleRejected(EvaluationExplainReason.TUPLE_EXPIRED);
+            return TupleVisibilityDecision.tupleRejected(BusinessEvidenceReason.TUPLE_EXPIRED);
         }
         // 没有条件定义时，该 tuple 只要未过期就可直接参与计算。
         if (!tuple.hasCondition()) {
@@ -45,7 +45,7 @@ public record TupleVisibilitySpecification(CompiledAuthorizationModel model, Eva
         return model.findCondition(tuple.getConditionDefinitionId())
                 .map(definition -> conditionEvaluator.evaluate(definition, new TupleMatchContext(request, tuple))
                         ? TupleVisibilityDecision.conditionPassed()
-                        : TupleVisibilityDecision.conditionRejected(EvaluationExplainReason.CONDITION_FAILED))
-                .orElse(TupleVisibilityDecision.conditionRejected(EvaluationExplainReason.CONDITION_DEFINITION_MISSING));
+                        : TupleVisibilityDecision.conditionRejected(BusinessEvidenceReason.CONDITION_FAILED))
+                .orElse(TupleVisibilityDecision.conditionRejected(BusinessEvidenceReason.CONDITION_DEFINITION_MISSING));
     }
 }

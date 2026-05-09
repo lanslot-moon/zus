@@ -68,7 +68,7 @@ final class EvaluationExplainNodeFactory {
                 "",
                 "",
                 allowed,
-                allowed ? EvaluationExplainReason.RELATION_ALLOWED : EvaluationExplainReason.RELATION_DENIED,
+                EvaluationExplainReason.NodeCompletionReason.resolve(EvaluationNodeType.RELATION, allowed),
                 null,
                 null,
                 List.of()

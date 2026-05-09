@@ -1,6 +1,7 @@
 package org.kitona.zus.domain.authorization.evaluation.runtime;
 
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTraceRecorder;
 
 import java.util.function.BooleanSupplier;
@@ -27,20 +28,20 @@ public final class RecursiveEvaluationTemplate {
     public boolean execute(EvaluationRuntime runtime, EvaluationMemoKey memoKey, int depth, BooleanSupplier evaluator) {
         // 检查当前递归深度是否超过最大允许深度，防止无限递归
         if (depth > runtime.guard().maxDepth()) {
-            mark(runtime, false, EvaluationExplainReason.DEPTH_LIMIT_EXCEEDED);
+            mark(runtime, false, BusinessEvidenceReason.DEPTH_LIMIT_EXCEEDED);
             return false;
         }
 
         // 检查是否已经计算过（memoization），如果已经计算过则直接返回缓存结果
         Boolean memoized = runtime.guard().getMemo(memoKey);
         if (memoized != null) {
-            mark(runtime, memoized, memoized ? EvaluationExplainReason.MEMO_ALLOWED : EvaluationExplainReason.MEMO_DENIED);
+            mark(runtime, memoized, memoized ? BusinessEvidenceReason.MEMO_ALLOWED : BusinessEvidenceReason.MEMO_DENIED);
             return memoized;
         }
 
         // 检查当前节点是否正在访问路径中，用于检测循环引用
         if (runtime.guard().isVisiting(memoKey)) {
-            mark(runtime, false, EvaluationExplainReason.CYCLE_DETECTED);
+            mark(runtime, false, BusinessEvidenceReason.CYCLE_DETECTED);
             return false;
         }
 

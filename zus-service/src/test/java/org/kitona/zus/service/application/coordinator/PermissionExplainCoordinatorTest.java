@@ -7,7 +7,6 @@ import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthoriza
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationDecision;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainNode;
 import org.kitona.zus.domain.enums.EvaluationNodeType;
-import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTrace;
 import org.kitona.zus.domain.authorization.evaluation.explain.StaleSnapshotDiagnosis;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
@@ -33,6 +32,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.RELATION_DENIED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -100,7 +100,7 @@ class PermissionExplainCoordinatorTest {
     private EvaluationDecision deniedDecision() {
         EvaluationExplainNode root = new EvaluationExplainNode(EvaluationNodeType.RELATION,
                 "document:doc-1#viewer", "user:alice", "viewer", false,
-                EvaluationExplainReason.RELATION_DENIED, null, null, List.of());
+                RELATION_DENIED, null, null, List.of());
         EvaluationTrace trace = new EvaluationTrace(false, "1", "", StaleSnapshotDiagnosis.NOT_REQUESTED, root, false);
         return new EvaluationDecision(false, trace);
     }

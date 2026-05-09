@@ -1,7 +1,7 @@
 package org.kitona.zus.domain.authorization.evaluation.strategy.impl;
 
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledRelation;
-import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTraceCollector;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRuntime;
 import org.kitona.zus.domain.authorization.evaluation.nodes.TupleToUsersetNode;
@@ -57,7 +57,7 @@ public final class TupleToUsersetEvaluationStrategy implements RewriteNodeEvalua
                 // relation/rewrite 节点可由 evaluator 统一记录，但这条边只在 TTU 策略内部可见。
                 // 这里必须显式写入 explain 树，否则授权路径会缺少从 object 跳转到 linkedObject 的原因。
                 EvaluationTraceCollector collector = runtime.traceCollector();
-                Optional.ofNullable(collector).ifPresent(item -> item.recordTupleDecision(link, true, EvaluationExplainReason.TUPLE_TO_USERSET_LINK_MATCHED));
+                Optional.ofNullable(collector).ifPresent(item -> item.recordTupleDecision(link, true, BusinessEvidenceReason.TUPLE_TO_USERSET_LINK_MATCHED));
                 return true;
             }
         }

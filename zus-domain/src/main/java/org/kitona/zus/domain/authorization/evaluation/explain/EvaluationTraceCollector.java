@@ -187,7 +187,7 @@ public final class EvaluationTraceCollector {
     /**
      * 判断本次 explain 是否还能继续记录节点。
      *
-     * <p>当节点数量达到上限时，只会在当前节点标记一次 {@link EvaluationExplainReason#TRACE_TRUNCATED}，
+     * <p>当节点数量达到上限时，只会在当前节点标记一次 {@link  EvaluationExplainReason.BusinessEvidenceReason#TRACE_TRUNCATED}，
      * 后续事件直接忽略，避免异常授权模型生成过大的 resolution 树。
      *
      * @return 如果不能继续记录新节点则返回 {@code true}
@@ -200,7 +200,7 @@ public final class EvaluationTraceCollector {
             return false;
         }
         truncated = true;
-        markCurrent(false, EvaluationExplainReason.TRACE_TRUNCATED);
+        markCurrent(false, EvaluationExplainReason.BusinessEvidenceReason.TRACE_TRUNCATED);
         return true;
     }
 }

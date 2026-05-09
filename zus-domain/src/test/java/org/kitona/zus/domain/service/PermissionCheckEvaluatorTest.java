@@ -43,6 +43,16 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason.CONDITION_FAILED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason.DEPTH_LIMIT_EXCEEDED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason.DIRECT_TUPLE_MATCHED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason.TUPLE_TO_USERSET_LINK_MATCHED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.COMPUTED_USERSET_ALLOWED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.EXCLUSION_LEFT_ALLOWED_RIGHT_DENIED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.INTERSECTION_ALL_BRANCHES_ALLOWED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.RELATION_ALLOWED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.TUPLE_TO_USERSET_ALLOWED;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.UNION_BRANCH_ALLOWED;
 
 class PermissionCheckEvaluatorTest {
 
@@ -244,8 +254,8 @@ class PermissionCheckEvaluatorTest {
         assertEquals(evaluator.check(model, request), decision.allowed());
         assertTrue(decision.allowed());
         assertNotNull(decision.trace());
-        assertEquals(EvaluationExplainReason.RELATION_ALLOWED, decision.trace().root().reason());
-        assertTrue(hasReason(decision.trace().root(), EvaluationExplainReason.DIRECT_TUPLE_MATCHED));
+        assertEquals(RELATION_ALLOWED, decision.trace().root().reason());
+        assertTrue(hasReason(decision.trace().root(), DIRECT_TUPLE_MATCHED));
     }
 
     @Test
@@ -266,8 +276,47 @@ class PermissionCheckEvaluatorTest {
                 ObjectRef.of("document", "doc-1"), "viewer"));
 
         assertTrue(decision.allowed());
-        assertTrue(hasReason(decision.trace().root(), EvaluationExplainReason.TUPLE_TO_USERSET_LINK_MATCHED));
+        assertTrue(hasReason(decision.trace().root(), TUPLE_TO_USERSET_LINK_MATCHED));
         assertTrue(hasTarget(decision.trace().root(), "folder:folder-1#viewer"));
+    }
+
+    @Test
+    void shouldExplainSuccessfulRewriteNodesWithSpecificReasons() {
+        InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
+                tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice")),
+                tuple("store", "document", "doc-1", "editor", Subject.user("user", "alice")),
+                tuple("store", "document", "doc-1", "parent", Subject.user("folder", "folder-1")),
+                tuple("store", "folder", "folder-1", "viewer", Subject.user("user", "alice"))
+        ));
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        CompiledAuthorizationModel model = model(Map.of(
+                relationKey("document", "viewer"), relation("document", "viewer", new SelfNode()),
+                relationKey("document", "editor"), relation("document", "editor", new SelfNode()),
+                relationKey("document", "visible"), relation("document", "visible",
+                        new UnionNode(List.of(new DirectRelationReferenceNode("viewer"), new DirectRelationReferenceNode("editor")))),
+                relationKey("document", "collaborator"), relation("document", "collaborator",
+                        new IntersectionNode(List.of(new DirectRelationReferenceNode("viewer"), new DirectRelationReferenceNode("editor")))),
+                relationKey("document", "allowed"), relation("document", "allowed",
+                        new ExclusionNode(new DirectRelationReferenceNode("visible"), new DirectRelationReferenceNode("missing"))),
+                relationKey("document", "can_edit"), relation("document", "can_edit",
+                        new ComputedUsersetNode("document", "editor")),
+                relationKey("document", "parent"), relation("document", "parent", new SelfNode()),
+                relationKey("document", "inherited_viewer"), relation("document", "inherited_viewer",
+                        new TupleToUsersetNode("parent", "viewer")),
+                relationKey("folder", "viewer"), relation("folder", "viewer", new SelfNode())
+        ), Map.of());
+
+        EvaluationExplainNode unionRoot = explainRoot(evaluator, model, "visible");
+        EvaluationExplainNode intersectionRoot = explainRoot(evaluator, model, "collaborator");
+        EvaluationExplainNode exclusionRoot = explainRoot(evaluator, model, "allowed");
+        EvaluationExplainNode computedRoot = explainRoot(evaluator, model, "can_edit");
+        EvaluationExplainNode ttuRoot = explainRoot(evaluator, model, "inherited_viewer");
+
+        assertTrue(hasReason(unionRoot, UNION_BRANCH_ALLOWED));
+        assertTrue(hasReason(intersectionRoot, INTERSECTION_ALL_BRANCHES_ALLOWED));
+        assertTrue(hasReason(exclusionRoot, EXCLUSION_LEFT_ALLOWED_RIGHT_DENIED));
+        assertTrue(hasReason(computedRoot, COMPUTED_USERSET_ALLOWED));
+        assertTrue(hasReason(ttuRoot, TUPLE_TO_USERSET_ALLOWED));
     }
 
     @Test
@@ -296,9 +345,9 @@ class PermissionCheckEvaluatorTest {
                 request("store", Subject.user("user", "alice"), ObjectRef.of("document", "doc-1"), "viewer"));
 
         assertFalse(conditionDecision.allowed());
-        assertTrue(hasReason(conditionDecision.trace().root(), EvaluationExplainReason.CONDITION_FAILED));
+        assertTrue(hasReason(conditionDecision.trace().root(), CONDITION_FAILED));
         assertFalse(depthDecision.allowed());
-        assertTrue(hasReason(depthDecision.trace().root(), EvaluationExplainReason.DEPTH_LIMIT_EXCEEDED));
+        assertTrue(hasReason(depthDecision.trace().root(), DEPTH_LIMIT_EXCEEDED));
     }
 
     private static EvaluationRequest request(String storeId, Subject subject, ObjectRef object, String relation) {
@@ -351,6 +400,15 @@ class PermissionCheckEvaluatorTest {
             return true;
         }
         return node.children().stream().anyMatch(child -> hasTarget(child, target));
+    }
+
+    private static EvaluationExplainNode explainRoot(PermissionCheckEvaluator evaluator,
+                                                     CompiledAuthorizationModel model,
+                                                     String relation) {
+        EvaluationDecision decision = evaluator.checkWithExplain(model, request("store", Subject.user("user", "alice"),
+                ObjectRef.of("document", "doc-1"), relation));
+        assertTrue(decision.allowed());
+        return decision.trace().root();
     }
 
     private static RelationTuple tuple(String storeId, String objectType, String objectId,

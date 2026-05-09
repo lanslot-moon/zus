@@ -1,6 +1,7 @@
 package org.kitona.zus.domain.authorization.evaluation.specification;
 
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.BusinessEvidenceReason;
 
 /**
  * tuple 可见性规则的结构化判断结果。
@@ -26,7 +27,7 @@ public record TupleVisibilityDecision(boolean satisfied,
      * 表示 tuple 绑定的条件通过，需要记录 condition explain。
      */
     private static final TupleVisibilityDecision CONDITION_PASSED =
-            new TupleVisibilityDecision(true, EvaluationExplainReason.CONDITION_PASSED, TraceKind.CONDITION);
+            new TupleVisibilityDecision(true, BusinessEvidenceReason.CONDITION_PASSED, TraceKind.CONDITION);
 
     /**
      * 创建无条件且可见的判断结果。

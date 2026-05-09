@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainNode;
 import org.kitona.zus.domain.enums.EvaluationNodeType;
-import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTrace;
 import org.kitona.zus.domain.authorization.evaluation.explain.StaleSnapshotDiagnosis;
 import org.kitona.zus.domain.valueobject.PermissionCheckStatus;
@@ -23,6 +22,7 @@ import java.util.Objects;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason.NodeCompletionReason.RELATION_DENIED;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -54,7 +54,7 @@ class PermissionExplainApplicationServiceTest {
         assertNotNull(result.getResolution());
         assertEquals(StaleSnapshotDiagnosis.STALE_SNAPSHOT_CAUSED.name(),
                 result.getResolution().getStaleSnapshotDiagnosis());
-        assertEquals(EvaluationExplainReason.RELATION_DENIED.name(), result.getResolution().getRoot().getReason());
+        assertEquals(RELATION_DENIED.name(), result.getResolution().getRoot().getReason());
     }
 
     private ExplainCommand command() {
@@ -72,7 +72,7 @@ class PermissionExplainApplicationServiceTest {
     private EvaluationTrace deniedTrace() {
         EvaluationExplainNode root = new EvaluationExplainNode(EvaluationNodeType.RELATION,
                 "document:doc-1#viewer", "user:alice", "viewer", false,
-                EvaluationExplainReason.RELATION_DENIED, null, null, List.of());
+                RELATION_DENIED, null, null, List.of());
         return new EvaluationTrace(false, "1", "9", StaleSnapshotDiagnosis.STALE_SNAPSHOT_CAUSED, root, false);
     }
 }
