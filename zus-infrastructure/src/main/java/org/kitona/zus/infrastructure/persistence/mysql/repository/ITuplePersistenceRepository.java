@@ -65,7 +65,7 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
     List<TuplePO> findBySubject(TupleSubjectQuery query);
 
     /**
-     * 按资源查询元组列表，用于 ListUsers 等，可按 relation 过滤
+     * 按资源查询元组列表，用于 ListSubjects 等，可按 relation 过滤
      *
      * @param storeId    存储空间 ID
      * @param objectType 资源类型

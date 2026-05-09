@@ -2,26 +2,26 @@ package org.kitona.zus.api.converter;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.api.request.authorization.FgaListObjectsRequest;
-import org.kitona.zus.api.request.authorization.FgaListUsersRequest;
+import org.kitona.zus.api.request.authorization.FgaListSubjectsRequest;
 import org.kitona.zus.api.request.common.FgaConsistencyOptions;
 import org.kitona.zus.api.request.common.FgaReferenceRequest;
 import org.kitona.zus.api.response.FgaListObjectsResponseVO;
-import org.kitona.zus.api.response.FgaListUsersResponseVO;
-import org.kitona.zus.api.response.FgaUserVO;
+import org.kitona.zus.api.response.FgaListSubjectsResponseVO;
+import org.kitona.zus.api.response.FgaSubjectVO;
 import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
-import org.kitona.zus.service.dto.query.ListUsersQuery;
+import org.kitona.zus.service.dto.query.ListSubjectsQuery;
 import org.kitona.zus.service.dto.response.ListObjectsResultDTO;
-import org.kitona.zus.service.dto.response.ListUsersResultDTO;
+import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 
 import java.util.Collections;
 import java.util.List;
 
 /**
- * 关系查询（ListObjects / ListUsers）的 API ↔ Service 转换器。
+ * 关系查询（ListObjects / ListSubjects）的 API ↔ Service 转换器。
  *
- * <p>说明：当前 {@link FgaListUsersRequest} 支持多个 {@code userFilters}，
- * 但领域层 {@link ListUsersQuery} 只承载单一过滤条件；这里选取第一个过滤器作为主过滤项，
+ * <p>说明：当前 {@link FgaListSubjectsRequest} 支持多个 {@code subjectFilters}，
+ * 但领域层 {@link ListSubjectsQuery} 只承载单一过滤条件；这里选取第一个过滤器作为主过滤项，
  * 避免 API 层再做多次查询合并（待领域层补齐 multi-filter 后可调整）。
  *
  * @author kitona
@@ -51,13 +51,13 @@ public final class FgaRelationQueryConverter {
                 .build();
     }
 
-    public static ListUsersQuery toListUsersQuery(String storeId, FgaListUsersRequest request) {
+    public static ListSubjectsQuery toListSubjectsQuery(String storeId, FgaListSubjectsRequest request) {
         if (request == null) {
             return null;
         }
         FgaReferenceRequest object = request.getObject();
-        FgaListUsersRequest.UserFilter first = firstFilter(request.getUserFilters());
-        return ListUsersQuery.builder()
+        FgaListSubjectsRequest.SubjectFilter first = firstFilter(request.getSubjectFilters());
+        return ListSubjectsQuery.builder()
                 .storeId(storeId)
                 .objectType(object != null ? object.getType() : null)
                 .objectId(object != null ? object.getId() : null)
@@ -69,7 +69,7 @@ public final class FgaRelationQueryConverter {
                 .build();
     }
 
-    private static FgaListUsersRequest.UserFilter firstFilter(List<FgaListUsersRequest.UserFilter> filters) {
+    private static FgaListSubjectsRequest.SubjectFilter firstFilter(List<FgaListSubjectsRequest.SubjectFilter> filters) {
         if (CollectionUtils.isEmpty(filters)) {
             return null;
         }
@@ -91,13 +91,13 @@ public final class FgaRelationQueryConverter {
         return vo;
     }
 
-    public static FgaListUsersResponseVO toListUsersVO(ListUsersResultDTO dto) {
-        FgaListUsersResponseVO vo = new FgaListUsersResponseVO();
-        if (dto == null || CollectionUtils.isEmpty(dto.getUsers())) {
-            vo.setUsers(Collections.emptyList());
+    public static FgaListSubjectsResponseVO toListSubjectsVO(ListSubjectsResultDTO dto) {
+        FgaListSubjectsResponseVO vo = new FgaListSubjectsResponseVO();
+        if (dto == null || CollectionUtils.isEmpty(dto.getSubjects())) {
+            vo.setSubjects(Collections.emptyList());
             return vo;
         }
-        vo.setUsers(MapstructUtil.convert(dto.getUsers(), FgaUserVO.class));
+        vo.setSubjects(MapstructUtil.convert(dto.getSubjects(), FgaSubjectVO.class));
         return vo;
     }
 }

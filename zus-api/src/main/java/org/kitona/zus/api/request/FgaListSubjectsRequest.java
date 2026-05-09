@@ -9,10 +9,10 @@ import lombok.Data;
 import java.util.Map;
 
 /**
- * FGA ListUsers API 请求
+ * FGA ListSubjects API 请求
  */
 @Data
-public class FgaListUsersRequest {
+public class FgaListSubjectsRequest {
 
     @Valid
     @NotNull(message = "object 不能为空")

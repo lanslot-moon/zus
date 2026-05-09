@@ -44,7 +44,7 @@ public class FgaExpandTreeVO {
         /**
          * LEAF 时的主体集合
          */
-        private List<FgaUserVO> leaves;
+        private List<FgaSubjectVO> leaves;
 
         /**
          * 组合节点的子节点

@@ -4,7 +4,7 @@ import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
-import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.port.ICompiledModelCache;
 import org.kitona.zus.domain.port.ICompiledModelCompiler;
@@ -13,26 +13,27 @@ import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
 import org.kitona.zus.domain.repository.ITupleQueryRepository;
-import org.kitona.zus.domain.service.PermissionEvaluator;
+import org.kitona.zus.domain.service.PermissionSearchEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
 import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
 import org.kitona.zus.service.conv.assembler.TupleAssembler;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
-import org.kitona.zus.service.dto.query.ListUsersQuery;
+import org.kitona.zus.service.dto.query.ListSubjectsQuery;
 import org.kitona.zus.service.dto.query.TupleReadQuery;
 import org.kitona.zus.service.dto.response.ListObjectsResultDTO;
-import org.kitona.zus.service.dto.response.ListUsersResultDTO;
+import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Read / ListObjects / ListUsers 应用服务
+ * Read / ListObjects / ListSubjects 应用服务
  *
  * <p>通过 ITupleQueryRepository 实现元组读取与列表查询。
  * <p>职责：编排查询流程，将结果转换为 DTO 返回。
@@ -73,7 +74,7 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     private ICompiledModelCache compiledModelCache;
 
     @Resource
-    private PermissionEvaluator permissionEvaluator;
+    private PermissionSearchEvaluator permissionSearchEvaluator;
 
     @Override
     public PageResultDTO<TupleResultDTO> read(String storeId, TupleReadQuery query) {
@@ -84,20 +85,19 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
         TupleReadQuery effectiveQuery = (query != null) ? query : new TupleReadQuery();
         int pageSize = effectiveQuery.getEffectivePageSize();
 
-        List<RelationTuple> tuples = tupleQueryRepository.list(
-                TupleQueryCriteria.forPage(
-                        storeId,
-                        effectiveQuery.getObjectType(),
-                        effectiveQuery.getObjectId(),
-                        effectiveQuery.getRelation(),
-                        effectiveQuery.getSubjectType(),
-                        effectiveQuery.getSubjectId(),
-                        null,
-                        pageSize,
-                        effectiveQuery.parsePageTokenAsLong()
-                )
+        TupleQueryCriteria criteria = TupleQueryCriteria.forPage(
+                storeId,
+                effectiveQuery.getObjectType(),
+                effectiveQuery.getObjectId(),
+                effectiveQuery.getRelation(),
+                effectiveQuery.getSubjectType(),
+                effectiveQuery.getSubjectId(),
+                null,
+                pageSize,
+                effectiveQuery.parsePageTokenAsLong()
         );
 
+        List<RelationTuple> tuples = tupleQueryRepository.list(criteria);
         List<TupleResultDTO> tupleDTOs = TupleAssembler.toDTOList(tuples);
         String nextToken = buildNextPageToken(tuples, pageSize);
         return PageResultDTO.of(tupleDTOs, nextToken);
@@ -107,42 +107,44 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     public ListObjectsResultDTO listObjects(ListObjectsQuery query) {
         ValidationUtil.validate(query);
         CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId());
-        EvaluationRequest request = EvaluationRequest.of(
+
+        Subject subject = buildSubject(query.getSubjectType(), query.getSubjectId(), query.getSubjectRelation());
+        List<String> objects = permissionSearchEvaluator.listObjects(
+                compiledModel,
                 query.getStoreId(),
-                buildSubject(query.getSubjectType(), query.getSubjectId(), query.getSubjectRelation()),
-                ObjectRef.of(StringUtils.defaultIfBlank(query.getObjectType(), "object"), "*"),
+                subject,
                 query.getRelation(),
                 Zookie.parse(query.getConsistencyToken()),
-                query.getContext()
+                query.getContext(),
+                query.getObjectType()
         );
-        List<String> objects = permissionEvaluator.listObjects(compiledModel, request, query.getObjectType());
         return ListObjectsResultDTO.builder().objects(objects).build();
     }
 
     @Override
-    public ListUsersResultDTO listUsers(ListUsersQuery query) {
+    public ListSubjectsResultDTO listSubjects(ListSubjectsQuery query) {
         ValidationUtil.validate(query);
         CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId());
-        EvaluationRequest request = EvaluationRequest.of(
+
+        List<ListSubjectsResultDTO.SubjectDTO> subjects = permissionSearchEvaluator.listSubjects(
+                compiledModel,
                 query.getStoreId(),
-                Subject.user(StringUtils.defaultIfBlank(query.getSubjectType(), "subject"), "*"),
                 ObjectRef.of(query.getObjectType(), query.getObjectId()),
                 query.getRelation(),
                 Zookie.parse(query.getConsistencyToken()),
                 query.getContext()
-        );
-        List<ListUsersResultDTO.UserDTO> users = permissionEvaluator.listUsers(compiledModel, request).stream()
+        ).stream()
                 .filter(subject -> StringUtils.isBlank(query.getSubjectType())
                         || Objects.equals(query.getSubjectType(), subject.getType()))
                 .filter(subject -> StringUtils.isBlank(query.getSubjectRelation())
                         || Objects.equals(query.getSubjectRelation(), subject.getRelation()))
-                .map(subject -> ListUsersResultDTO.UserDTO.builder()
+                .map(subject -> ListSubjectsResultDTO.SubjectDTO.builder()
                         .type(subject.getType())
                         .id(subject.getId())
                         .relation(subject.getRelation())
                         .build())
                 .toList();
-        return ListUsersResultDTO.builder().users(users).build();
+        return ListSubjectsResultDTO.builder().subjects(subjects).build();
     }
 
     private CompiledAuthorizationModel loadCompiledModel(String storeId) {
@@ -150,15 +152,22 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
         if (storeView == null || StringUtils.isBlank(storeView.currentModelId())) {
             throw new IllegalStateException("store 未绑定当前模型: " + storeId);
         }
-        return compiledModelCache.get(storeId, storeView.currentModelId())
-                .orElseGet(() -> {
-                    CompiledAuthorizationModel model = compiledModelCompiler.compile(
-                            modelRepository.findByModelId(storeId, storeView.currentModelId())
-                                    .orElseThrow(() -> new IllegalStateException("模型不存在: " + storeView.currentModelId())));
-                    compiledModelCache.put(storeId, storeView.currentModelId(), model);
-                    return model;
-                });
+
+        Optional<CompiledAuthorizationModel> modelOptional = compiledModelCache.get(storeId, storeView.currentModelId());
+        if (modelOptional.isPresent()) {
+            return modelOptional.get();
+        }
+
+        Optional<AuthorizationModelAggregate> optional = modelRepository.findByModelId(storeId, storeView.currentModelId());
+        if (optional.isEmpty()) {
+            throw new IllegalStateException("模型不存在: " + storeView.currentModelId());
+        }
+
+        CompiledAuthorizationModel model = compiledModelCompiler.compile(optional.get());
+        compiledModelCache.put(storeId, storeView.currentModelId(), model);
+        return model;
     }
+
 
     private Subject buildSubject(String subjectType, String subjectId, String subjectRelation) {
         if (StringUtils.isBlank(subjectRelation)) {
@@ -169,6 +178,8 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
         }
         return Subject.userset(subjectType, subjectId, subjectRelation);
     }
+
+
 
     private String buildNextPageToken(List<RelationTuple> tuples, int pageSize) {
         if (tuples.isEmpty() || tuples.size() < pageSize) {

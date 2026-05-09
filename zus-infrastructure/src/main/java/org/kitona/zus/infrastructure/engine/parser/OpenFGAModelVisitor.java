@@ -1,4 +1,4 @@
-// Generated from /Users/kitona/IdeaProjects/zus/zus-infrastructure/src/main/java/org/kitona/zus/infrastructure/engine/parser/OpenFGAModel.g4 by ANTLR 4.13.2
+// Generated from /Subjects/kitona/IdeaProjects/zus/zus-infrastructure/src/main/java/org/kitona/zus/infrastructure/engine/parser/OpenFGAModel.g4 by ANTLR 4.13.2
 package org.kitona.zus.infrastructure.engine.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 

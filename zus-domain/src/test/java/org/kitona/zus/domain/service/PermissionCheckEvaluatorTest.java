@@ -44,7 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class PermissionEvaluatorTest {
+class PermissionCheckEvaluatorTest {
 
     private static final long OFFICE_HOURS_CONDITION_ID = 1001L;
 
@@ -56,7 +56,7 @@ class PermissionEvaluatorTest {
                 tuple("store", "document", "doc-1", "banned", Subject.user("user", "bob")),
                 tuple("store", "document", "doc-1", "viewer", Subject.user("user", "bob"))
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
 
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode()),
@@ -85,7 +85,7 @@ class PermissionEvaluatorTest {
                 tuple("store", "document", "doc-1", "parent", Subject.user("folder", "folder-1")),
                 tuple("store", "folder", "folder-1", "viewer", Subject.user("user", "alice"))
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
 
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "editor"), relation("document", "editor", new SelfNode()),
@@ -116,7 +116,7 @@ class PermissionEvaluatorTest {
                 tuple("store", "document", "doc-3", "viewer", Subject.user("user", "alice"),
                         TupleCondition.of(OFFICE_HOURS_CONDITION_ID, "office_hours", "{\"required\":true}"), null)
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new RequestFlagConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new RequestFlagConditionEvaluator());
 
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
@@ -142,7 +142,7 @@ class PermissionEvaluatorTest {
         InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
                 tuple("store", "document", "doc-1", "owner", Subject.user("user", "alice"))
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator(), 1);
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator(), 1);
 
         CompiledAuthorizationModel cyclicModel = model(Map.of(
                 relationKey("document", "viewer"), relation("document", "viewer", new DirectRelationReferenceNode("editor")),
@@ -161,24 +161,25 @@ class PermissionEvaluatorTest {
     }
 
     @Test
-    void shouldListObjectsAndUsersUsingUnifiedEvaluator() {
+    void shouldListObjectsAndSubjectsUsingSearchEvaluator() {
         InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
                 tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice")),
                 tuple("store", "document", "doc-2", "viewer", Subject.user("user", "bob")),
                 tuple("store", "document", "doc-3", "viewer", Subject.user("user", "alice"))
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionSearchEvaluator searchEvaluator = searchEvaluator(evaluator, tupleRepository);
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of());
 
-        List<String> objects = evaluator.listObjects(model, request("store", Subject.user("user", "alice"),
-                ObjectRef.of("document", "*"), "viewer"), "document");
-        List<Subject> users = evaluator.listUsers(model, request("store", Subject.wildcard("user"),
-                ObjectRef.of("document", "doc-1"), "viewer"));
+        List<String> objects = searchEvaluator.listObjects(model, "store", Subject.user("user", "alice"),
+                "viewer", Zookie.EMPTY, Map.of(), "document");
+        List<Subject> subjects = searchEvaluator.listSubjects(model, "store", ObjectRef.of("document", "doc-1"),
+                "viewer", Zookie.EMPTY, Map.of());
 
         assertIterableEquals(List.of("document:doc-1", "document:doc-3"), objects);
-        assertEquals(List.of(Subject.user("user", "alice")), users);
+        assertEquals(List.of(Subject.user("user", "alice")), subjects);
     }
 
     @Test
@@ -187,15 +188,19 @@ class PermissionEvaluatorTest {
                 tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice"), TupleCondition.EMPTY, null, 1L),
                 tuple("store", "document", "doc-2", "viewer", Subject.user("user", "alice"), TupleCondition.EMPTY, null, 2L)
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionSearchEvaluator searchEvaluator = searchEvaluator(evaluator, tupleRepository);
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of());
 
-        List<String> objects = evaluator.listObjects(
+        List<String> objects = searchEvaluator.listObjects(
                 model,
-                EvaluationRequest.of("store", Subject.user("user", "alice"), ObjectRef.of("document", "*"),
-                        "viewer", Zookie.of(1L), Map.of()),
+                "store",
+                Subject.user("user", "alice"),
+                "viewer",
+                Zookie.of(1L),
+                Map.of(),
                 "document");
 
         assertIterableEquals(List.of("document:doc-1"), objects);
@@ -208,7 +213,7 @@ class PermissionEvaluatorTest {
                 tuple("store", "document", "doc-1", "viewer", Subject.userset("group", "eng", "member")),
                 tuple("store", "document", "doc-1", "public_viewer", Subject.wildcard("user"))
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "viewer"), new CompiledRelation("document", "viewer", new SelfNode(), Set.of("group#member")),
                 relationKey("document", "public_viewer"), new CompiledRelation("document", "public_viewer", new SelfNode(), Set.of("user:*"))
@@ -227,7 +232,7 @@ class PermissionEvaluatorTest {
         InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
                 tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice"))
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of());
@@ -249,7 +254,7 @@ class PermissionEvaluatorTest {
                 tuple("store", "document", "doc-1", "parent", Subject.user("folder", "folder-1")),
                 tuple("store", "folder", "folder-1", "viewer", Subject.user("user", "alice"))
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
         CompiledAuthorizationModel model = model(Map.of(
                 relationKey("document", "parent"), relation("document", "parent", new SelfNode()),
                 relationKey("document", "viewer"), relation("document", "viewer",
@@ -272,7 +277,7 @@ class PermissionEvaluatorTest {
                 tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice"),
                         TupleCondition.of(OFFICE_HOURS_CONDITION_ID, "office_hours", "{\"required\":true}"), now + 60_000L)
         ));
-        PermissionEvaluator evaluator = evaluator(tupleRepository, new RequestFlagConditionEvaluator(), 1);
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new RequestFlagConditionEvaluator(), 1);
         CompiledAuthorizationModel conditionalModel = model(Map.of(
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of(
@@ -300,15 +305,20 @@ class PermissionEvaluatorTest {
         return request(storeId, subject, object, relation, Map.of());
     }
 
-    private static PermissionEvaluator evaluator(InMemoryTupleQueryRepository repository,
+    private static PermissionCheckEvaluator evaluator(InMemoryTupleQueryRepository repository,
                                                  IConditionEvaluator conditionEvaluator) {
         return evaluator(repository, conditionEvaluator, 32);
     }
 
-    private static PermissionEvaluator evaluator(InMemoryTupleQueryRepository repository,
+    private static PermissionCheckEvaluator evaluator(InMemoryTupleQueryRepository repository,
                                                  IConditionEvaluator conditionEvaluator,
                                                  int maxDepth) {
-        return new PermissionEvaluator(repository, repository, repository, repository, conditionEvaluator, maxDepth);
+        return new PermissionCheckEvaluator(repository, repository, conditionEvaluator, maxDepth);
+    }
+
+    private static PermissionSearchEvaluator searchEvaluator(PermissionCheckEvaluator evaluator,
+                                                             InMemoryTupleQueryRepository repository) {
+        return new PermissionSearchEvaluator(evaluator, repository, repository);
     }
 
     private static EvaluationRequest request(String storeId, Subject subject, ObjectRef object,

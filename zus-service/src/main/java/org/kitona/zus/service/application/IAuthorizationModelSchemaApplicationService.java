@@ -69,6 +69,8 @@ public interface IAuthorizationModelSchemaApplicationService {
      */
     boolean deleteTypeDefinition(String storeId, String modelId, String type);
 
+
+
     // ==================== 关系定义 ====================
 
     /**

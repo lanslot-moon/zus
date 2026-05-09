@@ -10,7 +10,7 @@ import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
-import org.kitona.zus.domain.service.PermissionEvaluator;
+import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.PermissionCheckStatus;
 import org.kitona.zus.domain.valueobject.ObjectRef;
@@ -42,7 +42,7 @@ class PermissionCheckCoordinatorTest {
     private ICompiledModelCache compiledModelCache;
 
     @Mock
-    private PermissionEvaluator permissionEvaluator;
+    private PermissionCheckEvaluator permissionCheckEvaluator;
 
     private PermissionCheckCoordinator orchestrator;
 
@@ -53,7 +53,7 @@ class PermissionCheckCoordinatorTest {
         ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "modelRepository", modelRepository);
         ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "compiledModelCompiler", compiledModelCompiler);
         ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "compiledModelCache", compiledModelCache);
-        ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "permissionEvaluator", permissionEvaluator);
+        ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "permissionCheckEvaluator", permissionCheckEvaluator);
     }
 
     @Test

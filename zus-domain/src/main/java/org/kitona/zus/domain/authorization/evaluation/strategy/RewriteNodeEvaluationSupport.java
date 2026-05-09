@@ -13,7 +13,7 @@ import java.util.List;
  * 节点策略回调接口。
  *
  * <p>把递归求值和 tuple 链接查询这类“执行器能力”从具体策略中抽离出来，
- * 让策略只关注当前节点的业务语义，而不直接依赖 PermissionEvaluator 的内部实现。
+ * 让策略只关注当前节点的业务语义，而不直接依赖 PermissionCheckEvaluator 的内部实现。
  */
 public interface RewriteNodeEvaluationSupport {
 

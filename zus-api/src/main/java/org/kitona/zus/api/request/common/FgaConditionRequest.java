@@ -16,7 +16,7 @@ import java.util.Map;
  * <ol>
  *   <li><b>Write 元组</b>时绑定条件（写入 {@code fga_relation_tuple.condition_definition_id}
  *       + {@code condition_context}）；</li>
- *   <li><b>Check / ListObjects / ListUsers</b> 时提供运行时上下文，引擎在元组匹配后，
+ *   <li><b>Check / ListObjects / ListSubjects</b> 时提供运行时上下文，引擎在元组匹配后，
  *       以 {@code fga_condition_definition.expression} 结合 context 求值。</li>
  * </ol>
  *

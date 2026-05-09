@@ -3,10 +3,10 @@ package org.kitona.zus.api.controller;
 import jakarta.validation.Valid;
 import org.kitona.zus.api.request.authorization.FgaExpandRequest;
 import org.kitona.zus.api.request.authorization.FgaListObjectsRequest;
-import org.kitona.zus.api.request.authorization.FgaListUsersRequest;
+import org.kitona.zus.api.request.authorization.FgaListSubjectsRequest;
 import org.kitona.zus.api.response.FgaExpandTreeVO;
 import org.kitona.zus.api.response.FgaListObjectsResponseVO;
-import org.kitona.zus.api.response.FgaListUsersResponseVO;
+import org.kitona.zus.api.response.FgaListSubjectsResponseVO;
 import org.kitona.zus.api.response.RestResult;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.RestController;
  * 本接口聚焦“反向 / 展开式”查询，用于管理台、授权页、审计与调试等低频场景：
  * <ul>
  *   <li>{@code listObjects}：给定 subject，列出其对某类 object 具备某 relation 的全部 object id；</li>
- *   <li>{@code listUsers}：给定 object，列出对其具备某 relation 的全部 subject；</li>
+ *   <li>{@code listSubjects}：给定 object，列出对其具备某 relation 的全部 subject；</li>
  *   <li>{@code expand}：展开某 object 上某 relation 的 userset 树，便于人工排查。</li>
  * </ul>
  *
  * <h3>接口列表</h3>
  * <pre>
  *   POST /fga/stores/{storeId}/list-objects  主体维度反向查询
- *   POST /fga/stores/{storeId}/list-users    对象维度反向查询
+ *   POST /fga/stores/{storeId}/list-subjects    对象维度反向查询
  *   POST /fga/stores/{storeId}/expand        展开 userset 树（调试 / 审计）
  * </pre>
  *
@@ -56,8 +56,8 @@ public interface IFgaAuthViewApiService {
     /**
      * 列出对指定对象具备某关系的全部 subject。
      */
-    @PostMapping("/list-users")
-    RestResult<FgaListUsersResponseVO> listUsers(@PathVariable String storeId, @Valid @RequestBody FgaListUsersRequest request);
+    @PostMapping("/list-subjects")
+    RestResult<FgaListSubjectsResponseVO> listSubjects(@PathVariable String storeId, @Valid @RequestBody FgaListSubjectsRequest request);
 
     /**
      * 展开对象关系的 userset 树 —— 用于人工排查权限来源。

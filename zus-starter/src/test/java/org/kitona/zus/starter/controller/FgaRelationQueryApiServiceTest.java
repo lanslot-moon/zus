@@ -9,7 +9,7 @@ import org.kitona.zus.api.controller.IFgaTupleApiService;
 import org.kitona.zus.api.request.FgaCreateStoreRequest;
 import org.kitona.zus.api.request.authorization.FgaExpandRequest;
 import org.kitona.zus.api.request.authorization.FgaListObjectsRequest;
-import org.kitona.zus.api.request.authorization.FgaListUsersRequest;
+import org.kitona.zus.api.request.authorization.FgaListSubjectsRequest;
 import org.kitona.zus.api.request.common.FgaReferenceRequest;
 import org.kitona.zus.api.request.common.FgaTupleKeyRequest;
 import org.kitona.zus.api.request.model.FgaRelationDefinitionInput;
@@ -20,7 +20,7 @@ import org.kitona.zus.api.request.tuple.FgaTupleWriteItem;
 import org.kitona.zus.api.request.tuple.FgaWriteRequest;
 import org.kitona.zus.api.response.FgaExpandTreeVO;
 import org.kitona.zus.api.response.FgaListObjectsResponseVO;
-import org.kitona.zus.api.response.FgaListUsersResponseVO;
+import org.kitona.zus.api.response.FgaListSubjectsResponseVO;
 import org.kitona.zus.api.response.FgaModelVO;
 import org.kitona.zus.api.response.FgaStoreVO;
 import org.kitona.zus.api.response.RestResult;
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link IFgaAuthViewApiService} 端到端真实链路测试。
  *
  * <p>场景：document(viewer: user) 模型，写入多条真实元组后验证
- * list-objects / list-users / expand 的输出。
+ * list-objects / list-subjects / expand 的输出。
  */
 @DisplayName("FGA Relation Query API 端到端测试")
 class FgaRelationQueryApiServiceTest extends AbstractControllerTest {
@@ -71,19 +71,19 @@ class FgaRelationQueryApiServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    @DisplayName("listUsers 列出对资源有权的主体（userFilters 过滤 user 类型）")
-    void listUsers_returnsAuthorizedSubjects() {
+    @DisplayName("listSubjects 列出对资源有权的主体（subjectFilters 过滤 user 类型）")
+    void listSubjects_returnsAuthorizedSubjects() {
         String storeId = prepareStoreWithTuples();
 
-        FgaListUsersRequest req = FgaListUsersRequest.builder()
+        FgaListSubjectsRequest req = FgaListSubjectsRequest.builder()
                 .object(FgaReferenceRequest.builder().type("document").id("doc-1").build())
                 .relation("viewer")
-                .userFilters(List.of(FgaListUsersRequest.UserFilter.builder().type("user").build()))
+                .subjectFilters(List.of(FgaListSubjectsRequest.SubjectFilter.builder().type("user").build()))
                 .build();
 
-        RestResult<FgaListUsersResponseVO> result = authViewApi.listUsers(storeId, req);
+        RestResult<FgaListSubjectsResponseVO> result = authViewApi.listSubjects(storeId, req);
         assertThat(result.getCode()).isEqualTo(200);
-        assertThat(result.getData().getUsers())
+        assertThat(result.getData().getSubjects())
                 .isNotNull()
                 .extracting(u -> u.getType() + ":" + u.getId())
                 .contains("user:alice");

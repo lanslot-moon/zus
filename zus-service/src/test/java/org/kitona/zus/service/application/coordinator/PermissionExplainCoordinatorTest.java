@@ -17,7 +17,7 @@ import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
-import org.kitona.zus.domain.service.PermissionEvaluator;
+import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.PermissionCheckStatus;
 import org.kitona.zus.domain.valueobject.Subject;
@@ -52,7 +52,7 @@ class PermissionExplainCoordinatorTest {
     private ICompiledModelCache compiledModelCache;
 
     @Mock
-    private PermissionEvaluator permissionEvaluator;
+    private PermissionCheckEvaluator permissionCheckEvaluator;
 
     @Mock
     private AuthorizationModelAggregate aggregate;
@@ -69,7 +69,7 @@ class PermissionExplainCoordinatorTest {
         ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "modelRepository", modelRepository);
         ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "compiledModelCompiler", compiledModelCompiler);
         ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "compiledModelCache", compiledModelCache);
-        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "permissionEvaluator", permissionEvaluator);
+        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "permissionCheckEvaluator", permissionCheckEvaluator);
     }
 
     @Test
@@ -79,8 +79,8 @@ class PermissionExplainCoordinatorTest {
         when(modelRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(aggregate));
         when(aggregate.getTypeDefinitions()).thenReturn(List.of(TypeDefinition.create("document")));
         when(compiledModelCache.get("store-1", "model-1")).thenReturn(Optional.of(compiledModel));
-        when(permissionEvaluator.checkWithExplain(any(), any())).thenReturn(deniedDecision());
-        when(permissionEvaluator.check(any(), any())).thenReturn(true);
+        when(permissionCheckEvaluator.checkWithExplain(any(), any())).thenReturn(deniedDecision());
+        when(permissionCheckEvaluator.check(any(), any())).thenReturn(true);
 
         PermissionExplainOutcome outcome = coordinator.explain(
                 "store-1",

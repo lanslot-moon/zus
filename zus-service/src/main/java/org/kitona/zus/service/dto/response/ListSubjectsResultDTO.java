@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- * ListUsers API 结果 DTO
+ * ListSubjects API 结果 DTO
  *
  * @author kitona
  * @version 1.0.0
@@ -19,21 +19,21 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListUsersResultDTO implements Serializable {
+public class ListSubjectsResultDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private List<UserDTO> users;
+    private List<SubjectDTO> subjects;
 
-    public static ListUsersResultDTO empty() {
-        return ListUsersResultDTO.builder().users(List.of()).build();
+    public static ListSubjectsResultDTO empty() {
+        return ListSubjectsResultDTO.builder().subjects(List.of()).build();
     }
 
     @Getter
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class UserDTO implements Serializable {
+    public static class SubjectDTO implements Serializable {
         private static final long serialVersionUID = 1L;
         private String type;
         private String id;

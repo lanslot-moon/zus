@@ -14,7 +14,7 @@ import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
-import org.kitona.zus.domain.service.PermissionEvaluator;
+import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.Subject;
@@ -28,7 +28,7 @@ import java.util.Optional;
  * Explain 用例编排器。
  *
  * <p>该组件只提供独立调试入口所需的编排逻辑，真正的授权判断仍复用
- * {@link PermissionEvaluator}，避免出现独立 explain 鉴权链路。
+ * {@link PermissionCheckEvaluator}，避免出现独立 explain 鉴权链路。
  */
 @Slf4j
 @Component
@@ -59,10 +59,10 @@ public class PermissionExplainCoordinator {
     private ICompiledModelCache compiledModelCache;
 
     /**
-     * 权限求值领域服务，Explain 入口通过它复用真实 Check 执行内核。
+     * 单点权限检查器，Explain 入口通过它复用真实 Check 执行内核。
      */
     @Resource
-    private PermissionEvaluator permissionEvaluator;
+    private PermissionCheckEvaluator permissionCheckEvaluator;
 
     /**
      * 执行一次可解释的权限检查。
@@ -103,7 +103,7 @@ public class PermissionExplainCoordinator {
             return PermissionExplainOutcome.modelInvalid();
         }
         EvaluationRequest request = EvaluationRequest.of(storeId, subject, object, relation, zookie, context);
-        EvaluationDecision decision = permissionEvaluator.checkWithExplain(compiledModel, request);
+        EvaluationDecision decision = permissionCheckEvaluator.checkWithExplain(compiledModel, request);
         EvaluationTrace trace = enrichTrace(decision, compiledModel, request, storeView.currentZookie());
 
         log.debug("Explain 权限检查完成: storeId={}, object={}, relation={}, subject={}, allowed={}",
@@ -152,7 +152,7 @@ public class PermissionExplainCoordinator {
         if (requestedVersion == null || requestedVersion >= currentZookie) {
             return StaleSnapshotDiagnosis.NOT_APPLICABLE;
         }
-        boolean latestAllowed = permissionEvaluator.check(compiledModel, request.withZookie(Zookie.of(currentZookie)));
+        boolean latestAllowed = permissionCheckEvaluator.check(compiledModel, request.withZookie(Zookie.of(currentZookie)));
         return latestAllowed
                 ? StaleSnapshotDiagnosis.STALE_SNAPSHOT_CAUSED
                 : StaleSnapshotDiagnosis.STALE_SNAPSHOT_NOT_CAUSED;

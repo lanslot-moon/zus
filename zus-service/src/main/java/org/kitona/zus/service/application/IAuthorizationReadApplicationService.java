@@ -1,15 +1,15 @@
 package org.kitona.zus.service.application;
 
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
-import org.kitona.zus.service.dto.query.ListUsersQuery;
+import org.kitona.zus.service.dto.query.ListSubjectsQuery;
 import org.kitona.zus.service.dto.query.TupleReadQuery;
 import org.kitona.zus.service.dto.response.ListObjectsResultDTO;
-import org.kitona.zus.service.dto.response.ListUsersResultDTO;
+import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
 
 /**
- * Read / ListObjects / ListUsers 应用服务接口
+ * Read / ListObjects / ListSubjects 应用服务接口
  *
  * @author kitona
  * @version 1.0.0
@@ -35,10 +35,10 @@ public interface IAuthorizationReadApplicationService {
     ListObjectsResultDTO listObjects(ListObjectsQuery query);
 
     /**
-     * 列出对资源有权限的用户
+     * 列出对对象关系具备权限的主体。
      *
      * @param query 查询条件
-     * @return 用户列表
+     * @return 主体列表
      */
-    ListUsersResultDTO listUsers(ListUsersQuery query);
+    ListSubjectsResultDTO listSubjects(ListSubjectsQuery query);
 }

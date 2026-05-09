@@ -1,7 +1,7 @@
 package org.kitona.zus.service.conv.assembler;
 
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
-import org.kitona.zus.service.dto.response.ListUsersResultDTO;
+import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
 
 import java.util.Collections;
@@ -82,23 +82,23 @@ public final class TupleAssembler {
     }
 
     /**
-     * 从元组列表提取去重的用户信息
+     * 从元组列表提取去重的主体信息。
      *
      * @param entities 关系元组实体列表
-     * @return 去重的用户 DTO 列表
+     * @return 去重的主体 DTO 列表
      */
-    public static List<ListUsersResultDTO.UserDTO> toDistinctUserDTOList(List<RelationTuple> entities) {
+    public static List<ListSubjectsResultDTO.SubjectDTO> toDistinctSubjectDTOList(List<RelationTuple> entities) {
         if (entities == null || entities.isEmpty()) {
             return Collections.emptyList();
         }
         return entities.stream()
-                .map(TupleAssembler::toUserDTO)
+                .map(TupleAssembler::toSubjectDTO)
                 .distinct()
                 .collect(Collectors.toList());
     }
 
-    private static ListUsersResultDTO.UserDTO toUserDTO(RelationTuple entity) {
-        return ListUsersResultDTO.UserDTO.builder()
+    private static ListSubjectsResultDTO.SubjectDTO toSubjectDTO(RelationTuple entity) {
+        return ListSubjectsResultDTO.SubjectDTO.builder()
                 .type(entity.getSubjectType())
                 .id(entity.getSubjectId())
                 .relation(entity.getSubjectRelation())

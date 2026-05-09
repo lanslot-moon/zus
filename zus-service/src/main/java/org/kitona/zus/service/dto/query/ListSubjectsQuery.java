@@ -11,10 +11,10 @@ import java.io.Serial;
 import java.io.Serializable;
 
 /**
- * 列出用户查询
+ * 列出主体查询。
  *
- * <p>用于查询对指定资源有权限的用户列表。
- * <p>查询语义：列出对 object 拥有 relation 权限的所有 subject。
+ * <p>用于查询对指定 object 的 relation 具备权限的 subject 列表。
+ * subject 可以是直接主体、userset 或 wildcard，不局限于自然人用户。
  *
  * @author kitona
  * @version 1.0.0
@@ -25,7 +25,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ListUsersQuery implements Serializable {
+public class ListSubjectsQuery implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

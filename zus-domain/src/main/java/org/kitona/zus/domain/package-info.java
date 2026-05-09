@@ -40,7 +40,8 @@
  * │   └── view/                     读侧结果视图
  * │
  * ├── service/           领域服务（Domain Service）
- * │   ├── PermissionEvaluator        统一权限求值器
+ * │   ├── PermissionCheckEvaluator        单点权限证明器
+ * │   ├── PermissionSearchEvaluator  权限关系搜索器
  * │   └── TupleMutationDomainService tuple 变更领域服务
  * │
  * └── port/              端口（Ports，六边形架构）

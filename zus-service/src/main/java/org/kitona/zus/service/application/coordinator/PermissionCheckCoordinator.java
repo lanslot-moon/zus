@@ -11,7 +11,7 @@ import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
-import org.kitona.zus.domain.service.PermissionEvaluator;
+import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
@@ -55,10 +55,10 @@ public class PermissionCheckCoordinator {
     private ICompiledModelCache compiledModelCache;
 
     /**
-     * 权限求值领域服务，承载 Check/ListObjects/ListUsers 的统一执行内核。
+     * 单点权限证明领域服务，只负责执行明确的 subject-object-relation Check 命题。
      */
     @Resource
-    private PermissionEvaluator permissionEvaluator;
+    private PermissionCheckEvaluator permissionCheckEvaluator;
 
     public PermissionCheckResult execute(String storeId, ObjectRef object, String relation,
                                          Subject subject, Zookie zookie) {
@@ -107,7 +107,7 @@ public class PermissionCheckCoordinator {
         }
 
         EvaluationRequest request = EvaluationRequest.of(storeId, subject, object, relation, zookie, context);
-        boolean result = permissionEvaluator.check(compiledModel, request);
+        boolean result = permissionCheckEvaluator.check(compiledModel, request);
         log.debug("权限检查结果: {}", result);
         return result ? PermissionCheckResult.allowed() : PermissionCheckResult.denied();
     }

@@ -3,7 +3,8 @@ package org.kitona.zus.service.bean;
 import org.kitona.zus.domain.port.*;
 import org.kitona.zus.domain.repository.IChangelogDomainRepository;
 import org.kitona.zus.domain.repository.ITupleDomainRepository;
-import org.kitona.zus.domain.service.PermissionEvaluator;
+import org.kitona.zus.domain.service.PermissionCheckEvaluator;
+import org.kitona.zus.domain.service.PermissionSearchEvaluator;
 import org.kitona.zus.domain.service.TupleMutationDomainService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,22 +20,33 @@ import org.springframework.context.annotation.Configuration;
 public class InitServiceBeanConfiguration {
 
     /**
-     * 创建权限评估器Bean，将此方法返回的对象作为Bean注册到Spring容器中
+     * 创建单点权限检查器 Bean。
      *
-     * @param directTupleReader            直接元组读取器
-     * @param tupleLinkReader              元组链接读取器
-     * @param subjectObjectCandidateReader 主体对象候选读取器
-     * @param objectSubjectCandidateReader 对象主体候选读取器
-     * @param conditionEvaluator           条件评估器
-     * @return 返回权限评估器实例
+     * @param directTupleReader  直接元组读取器
+     * @param tupleLinkReader    元组链接读取器
+     * @param conditionEvaluator 条件评估器
+     * @return 单点权限检查器
      */
     @Bean
-    public PermissionEvaluator buildPermissionEvaluator(IDirectTupleReader directTupleReader,
-                                                        ITupleLinkReader tupleLinkReader,
-                                                        ISubjectObjectCandidateReader subjectObjectCandidateReader,
-                                                        IObjectSubjectCandidateReader objectSubjectCandidateReader,
-                                                        IConditionEvaluator conditionEvaluator) {
-        return new PermissionEvaluator(directTupleReader, tupleLinkReader, subjectObjectCandidateReader, objectSubjectCandidateReader, conditionEvaluator);
+    public PermissionCheckEvaluator buildPermissionCheckEvaluator(IDirectTupleReader directTupleReader,
+                                                                  ITupleLinkReader tupleLinkReader,
+                                                                  IConditionEvaluator conditionEvaluator) {
+        return new PermissionCheckEvaluator(directTupleReader, tupleLinkReader, conditionEvaluator);
+    }
+
+    /**
+     * 创建权限搜索评估器 Bean。
+     *
+     * @param permissionCheckEvaluator     单点权限证明器
+     * @param subjectObjectCandidateReader object 候选读取器
+     * @param objectSubjectCandidateReader subject 候选读取器
+     * @return 权限搜索评估器
+     */
+    @Bean
+    public PermissionSearchEvaluator buildPermissionSearchEvaluator(PermissionCheckEvaluator permissionCheckEvaluator,
+                                                                    ISubjectObjectCandidateReader subjectObjectCandidateReader,
+                                                                    IObjectSubjectCandidateReader objectSubjectCandidateReader) {
+        return new PermissionSearchEvaluator(permissionCheckEvaluator, subjectObjectCandidateReader, objectSubjectCandidateReader);
     }
 
 

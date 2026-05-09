@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * FGA ListUsers 请求 —— 列出对某资源拥有指定关系的全部主体
+ * FGA ListSubjects 请求 —— 列出对某资源拥有指定关系的全部主体
  *
  * <p>典型用例：「谁有权编辑这篇文档」。
  *
@@ -27,7 +27,7 @@ import java.util.Map;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FgaListUsersRequest {
+public class FgaListSubjectsRequest {
 
     /**
      * 资源引用
@@ -44,12 +44,12 @@ public class FgaListUsersRequest {
     private String relation;
 
     /**
-     * 主体类型过滤器（对齐 OpenFGA 的 userFilters）
-     * <p>例如：返回「直接用户（{type: user}）」与「某些 group 的 member（{type: group, relation: member}）」。
+     * 主体类型过滤器。
+     * <p>例如：返回「直接主体（{type: user}）」与「某些 group 的 member（{type: group, relation: member}）」。
      */
     @Valid
-    @NotEmpty(message = "userFilters 不能为空")
-    private List<UserFilter> userFilters;
+    @NotEmpty(message = "subjectFilters 不能为空")
+    private List<SubjectFilter> subjectFilters;
 
     /**
      * 可选：模型版本
@@ -72,18 +72,18 @@ public class FgaListUsersRequest {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class UserFilter {
+    public static class SubjectFilter {
         /**
          * 主体类型
          */
-        @NotBlank(message = "userFilter.type 不能为空")
-        @Size(max = 64, message = "userFilter.type 长度不能超过 64")
+        @NotBlank(message = "subjectFilter.type 不能为空")
+        @Size(max = 64, message = "subjectFilter.type 长度不能超过 64")
         private String type;
 
         /**
          * 可选：userset 关系（如 member）
          */
-        @Size(max = 64, message = "userFilter.relation 长度不能超过 64")
+        @Size(max = 64, message = "subjectFilter.relation 长度不能超过 64")
         private String relation;
     }
 }

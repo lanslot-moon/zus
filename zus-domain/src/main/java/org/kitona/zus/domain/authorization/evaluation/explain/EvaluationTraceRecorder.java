@@ -12,7 +12,7 @@ import org.kitona.zus.domain.valueobject.Subject;
  *
  * <p>该对象只负责把 evaluator 产生的关键执行事件写入
  * {@link EvaluationTraceCollector}，并集中处理普通 Check 场景下 collector 为空的情况。
- * 这样 {@code PermissionEvaluator} 可以专注于权限语义判断，不需要在主流程中散落
+ * 这样 {@code PermissionCheckEvaluator} 可以专注于权限语义判断，不需要在主流程中散落
  * trace collector 的空值判断和写入细节。
  */
 public final class EvaluationTraceRecorder {

@@ -6,20 +6,20 @@ import org.kitona.zus.api.controller.IFgaReadApiService;
 import org.kitona.zus.api.converter.FgaRelationQueryConverter;
 import org.kitona.zus.api.converter.FgaTupleConverter;
 import org.kitona.zus.api.request.FgaListObjectsRequest;
-import org.kitona.zus.api.request.FgaListUsersRequest;
+import org.kitona.zus.api.request.FgaListSubjectsRequest;
 import org.kitona.zus.api.request.FgaReadRequest;
 import org.kitona.zus.api.response.FgaListObjectsResponseVO;
-import org.kitona.zus.api.response.FgaListUsersResponseVO;
+import org.kitona.zus.api.response.FgaListSubjectsResponseVO;
 import org.kitona.zus.api.response.FgaTupleVO;
 import org.kitona.zus.api.response.PageResponseVO;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
-import org.kitona.zus.service.dto.query.ListUsersQuery;
+import org.kitona.zus.service.dto.query.ListSubjectsQuery;
 import org.kitona.zus.service.dto.query.TupleReadQuery;
 import org.kitona.zus.service.dto.response.ListObjectsResultDTO;
-import org.kitona.zus.service.dto.response.ListUsersResultDTO;
+import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
 import org.springframework.stereotype.Service;
@@ -65,7 +65,7 @@ public class FgaReadApiService implements IFgaReadApiService {
 
     @Override
     public RestResult<FgaListObjectsResponseVO> listObjects(String storeId, FgaListObjectsRequest request) {
-        log.debug("FgaReadApiService listObjects, storeId:{}, user={}:{}, relation:{}, type:{}",
+        log.debug("FgaReadApiService listObjects, storeId:{}, subject={}:{}, relation:{}, type:{}",
                 storeId, request != null && request.getSubject() != null ? request.getSubject().getType() : null,
                 request != null && request.getSubject() != null ? request.getSubject().getId() : null,
                 request != null ? request.getRelation() : null,
@@ -87,13 +87,13 @@ public class FgaReadApiService implements IFgaReadApiService {
     }
 
     @Override
-    public RestResult<FgaListUsersResponseVO> listUsers(String storeId, FgaListUsersRequest request) {
-        log.debug("FgaReadApiService listUsers, storeId:{}, object={}:{}, relation:{}",
+    public RestResult<FgaListSubjectsResponseVO> listSubjects(String storeId, FgaListSubjectsRequest request) {
+        log.debug("FgaReadApiService listSubjects, storeId:{}, object={}:{}, relation:{}",
                 storeId, request != null && request.getObject() != null ? request.getObject().getType() : null,
                 request != null && request.getObject() != null ? request.getObject().getId() : null,
                 request != null ? request.getRelation() : null);
 
-        ListUsersQuery query = ListUsersQuery.builder()
+        ListSubjectsQuery query = ListSubjectsQuery.builder()
                 .storeId(storeId)
                 .objectType(request.getObject().getType())
                 .objectId(request.getObject().getId())
@@ -104,11 +104,11 @@ public class FgaReadApiService implements IFgaReadApiService {
                 .context(request.getContext())
                 .build();
 
-        ListUsersResultDTO result = readApplicationService.listUsers(query);
-        FgaListUsersResponseVO vo = new FgaListUsersResponseVO();
-        vo.setUsers(result == null || result.getUsers() == null
+        ListSubjectsResultDTO result = readApplicationService.listSubjects(query);
+        FgaListSubjectsResponseVO vo = new FgaListSubjectsResponseVO();
+        vo.setSubjects(result == null || result.getSubjects() == null
                 ? Collections.emptyList()
-                : MapstructUtil.convert(result.getUsers(), org.kitona.zus.api.response.FgaUserVO.class));
+                : MapstructUtil.convert(result.getSubjects(), org.kitona.zus.api.response.FgaSubjectVO.class));
         return RestResult.success(vo);
     }
 }

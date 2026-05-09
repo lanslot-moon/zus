@@ -108,13 +108,4 @@ public final class EvaluationRuntime {
         return traceCollector;
     }
 
-    /**
-     * 派生一个替换请求但共享递归上下文的新运行时对象。
-     *
-     * <p>ListObjects / ListUsers 会频繁替换 subject 或 object，
-     * 但它们仍应共享 memo、访问路径和时间快照。
-     */
-    public EvaluationRuntime withRequest(EvaluationRequest nextRequest, IConditionEvaluator conditionEvaluator) {
-        return new EvaluationRuntime(model, nextRequest, guard, currentTimeMillis, conditionEvaluator, traceCollector);
-    }
 }

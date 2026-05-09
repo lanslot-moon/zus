@@ -9,10 +9,10 @@ import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreQueryRepository;
 import org.kitona.zus.domain.repository.ITupleQueryRepository;
-import org.kitona.zus.domain.service.PermissionEvaluator;
+import org.kitona.zus.domain.service.PermissionSearchEvaluator;
 import org.kitona.zus.domain.valueobject.Subject;
-import org.kitona.zus.service.dto.query.ListUsersQuery;
-import org.kitona.zus.service.dto.response.ListUsersResultDTO;
+import org.kitona.zus.service.dto.query.ListSubjectsQuery;
+import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -45,15 +45,15 @@ class AuthorizationReadApplicationServiceTest {
     private ICompiledModelCache compiledModelCache;
 
     @Mock
-    private PermissionEvaluator permissionEvaluator;
+    private PermissionSearchEvaluator permissionSearchEvaluator;
 
     @InjectMocks
     private AuthorizationReadApplicationService readApplicationService;
 
     @Test
-    void shouldFilterListUsersBySubjectType() {
+    void shouldFilterListSubjectsBySubjectType() {
         CompiledAuthorizationModel compiledModel = new CompiledAuthorizationModel(Map.of(), Map.of());
-        ListUsersQuery query = ListUsersQuery.builder()
+        ListSubjectsQuery query = ListSubjectsQuery.builder()
                 .storeId("store-1")
                 .objectType("document")
                 .objectId("doc-1")
@@ -65,16 +65,16 @@ class AuthorizationReadApplicationServiceTest {
                 .thenReturn(Optional.of(new StoreView("store-1", "demo", "desc", "model-1", null, null, null)));
         when(compiledModelCache.get("store-1", "model-1"))
                 .thenReturn(Optional.of(compiledModel));
-        when(permissionEvaluator.listUsers(eq(compiledModel), any()))
+        when(permissionSearchEvaluator.listSubjects(eq(compiledModel), eq("store-1"), any(), eq("viewer"), any(), any()))
                 .thenReturn(List.of(
                         Subject.user("user", "alice"),
                         Subject.userset("group", "eng", "member")
                 ));
 
-        ListUsersResultDTO result = readApplicationService.listUsers(query);
+        ListSubjectsResultDTO result = readApplicationService.listSubjects(query);
 
-        assertEquals(1, result.getUsers().size());
-        assertEquals("user", result.getUsers().get(0).getType());
-        assertEquals("alice", result.getUsers().get(0).getId());
+        assertEquals(1, result.getSubjects().size());
+        assertEquals("user", result.getSubjects().get(0).getType());
+        assertEquals("alice", result.getSubjects().get(0).getId());
     }
 }
