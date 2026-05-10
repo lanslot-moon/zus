@@ -1,5 +1,6 @@
 package org.kitona.zus.service.application.impl;
 
+import com.google.common.cache.RemovalListener;
 import jakarta.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.utils.ValidationUtil;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Read / ListObjects / ListSubjects 应用服务
@@ -107,17 +109,16 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     @Override
     public ListObjectsResultDTO listObjects(ListObjectsQuery query) {
         ValidationUtil.validate(query);
-        CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId());
+        CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId(), query.getAuthorizationModelId());
 
-        Subject subject = buildSubject(query.getSubjectType(), query.getSubjectId(), query.getSubjectRelation());
         ListObjectsEvaluationRequest evaluationRequest = ListObjectsEvaluationRequest.of(
                 query.getStoreId(),
-                subject,
+                query.getSubjectType(),
+                query.getSubjectId(),
                 query.getRelation(),
-                Zookie.parse(query.getConsistencyToken()),
-                query.getContext(),
-                query.getObjectType()
-        );
+                Zookie.parse(query.getConsistencyToken())
+        ).withContext(query.getContext()).withSubjectRelation(query.getSubjectRelation()).withObjectType(query.getObjectType());
+
         List<ObjectRef> objects = permissionSearchEvaluator.listObjects(compiledModel, evaluationRequest);
         List<String> stringList = objects.stream().map(ObjectRef::toString).toList();
         return ListObjectsResultDTO.builder().objects(stringList).build();
@@ -126,52 +127,56 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     @Override
     public ListSubjectsResultDTO listSubjects(ListSubjectsQuery query) {
         ValidationUtil.validate(query);
-        CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId());
+        CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId(), query.getAuthorizationModelId());
         ListSubjectsEvaluationRequest evaluationRequest = ListSubjectsEvaluationRequest.of(
                 query.getStoreId(),
                 ObjectRef.of(query.getObjectType(), query.getObjectId()),
                 query.getRelation(),
-                Zookie.parse(query.getConsistencyToken()),
-                query.getContext()
-        );
+                Zookie.parse(query.getConsistencyToken())
+        ).withContext(query.getContext()).withSubjectType(query.getSubjectType()).withSubjectRelation(query.getSubjectRelation());
+
+        Function<Subject, ListSubjectsResultDTO.SubjectDTO> function = subject -> ListSubjectsResultDTO.SubjectDTO.builder()
+                .type(subject.getType())
+                .id(subject.getId())
+                .relation(subject.getRelation())
+                .build();
 
         List<Subject> listedSubjects = permissionSearchEvaluator.listSubjects(compiledModel, evaluationRequest);
-        List<String> stringList = listedSubjects.stream().map(Subject::toString).toList();
-        return ListSubjectsResultDTO.builder().subjects(stringList).build();
+        List<ListSubjectsResultDTO.SubjectDTO> subjects = listedSubjects.stream().map(function).toList();
+        return ListSubjectsResultDTO.builder().subjects(subjects).build();
     }
 
-    private CompiledAuthorizationModel loadCompiledModel(String storeId) {
+    private CompiledAuthorizationModel loadCompiledModel(String storeId, String authorizationModelId) {
         StoreView storeView = storeQueryRepository.findViewByStoreId(storeId).orElse(null);
-        if (storeView == null || StringUtils.isBlank(storeView.currentModelId())) {
-            throw new IllegalStateException("store 未绑定当前模型: " + storeId);
-        }
+        String modelId = resolveModelId(storeId, authorizationModelId, storeView);
 
-        Optional<CompiledAuthorizationModel> modelOptional = compiledModelCache.get(storeId, storeView.currentModelId());
+        Optional<CompiledAuthorizationModel> modelOptional = compiledModelCache.get(storeId, modelId);
         if (modelOptional.isPresent()) {
             return modelOptional.get();
         }
 
-        Optional<AuthorizationModelAggregate> optional = modelRepository.findByModelId(storeId, storeView.currentModelId());
+        Optional<AuthorizationModelAggregate> optional = modelRepository.findByModelId(storeId, modelId);
         if (optional.isEmpty()) {
-            throw new IllegalStateException("模型不存在: " + storeView.currentModelId());
+            throw new IllegalStateException("模型不存在: " + modelId);
         }
 
         CompiledAuthorizationModel model = compiledModelCompiler.compile(optional.get());
-        compiledModelCache.put(storeId, storeView.currentModelId(), model);
+        compiledModelCache.put(storeId, modelId, model);
         return model;
     }
 
-
-    private Subject buildSubject(String subjectType, String subjectId, String subjectRelation) {
-        if (StringUtils.isBlank(subjectRelation)) {
-            if (Subject.WILDCARD.equals(subjectId)) {
-                return Subject.wildcard(subjectType);
-            }
-            return Subject.user(subjectType, subjectId);
+    private String resolveModelId(String storeId, String authorizationModelId, StoreView storeView) {
+        if (storeView == null) {
+            throw new IllegalStateException("store 不存在: " + storeId);
         }
-        return Subject.userset(subjectType, subjectId, subjectRelation);
+        if (StringUtils.isNotBlank(authorizationModelId)) {
+            return authorizationModelId;
+        }
+        if (StringUtils.isBlank(storeView.currentModelId())) {
+            throw new IllegalStateException("未指定授权模型且 store 未绑定当前模型: " + storeId);
+        }
+        return storeView.currentModelId();
     }
-
 
     private String buildNextPageToken(List<RelationTuple> tuples, int pageSize) {
         if (tuples.isEmpty() || tuples.size() < pageSize) {

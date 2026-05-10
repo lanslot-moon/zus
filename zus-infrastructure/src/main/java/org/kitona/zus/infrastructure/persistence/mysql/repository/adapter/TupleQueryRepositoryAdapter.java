@@ -81,16 +81,16 @@ public class TupleQueryRepositoryAdapter implements ITupleQueryRepository, IDire
     public List<RelationTuple> findTupleLinks(String storeId, ObjectRef object, String relation, Long maxZookie) {
         return findByObject(TupleQueryCriteria.forObject(storeId, object.getType(), object.getId(), relation, maxZookie));
     }
-
     @Override
-    public List<RelationTuple> listObjectCandidates(String storeId, String objectType, Long maxZookie) {
-        return list(TupleQueryCriteria.forPage(storeId, objectType, null, null,
-                null, null, null, UNBOUNDED_PAGE_SIZE, null, maxZookie));
+    public List<RelationTuple> listObjectCandidates(String storeId, String subjectType, String subjectId, String relation, Long maxZookie) {
+        return list(TupleQueryCriteria.forPage(storeId, null, null, relation,
+                subjectType, subjectId, null, UNBOUNDED_PAGE_SIZE, null, maxZookie));
     }
 
     @Override
-    public List<RelationTuple> listSubjectCandidates(String storeId, Long maxZookie) {
-        return list(TupleQueryCriteria.forPage(storeId, null, null, null,
+    public List<RelationTuple> listSubjectCandidates(String storeId, String objectType, String objectId,
+                                                     String relation, Long maxZookie) {
+        return list(TupleQueryCriteria.forPage(storeId, objectType, objectId, relation,
                 null, null, null, UNBOUNDED_PAGE_SIZE, null, maxZookie));
     }
 }

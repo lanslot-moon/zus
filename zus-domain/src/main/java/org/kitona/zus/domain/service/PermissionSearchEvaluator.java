@@ -1,5 +1,6 @@
 package org.kitona.zus.domain.service;
 
+import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.runtime.ListObjectsEvaluationRequest;
@@ -11,7 +12,6 @@ import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
 
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,7 +43,7 @@ public final class PermissionSearchEvaluator {
     /**
      * 创建权限关系搜索服务。
      *
-     * @param permissionCheckEvaluator          单点权限证明器
+     * @param permissionCheckEvaluator     单点权限证明器
      * @param subjectObjectCandidateReader object 候选读取端口
      * @param objectSubjectCandidateReader subject 候选读取端口
      */
@@ -68,9 +68,20 @@ public final class PermissionSearchEvaluator {
     public List<ObjectRef> listObjects(CompiledAuthorizationModel model, ListObjectsEvaluationRequest request) {
         Set<ObjectRef> objects = new LinkedHashSet<>();
         Zookie effectiveZookie = effectiveZookie(request.zookie());
-        for (ObjectRef candidate : collectObjectCandidates(request.storeId(), request.objectType(), effectiveZookie)) {
-            EvaluationRequest checkRequest = EvaluationRequest.of(request.storeId(), request.subject(), candidate,
-                    request.relation(), effectiveZookie, request.context());
+
+        List<ObjectRef> objectRefList = subjectObjectCandidateReader.listObjectCandidates(request.storeId(),
+                        request.subjectType(), request.subjectId(), request.relation(), effectiveZookie.getVersion())
+                .stream()
+                .map(tuple -> ObjectRef.of(tuple.getObjectType(), tuple.getObjectId()))
+                .distinct()
+                .toList();
+
+        for (ObjectRef candidate : objectRefList) {
+            if (StringUtils.isNotBlank(request.objectType()) && !request.objectType().equals(candidate.getType())) {
+                continue;
+            }
+
+            EvaluationRequest checkRequest = EvaluationRequest.of(request.storeId(), request.subject(), candidate, request.relation(), effectiveZookie, request.context());
             if (permissionCheckEvaluator.check(model, checkRequest)) {
                 objects.add(candidate);
             }
@@ -89,9 +100,24 @@ public final class PermissionSearchEvaluator {
      * @return 对指定 object relation 具备权限的主体列表
      */
     public List<Subject> listSubjects(CompiledAuthorizationModel model, ListSubjectsEvaluationRequest request) {
-        List<Subject> result = new ArrayList<>();
+        Set<Subject> result = new LinkedHashSet<>();
         Zookie effectiveZookie = effectiveZookie(request.zookie());
-        for (Subject subject : collectSubjectCandidates(request.storeId(), effectiveZookie)) {
+
+        List<Subject> subjectList = objectSubjectCandidateReader.listSubjectCandidates(request.storeId(),
+                        request.object().getType(), request.object().getId(), request.relation(), effectiveZookie.getVersion())
+                .stream()
+                .map(RelationTuple::getSubject)
+                .distinct()
+                .toList();
+
+        for (Subject subject : subjectList) {
+            if (StringUtils.isNotBlank(request.subjectType()) && !request.subjectType().equals(subject.getType())) {
+                continue;
+            }
+
+            if (StringUtils.isNotBlank(request.subjectRelation()) && !request.subjectRelation().equals(subject.getRelation())) {
+                continue;
+            }
             EvaluationRequest checkRequest = EvaluationRequest.of(request.storeId(), subject, request.object(),
                     request.relation(), effectiveZookie, request.context());
             if (permissionCheckEvaluator.check(model, checkRequest)) {
@@ -99,28 +125,6 @@ public final class PermissionSearchEvaluator {
             }
         }
         return List.copyOf(result);
-    }
-
-    /**
-     * 从读侧端口获取对象候选集。
-     */
-    private List<ObjectRef> collectObjectCandidates(String storeId, String objectType, Zookie zookie) {
-        return subjectObjectCandidateReader.listObjectCandidates(storeId, objectType, zookie.getVersion())
-                .stream()
-                .map(tuple -> ObjectRef.of(tuple.getObjectType(), tuple.getObjectId()))
-                .distinct()
-                .toList();
-    }
-
-    /**
-     * 从读侧端口获取主体候选集。
-     */
-    private List<Subject> collectSubjectCandidates(String storeId, Zookie zookie) {
-        return objectSubjectCandidateReader.listSubjectCandidates(storeId, zookie.getVersion())
-                .stream()
-                .map(RelationTuple::getSubject)
-                .distinct()
-                .toList();
     }
 
     /**

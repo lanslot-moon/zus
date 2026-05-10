@@ -185,15 +185,38 @@ class PermissionCheckEvaluatorTest {
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of());
 
-        List<String> objects = searchEvaluator.listObjects(model,
-                ListObjectsEvaluationRequest.of("store", Subject.user("user", "alice"),
-                        "viewer", Zookie.EMPTY, Map.of(), "document"));
+        List<ObjectRef> objects = searchEvaluator.listObjects(model,
+                ListObjectsEvaluationRequest.of("store", "user", "alice", "viewer", Zookie.EMPTY)
+                        .withContext(Map.of())
+                        .withObjectType("document"));
         List<Subject> subjects = searchEvaluator.listSubjects(model,
                 ListSubjectsEvaluationRequest.of("store", ObjectRef.of("document", "doc-1"),
-                        "viewer", Zookie.EMPTY, Map.of()));
+                        "viewer", Zookie.EMPTY).withContext(Map.of()));
 
-        assertIterableEquals(List.of("document:doc-1", "document:doc-3"), objects);
+        assertIterableEquals(List.of(ObjectRef.of("document", "doc-1"), ObjectRef.of("document", "doc-3")), objects);
         assertEquals(List.of(Subject.user("user", "alice")), subjects);
+    }
+
+    @Test
+    void shouldFilterListedSubjectsBeforeCheck() {
+        InMemoryTupleQueryRepository tupleRepository = new InMemoryTupleQueryRepository(List.of(
+                tuple("store", "document", "doc-1", "viewer", Subject.user("user", "alice")),
+                tuple("store", "document", "doc-1", "viewer", Subject.userset("group", "eng", "member"))
+        ));
+        PermissionCheckEvaluator evaluator = evaluator(tupleRepository, new AllowAllConditionEvaluator());
+        PermissionSearchEvaluator searchEvaluator = searchEvaluator(evaluator, tupleRepository);
+        CompiledAuthorizationModel model = model(Map.of(
+                relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
+        ), Map.of());
+
+        List<Subject> subjects = searchEvaluator.listSubjects(model,
+                ListSubjectsEvaluationRequest.of("store", ObjectRef.of("document", "doc-1"),
+                        "viewer", Zookie.EMPTY)
+                        .withContext(Map.of())
+                        .withSubjectType("group")
+                        .withSubjectRelation("member"));
+
+        assertEquals(List.of(Subject.userset("group", "eng", "member")), subjects);
     }
 
     @Test
@@ -208,11 +231,12 @@ class PermissionCheckEvaluatorTest {
                 relationKey("document", "viewer"), relation("document", "viewer", new SelfNode())
         ), Map.of());
 
-        List<String> objects = searchEvaluator.listObjects(model,
-                ListObjectsEvaluationRequest.of("store", Subject.user("user", "alice"),
-                        "viewer", Zookie.of(1L), Map.of(), "document"));
+        List<ObjectRef> objects = searchEvaluator.listObjects(model,
+                ListObjectsEvaluationRequest.of("store", "user", "alice", "viewer", Zookie.of(1L))
+                        .withContext(Map.of())
+                        .withObjectType("document"));
 
-        assertIterableEquals(List.of("document:doc-1"), objects);
+        assertIterableEquals(List.of(ObjectRef.of("document", "doc-1")), objects);
     }
 
     @Test
@@ -474,13 +498,15 @@ class PermissionCheckEvaluatorTest {
         }
 
         @Override
-        public List<RelationTuple> listObjectCandidates(String storeId, String objectType, Long maxZookie) {
-            return filter(storeId, objectType, null, null, null, null, null, maxZookie);
+        public List<RelationTuple> listObjectCandidates(String storeId, String subjectType, String subjectId,
+                                                        String relation, Long maxZookie) {
+            return filter(storeId, null, null, relation, subjectType, subjectId, null, maxZookie);
         }
 
         @Override
-        public List<RelationTuple> listSubjectCandidates(String storeId, Long maxZookie) {
-            return filter(storeId, null, null, null, null, null, null, maxZookie);
+        public List<RelationTuple> listSubjectCandidates(String storeId, String objectType, String objectId,
+                                                         String relation, Long maxZookie) {
+            return filter(storeId, objectType, objectId, relation, null, null, null, maxZookie);
         }
 
         private List<RelationTuple> filter(String storeId, String objectType, String objectId,

@@ -25,9 +25,37 @@ public class ListSubjectsResultDTO implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<String> subjects;
+    private List<SubjectDTO> subjects;
 
     public static ListSubjectsResultDTO empty() {
         return ListSubjectsResultDTO.builder().subjects(List.of()).build();
+    }
+
+    /**
+     * 主体结果项。
+     */
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SubjectDTO implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        /**
+         * 主体类型。
+         */
+        private String type;
+
+        /**
+         * 主体标识。
+         */
+        private String id;
+
+        /**
+         * 主体关系。
+         */
+        private String relation;
     }
 }

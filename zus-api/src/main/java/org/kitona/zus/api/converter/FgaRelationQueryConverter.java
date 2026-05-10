@@ -46,6 +46,7 @@ public final class FgaRelationQueryConverter {
                 .subjectRelation(subject != null ? subject.getRelation() : null)
                 .relation(request.getRelation())
                 .objectType(request.getObjectType())
+                .authorizationModelId(request.getAuthorizationModelId())
                 .consistencyToken(resolveConsistencyToken(request.getConsistency()))
                 .context(request.getContext())
                 .build();
@@ -64,6 +65,7 @@ public final class FgaRelationQueryConverter {
                 .relation(request.getRelation())
                 .subjectType(first != null ? first.getType() : null)
                 .subjectRelation(first != null ? first.getRelation() : null)
+                .authorizationModelId(request.getAuthorizationModelId())
                 .consistencyToken(resolveConsistencyToken(request.getConsistency()))
                 .context(request.getContext())
                 .build();

@@ -65,6 +65,13 @@ public class ListObjectsQuery implements Serializable {
     private String objectType;
 
     /**
+     * 授权模型版本 ID。
+     *
+     * <p>为空时由应用服务使用 store 当前激活模型；非空时固定使用指定模型执行本次查询。
+     */
+    private String authorizationModelId;
+
+    /**
      * 一致性令牌。
      */
     private String consistencyToken;
