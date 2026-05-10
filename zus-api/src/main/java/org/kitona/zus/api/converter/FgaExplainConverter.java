@@ -2,23 +2,30 @@ package org.kitona.zus.api.converter;
 
 import org.kitona.zus.api.request.authorization.FgaExplainRequest;
 import org.kitona.zus.api.request.common.FgaConsistencyOptions;
-import org.kitona.zus.api.request.common.FgaReferenceRequest;
-import org.kitona.zus.api.request.common.FgaTupleKeyRequest;
 import org.kitona.zus.api.response.FgaExplainResolutionVO;
 import org.kitona.zus.api.response.FgaExplainResultVO;
 import org.kitona.zus.service.dto.command.ExplainCommand;
 import org.kitona.zus.service.dto.response.ExplainResolutionDTO;
 import org.kitona.zus.service.dto.response.PermissionExplainResultDTO;
+import org.mapstruct.IterableMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.NullValueMappingStrategy;
+import org.mapstruct.factory.Mappers;
 
 import java.util.List;
 
 /**
  * Explain API 与应用层 DTO 转换器。
+ *
+ * <p>Explain 响应包含递归 resolution tree，字段虽然同名但需要逐层转换，因此这里采用
+ * MapStruct mapper interface 承载入口，树结构转换保留为 default 方法。
  */
-public final class FgaExplainConverter {
+@Mapper(componentModel = "spring")
+public interface FgaExplainConverter {
 
-    private FgaExplainConverter() {
-    }
+    FgaExplainConverter INSTANCE = Mappers.getMapper(FgaExplainConverter.class);
 
     /**
      * 将 Explain API 请求转换为应用层命令。
@@ -27,25 +34,16 @@ public final class FgaExplainConverter {
      * @param request Explain 请求
      * @return 应用层 Explain 命令
      */
-    public static ExplainCommand toExplainCommand(String storeId, FgaExplainRequest request) {
-        if (request == null || request.getTupleKey() == null) {
-            return null;
-        }
-        FgaTupleKeyRequest key = request.getTupleKey();
-        FgaReferenceRequest object = key.getObject();
-        FgaReferenceRequest subject = key.getSubject();
-        return ExplainCommand.builder()
-                .storeId(storeId)
-                .objectType(object != null ? object.getType() : null)
-                .objectId(object != null ? object.getId() : null)
-                .relation(key.getRelation())
-                .subjectType(subject != null ? subject.getType() : null)
-                .subjectId(subject != null ? subject.getId() : null)
-                .subjectRelation(subject != null ? subject.getRelation() : null)
-                .consistencyToken(resolveConsistencyToken(request.getConsistency()))
-                .context(request.getContext())
-                .build();
-    }
+    @Mapping(target = "storeId", source = "storeId")
+    @Mapping(target = "objectType", source = "request.tupleKey.object.type")
+    @Mapping(target = "objectId", source = "request.tupleKey.object.id")
+    @Mapping(target = "relation", source = "request.tupleKey.relation")
+    @Mapping(target = "subjectType", source = "request.tupleKey.subject.type")
+    @Mapping(target = "subjectId", source = "request.tupleKey.subject.id")
+    @Mapping(target = "subjectRelation", source = "request.tupleKey.subject.relation")
+    @Mapping(target = "consistencyToken", source = "request.consistency", qualifiedByName = "resolveConsistencyToken")
+    @Mapping(target = "context", source = "request.context")
+    ExplainCommand toExplainCommand(String storeId, FgaExplainRequest request);
 
     /**
      * 将应用层 Explain 结果转换为 API 响应 VO。
@@ -53,89 +51,56 @@ public final class FgaExplainConverter {
      * @param dto 应用层 Explain 结果
      * @return API 响应 VO
      */
-    public static FgaExplainResultVO toVO(PermissionExplainResultDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        return FgaExplainResultVO.builder()
-                .allowed(dto.isAllowed())
-                .durationMs(dto.getDurationMs())
-                .zookieToken(dto.getZookieToken())
-                .decision(dto.getDecision())
-                .errorMessage(dto.getErrorMessage())
-                .resolution(toResolutionVO(dto.getResolution()))
-                .build();
-    }
+    @Mapping(target = "allowed", source = "allowed")
+    @Mapping(target = "durationMs", source = "durationMs")
+    @Mapping(target = "zookieToken", source = "zookieToken")
+    @Mapping(target = "decision", source = "decision")
+    @Mapping(target = "errorMessage", source = "errorMessage")
+    @Mapping(target = "resolution", source = "resolution")
+    FgaExplainResultVO toVO(PermissionExplainResultDTO dto);
 
-    private static String resolveConsistencyToken(FgaConsistencyOptions options) {
+    @Named("resolveConsistencyToken")
+    default String resolveConsistencyToken(FgaConsistencyOptions options) {
         if (options == null || options.getPreference() != FgaConsistencyOptions.Preference.AT_LEAST_AS_FRESH) {
             return null;
         }
         return options.getAtRevision();
     }
 
-    private static FgaExplainResolutionVO toResolutionVO(ExplainResolutionDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        return FgaExplainResolutionVO.builder()
-                .allowed(dto.isAllowed())
-                .requestedZookie(dto.getRequestedZookie())
-                .currentZookie(dto.getCurrentZookie())
-                .staleSnapshotDiagnosis(dto.getStaleSnapshotDiagnosis())
-                .truncated(dto.isTruncated())
-                .root(toNodeVO(dto.getRoot()))
-                .build();
-    }
+    @Mapping(target = "allowed", source = "allowed")
+    @Mapping(target = "requestedZookie", source = "requestedZookie")
+    @Mapping(target = "currentZookie", source = "currentZookie")
+    @Mapping(target = "staleSnapshotDiagnosis", source = "staleSnapshotDiagnosis")
+    @Mapping(target = "truncated", source = "truncated")
+    @Mapping(target = "root", source = "root")
+    FgaExplainResolutionVO toResolutionVO(ExplainResolutionDTO dto);
 
-    private static FgaExplainResolutionVO.Node toNodeVO(ExplainResolutionDTO.NodeDTO node) {
-        if (node == null) {
-            return null;
-        }
-        return FgaExplainResolutionVO.Node.builder()
-                .nodeType(node.getNodeType())
-                .target(node.getTarget())
-                .subject(node.getSubject())
-                .relation(node.getRelation())
-                .allowed(node.isAllowed())
-                .reason(node.getReason())
-                .tuple(toTupleVO(node.getTuple()))
-                .condition(toConditionVO(node.getCondition()))
-                .children(toNodeVOList(node.getChildren()))
-                .build();
-    }
+    @Mapping(target = "nodeType", source = "nodeType")
+    @Mapping(target = "target", source = "target")
+    @Mapping(target = "subject", source = "subject")
+    @Mapping(target = "relation", source = "relation")
+    @Mapping(target = "allowed", source = "allowed")
+    @Mapping(target = "reason", source = "reason")
+    @Mapping(target = "tuple", source = "tuple")
+    @Mapping(target = "condition", source = "condition")
+    @Mapping(target = "children", source = "children")
+    FgaExplainResolutionVO.Node toNodeVO(ExplainResolutionDTO.NodeDTO node);
 
-    private static List<FgaExplainResolutionVO.Node> toNodeVOList(List<ExplainResolutionDTO.NodeDTO> children) {
-        if (children == null) {
-            return List.of();
-        }
-        return children.stream().map(FgaExplainConverter::toNodeVO).toList();
-    }
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<FgaExplainResolutionVO.Node> toNodeVOList(List<ExplainResolutionDTO.NodeDTO> children);
 
-    private static FgaExplainResolutionVO.Tuple toTupleVO(ExplainResolutionDTO.TupleDTO tuple) {
-        if (tuple == null) {
-            return null;
-        }
-        return FgaExplainResolutionVO.Tuple.builder()
-                .object(tuple.getObject())
-                .relation(tuple.getRelation())
-                .subject(tuple.getSubject())
-                .wildcard(tuple.isWildcard())
-                .zookie(tuple.getZookie())
-                .expiresAt(tuple.getExpiresAt())
-                .conditionDefinitionId(tuple.getConditionDefinitionId())
-                .conditionName(tuple.getConditionName())
-                .build();
-    }
+    @Mapping(target = "object", source = "object")
+    @Mapping(target = "relation", source = "relation")
+    @Mapping(target = "subject", source = "subject")
+    @Mapping(target = "wildcard", source = "wildcard")
+    @Mapping(target = "zookie", source = "zookie")
+    @Mapping(target = "expiresAt", source = "expiresAt")
+    @Mapping(target = "conditionDefinitionId", source = "conditionDefinitionId")
+    @Mapping(target = "conditionName", source = "conditionName")
+    FgaExplainResolutionVO.Tuple toTupleVO(ExplainResolutionDTO.TupleDTO tuple);
 
-    private static FgaExplainResolutionVO.Condition toConditionVO(ExplainResolutionDTO.ConditionDTO condition) {
-        if (condition == null) {
-            return null;
-        }
-        return FgaExplainResolutionVO.Condition.builder()
-                .conditionDefinitionId(condition.getConditionDefinitionId())
-                .conditionName(condition.getConditionName())
-                .passed(condition.isPassed())
-                .build();
-    }
+    @Mapping(target = "conditionDefinitionId", source = "conditionDefinitionId")
+    @Mapping(target = "conditionName", source = "conditionName")
+    @Mapping(target = "passed", source = "passed")
+    FgaExplainResolutionVO.Condition toConditionVO(ExplainResolutionDTO.ConditionDTO condition);
 }

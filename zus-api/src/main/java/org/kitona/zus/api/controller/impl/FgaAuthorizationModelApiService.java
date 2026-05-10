@@ -18,7 +18,6 @@ import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * FGA Authorization Model API 实现。
@@ -51,10 +50,10 @@ public class FgaAuthorizationModelApiService implements IFgaAuthModelApiService 
             return RestResult.error(501, "暂未支持 DSL 文本模式，请使用 Schema 模式传入 typeDefinitions");
         }
 
-        CreateModelCommand command = FgaModelConverter.toCreateModelCommand(storeId, request);
+        CreateModelCommand command = FgaModelConverter.INSTANCE.toCreateModelCommand(storeId, request);
         AuthorizationModelResultDTO created = modelApplicationService.createModel(command);
         log.info("FgaAuthorizationModelApiService.writeModel 成功: storeId={}, result={}", storeId, JacksonUtil.toJSONString(created));
-        return RestResult.success(FgaModelConverter.toVO(created));
+        return RestResult.success(FgaModelConverter.INSTANCE.toVO(created));
     }
 
     @Override
@@ -92,23 +91,23 @@ public class FgaAuthorizationModelApiService implements IFgaAuthModelApiService 
         if (dto == null) {
             return RestResult.success(null);
         }
-        return RestResult.success(FgaModelConverter.toVO(dto));
+        return RestResult.success(FgaModelConverter.INSTANCE.toVO(dto));
     }
 
     @Override
     public RestResult<FgaModelVO> getModel(String storeId, String modelId, String view) {
         log.info("FgaAuthorizationModelApiService.getModel storeId={}, modelId={}, view={}", storeId, modelId, view);
         AuthorizationModelResultDTO dto = modelApplicationService.getModel(storeId, modelId);
-        return RestResult.success(FgaModelConverter.toVO(dto));
+        return RestResult.success(FgaModelConverter.INSTANCE.toVO(dto));
     }
 
     @Override
     public RestResult<PageResponseVO<FgaModelVO>> listModels(String storeId, Integer pageSize, String pageToken, Integer status) {
         log.info("FgaAuthorizationModelApiService.listModels storeId={}, pageSize={}, pageToken={}, status={}",
                 storeId, pageSize, pageToken, status);
-        ListModelsQuery query = FgaModelConverter.toListModelsQuery(storeId, status, pageSize, pageToken);
+        ListModelsQuery query = FgaModelConverter.INSTANCE.toListModelsQuery(storeId, status, pageSize, pageToken);
         PageResultDTO<AuthorizationModelResultDTO> result = modelApplicationService.listModels(query);
-        List<FgaModelVO> voList = FgaModelConverter.toVOList(result.getData());
+        List<FgaModelVO> voList = FgaModelConverter.INSTANCE.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(voList, result.getContinuationToken(), result.isHasMore()));
     }
 }

@@ -25,10 +25,10 @@ public class FgaExplainApiService implements IFgaExplainApiService {
     @Override
     public RestResult<FgaExplainResultVO> explain(String storeId, FgaExplainRequest request) {
         long startNanos = System.nanoTime();
-        ExplainCommand command = FgaExplainConverter.toExplainCommand(storeId, request);
+        ExplainCommand command = FgaExplainConverter.INSTANCE.toExplainCommand(storeId, request);
         PermissionExplainResultDTO dto = permissionExplainApplicationService.explain(command);
         long costMs = (System.nanoTime() - startNanos) / 1_000_000L;
         log.debug("FgaExplainApiService.explain storeId={}, cost={}ms", storeId, costMs);
-        return RestResult.success(FgaExplainConverter.toVO(dto));
+        return RestResult.success(FgaExplainConverter.INSTANCE.toVO(dto));
     }
 }

@@ -2,14 +2,9 @@ package org.kitona.zus.api.controller.impl;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.api.controller.IFgaModelApiService;
 import org.kitona.zus.api.converter.FgaModelConverter;
-import org.kitona.zus.api.request.FgaConditionDefinitionInput;
 import org.kitona.zus.api.request.FgaCreateModelRequest;
-import org.kitona.zus.api.request.FgaRelationDefinitionInput;
-import org.kitona.zus.api.request.FgaTypeRestrictionInput;
-import org.kitona.zus.api.request.FgaTypeDefinitionInput;
 import org.kitona.zus.api.response.FgaModelVO;
 import org.kitona.zus.api.response.FgaRelationVO;
 import org.kitona.zus.api.response.FgaTypeDefinitionVO;
@@ -47,77 +42,9 @@ public class FgaModelApiService implements IFgaModelApiService {
             return RestResult.fail("请求不能为空");
         }
         log.info("FgaModelApiService createModel, storeId:{}", storeId);
-        CreateModelCommand command = CreateModelCommand.builder()
-                .storeId(storeId)
-                .schemaVersion(request.getSchemaVersion())
-                .description(request.getDescription())
-                .typeDefinitions(convertTypeDefinitions(request.getTypes()))
-                .conditions(convertConditions(request.getConditions()))
-                .build();
-
+        CreateModelCommand command = FgaModelConverter.INSTANCE.toCreateModelCommand(storeId, request);
         AuthorizationModelResultDTO model = modelApplicationService.createModel(command);
-        return RestResult.success(FgaModelConverter.toVO(model));
-    }
-
-    private List<CreateModelCommand.TypeDefinitionInput> convertTypeDefinitions(List<FgaTypeDefinitionInput> inputList) {
-        if (CollectionUtils.isEmpty(inputList)) {
-            return List.of();
-        }
-        return inputList.stream()
-                .map(input -> CreateModelCommand.TypeDefinitionInput.builder()
-                        .type(input.getType())
-                        .relations(convertRelations(input.getRelations()))
-                        .build())
-                .toList();
-    }
-
-    private List<CreateModelCommand.RelationInput> convertRelations(List<FgaRelationDefinitionInput> relations) {
-        if (CollectionUtils.isEmpty(relations)) {
-            return List.of();
-        }
-        return relations.stream()
-                .map(relation -> CreateModelCommand.RelationInput.builder()
-                        .relationName(relation.getName())
-                        .rewriteExpression(relation.getRewriteExpression())
-                        .allowedSubjectTypes(flattenRestrictions(relation.getRestrictions()))
-                        .build())
-                .toList();
-    }
-
-    private List<CreateModelCommand.ConditionDefinitionInput> convertConditions(List<FgaConditionDefinitionInput> conditions) {
-        if (CollectionUtils.isEmpty(conditions)) {
-            return List.of();
-        }
-        return conditions.stream()
-                .map(condition -> CreateModelCommand.ConditionDefinitionInput.builder()
-                        .name(condition.getName())
-                        .expression(condition.getExpression())
-                        .parameterSchema(condition.getParameterSchema() == null
-                                ? null
-                                : JacksonUtil.toJSONString(condition.getParameterSchema()))
-                        .description(condition.getDescription())
-                        .build())
-                .toList();
-    }
-
-    private List<String> flattenRestrictions(List<FgaTypeRestrictionInput> restrictions) {
-        if (CollectionUtils.isEmpty(restrictions)) {
-            return List.of();
-        }
-        return restrictions.stream()
-                .map(this::toRestrictionValue)
-                .filter(value -> value != null && !value.isBlank())
-                .toList();
-    }
-
-    private String toRestrictionValue(FgaTypeRestrictionInput restriction) {
-        if (restriction == null || restriction.getType() == null || restriction.getType().isBlank()) {
-            return null;
-        }
-        if (restriction.getRelation() == null || restriction.getRelation().isBlank()) {
-            return restriction.getType();
-        }
-        return restriction.getType() + "#" + restriction.getRelation();
+        return RestResult.success(FgaModelConverter.INSTANCE.toVO(model));
     }
 
     @Override
@@ -126,7 +53,7 @@ public class FgaModelApiService implements IFgaModelApiService {
 
         AuthorizationModelResultDTO model = modelApplicationService.getModel(storeId, modelId);
         log.info("FgaModelApiService.getModel 获取响应结果为:{}", JacksonUtil.toJSONString(model));
-        return RestResult.success(FgaModelConverter.toVO(model));
+        return RestResult.success(FgaModelConverter.INSTANCE.toVO(model));
     }
 
     @Override
@@ -140,7 +67,7 @@ public class FgaModelApiService implements IFgaModelApiService {
                 .status(status)
                 .build();
         PageResultDTO<AuthorizationModelResultDTO> result = modelApplicationService.listModels(query);
-        List<FgaModelVO> voList = FgaModelConverter.toVOList(result.getData());
+        List<FgaModelVO> voList = FgaModelConverter.INSTANCE.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(voList, result.getContinuationToken(), result.isHasMore()));
     }
 

@@ -39,9 +39,9 @@ public class FgaRelationQueryApiService implements IFgaAuthViewApiService {
         log.debug("FgaRelationQueryApiService.listObjects storeId={}, relation={}, objectType={}",
                 storeId, request != null ? request.getRelation() : null,
                 request != null ? request.getObjectType() : null);
-        ListObjectsQuery query = FgaRelationQueryConverter.toListObjectsQuery(storeId, request);
+        ListObjectsQuery query = FgaRelationQueryConverter.INSTANCE.toListObjectsQuery(storeId, request);
         ListObjectsResultDTO result = authorizationReadApplicationService.listObjects(query);
-        return RestResult.success(FgaRelationQueryConverter.toListObjectsVO(result));
+        return RestResult.success(FgaRelationQueryConverter.INSTANCE.toListObjectsVO(result));
     }
 
     @Override
@@ -50,9 +50,9 @@ public class FgaRelationQueryApiService implements IFgaAuthViewApiService {
                 storeId,
                 request != null && request.getObject() != null ? request.getObject().getType() : null,
                 request != null ? request.getRelation() : null);
-        ListSubjectsQuery query = FgaRelationQueryConverter.toListSubjectsQuery(storeId, request);
+        ListSubjectsQuery query = FgaRelationQueryConverter.INSTANCE.toListSubjectsQuery(storeId, request);
         ListSubjectsResultDTO result = authorizationReadApplicationService.listSubjects(query);
-        return RestResult.success(FgaRelationQueryConverter.toListSubjectsVO(result));
+        return RestResult.success(FgaRelationQueryConverter.INSTANCE.toListSubjectsVO(result));
     }
 
     @Override

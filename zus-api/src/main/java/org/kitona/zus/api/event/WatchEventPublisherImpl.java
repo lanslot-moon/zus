@@ -28,7 +28,7 @@ public class WatchEventPublisherImpl implements WatchEventPublisher {
         if (storeId == null || change == null) {
             return;
         }
-        WatchChangeEventVO event = WatchEventConverter.toChangeEvent(change);
+        WatchChangeEventVO event = WatchEventConverter.INSTANCE.toChangeEvent(change);
         if (event != null) {
             sseConnectionManager.broadcastChange(storeId, event);
         }

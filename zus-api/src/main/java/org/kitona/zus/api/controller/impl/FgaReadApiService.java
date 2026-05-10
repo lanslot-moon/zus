@@ -13,7 +13,6 @@ import org.kitona.zus.api.response.FgaListSubjectsResponseVO;
 import org.kitona.zus.api.response.FgaTupleVO;
 import org.kitona.zus.api.response.PageResponseVO;
 import org.kitona.zus.api.response.RestResult;
-import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
 import org.kitona.zus.service.dto.query.ListSubjectsQuery;
@@ -24,7 +23,6 @@ import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -59,7 +57,7 @@ public class FgaReadApiService implements IFgaReadApiService {
                 .build();
         PageResultDTO<TupleResultDTO> result = readApplicationService.read(storeId, query);
 
-        List<FgaTupleVO> tuples = FgaTupleConverter.toVOList(result.getData());
+        List<FgaTupleVO> tuples = FgaTupleConverter.INSTANCE.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(tuples, result.getContinuationToken(), result.isHasMore()));
     }
 
@@ -83,7 +81,7 @@ public class FgaReadApiService implements IFgaReadApiService {
                 .build();
 
         ListObjectsResultDTO result = readApplicationService.listObjects(query);
-        return RestResult.success(FgaRelationQueryConverter.toListObjectsVO(result));
+        return RestResult.success(FgaRelationQueryConverter.INSTANCE.toListObjectsVO(result));
     }
 
     @Override
@@ -105,10 +103,6 @@ public class FgaReadApiService implements IFgaReadApiService {
                 .build();
 
         ListSubjectsResultDTO result = readApplicationService.listSubjects(query);
-        FgaListSubjectsResponseVO vo = new FgaListSubjectsResponseVO();
-        vo.setSubjects(result == null || result.getSubjects() == null
-                ? Collections.emptyList()
-                : MapstructUtil.convert(result.getSubjects(), org.kitona.zus.api.response.FgaSubjectVO.class));
-        return RestResult.success(vo);
+        return RestResult.success(FgaRelationQueryConverter.INSTANCE.toListSubjectsVO(result));
     }
 }

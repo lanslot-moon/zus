@@ -70,13 +70,14 @@ public class FgaTupleApiService implements IFgaTupleApiService {
     @Resource
     private IAuthorizationModelApplicationService authorizationModelApplicationService;
 
+
     @Override
     public RestResult<FgaWriteResultVO> write(String storeId, FgaWriteRequest request) {
         Function<String, Long> conditionResolver = loadConditionResolver(storeId,
                 request != null ? request.getAuthorizationModelId() : null);
 
-        List<WriteTupleCommand> writes = FgaTupleConverter.toWriteCommands(request, conditionResolver);
-        List<WriteTupleCommand> deletes = FgaTupleConverter.toDeleteCommands(request);
+        List<WriteTupleCommand> writes = FgaTupleConverter.INSTANCE.toWriteCommands(request, conditionResolver);
+        List<WriteTupleCommand> deletes = FgaTupleConverter.INSTANCE.toDeleteCommands(request);
 
         int writtenCount = writes != null ? writes.size() : 0;
         int deletedCount = deletes != null ? deletes.size() : 0;
@@ -100,12 +101,12 @@ public class FgaTupleApiService implements IFgaTupleApiService {
 
     @Override
     public RestResult<PageResponseVO<FgaTupleVO>> read(String storeId, FgaReadRequest request) {
-        TupleReadQuery query = FgaTupleConverter.toReadQuery(request);
+        TupleReadQuery query = FgaTupleConverter.INSTANCE.toReadQuery(request);
         PageResultDTO<TupleResultDTO> result = authorizationReadApplicationService.read(storeId, query);
         if (result == null || result.isEmpty()) {
             return RestResult.success(PageResponseVO.empty());
         }
-        List<FgaTupleVO> voList = FgaTupleConverter.toVOList(result.getData());
+        List<FgaTupleVO> voList = FgaTupleConverter.INSTANCE.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(voList, result.getContinuationToken(), result.isHasMore()));
     }
 
@@ -113,12 +114,11 @@ public class FgaTupleApiService implements IFgaTupleApiService {
     public RestResult<PageResponseVO<FgaTupleChangeVO>> listChanges(String storeId, String type,
                                                                     String startToken, Integer pageSize) {
         int size = pageSize != null ? pageSize : 100;
-        PageResultDTO<TupleChangeResultDTO> result =
-                tupleWatchApplicationService.listChanges(storeId, startToken, size, type);
+        PageResultDTO<TupleChangeResultDTO> result = tupleWatchApplicationService.listChanges(storeId, startToken, size, type);
         if (result == null || result.isEmpty()) {
             return RestResult.success(PageResponseVO.empty());
         }
-        List<FgaTupleChangeVO> voList = FgaChangelogConverter.toVOList(result.getData());
+        List<FgaTupleChangeVO> voList = FgaChangelogConverter.INSTANCE.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(voList, result.getContinuationToken(), result.isHasMore()));
     }
 

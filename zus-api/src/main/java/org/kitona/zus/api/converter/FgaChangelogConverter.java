@@ -1,50 +1,51 @@
 package org.kitona.zus.api.converter;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.api.response.FgaTupleChangeVO;
 import org.kitona.zus.api.response.FgaTupleVO;
 import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
+import org.mapstruct.IterableMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.NullValueMappingStrategy;
+import org.mapstruct.factory.Mappers;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
- * 变更日志 API ↔ Service 转换器。
+ * 变更日志 API 与 Service 转换器。
  *
- * <p>{@link TupleChangeResultDTO} 里的元组键位字段是扁平的，需要在 API 层重新封装到
+ * <p>{@link TupleChangeResultDTO} 里的元组键位字段是扁平结构，需要在 API 层重新封装到
  * {@link FgaTupleVO} 中，使 Watch / Changes 接口的结构与 Read 接口保持一致。
  *
  * @author kitona
  * @since 2026-04-18
  */
-public final class FgaChangelogConverter {
+@Mapper(componentModel = "spring", uses = FgaTupleConverter.class)
+public interface FgaChangelogConverter {
 
-    private FgaChangelogConverter() {
-    }
+    FgaChangelogConverter INSTANCE = Mappers.getMapper(FgaChangelogConverter.class);
 
-    public static FgaTupleChangeVO toVO(TupleChangeResultDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        FgaTupleVO tuple = new FgaTupleVO();
-        FgaTupleConverter.populateTupleView(tuple, dto.getObjectType(), dto.getObjectId(), dto.getRelation(),
-                dto.getSubjectType(), dto.getSubjectId(), dto.getSubjectRelation(), dto.getZookie());
+    /**
+     * 将 tuple changelog DTO 转换为 API 响应。
+     *
+     * @param dto changelog DTO
+     * @return API 响应
+     */
+    @Mapping(target = "tuple.objectType", source = "objectType")
+    @Mapping(target = "tuple.objectId", source = "objectId")
+    @Mapping(target = "tuple.relation", source = "relation")
+    @Mapping(target = "tuple.subjectType", source = "subjectType")
+    @Mapping(target = "tuple.subjectId", source = "subjectId")
+    @Mapping(target = "tuple.subjectRelation", source = "subjectRelation")
+    @Mapping(target = "tuple.zookie", source = "zookie")
+    FgaTupleChangeVO toVO(TupleChangeResultDTO dto);
 
-        return FgaTupleChangeVO.builder()
-                .zookie(dto.getZookie())
-                .operation(dto.getOperation())
-                .tuple(tuple)
-                .operationTime(dto.getOperationTime())
-                .operatorId(dto.getOperatorId())
-                .requestId(dto.getRequestId())
-                .source(dto.getSource())
-                .build();
-    }
-
-    public static List<FgaTupleChangeVO> toVOList(List<TupleChangeResultDTO> dtoList) {
-        if (CollectionUtils.isEmpty(dtoList)) {
-            return Collections.emptyList();
-        }
-        return dtoList.stream().map(FgaChangelogConverter::toVO).toList();
-    }
+    /**
+     * 批量转换 tuple changelog DTO。
+     *
+     * @param dtoList changelog DTO 列表
+     * @return API 响应列表
+     */
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<FgaTupleChangeVO> toVOList(List<TupleChangeResultDTO> dtoList);
 }

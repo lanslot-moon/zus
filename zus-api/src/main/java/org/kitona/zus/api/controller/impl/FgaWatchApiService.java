@@ -44,7 +44,7 @@ public class FgaWatchApiService implements IFgaWatchApiService {
         if (startAt != null) {
             List<TupleChangeResultDTO> changes =
                     watchApplicationService.getChanges(storeId, startAt, HISTORICAL_CHANGE_LIMIT);
-            List<WatchChangeEventVO> events = WatchEventConverter.toChangeEventList(changes);
+            List<WatchChangeEventVO> events = WatchEventConverter.INSTANCE.toChangeEventList(changes);
             sseConnectionManager.sendChangeEvents(emitter, events);
         }
 

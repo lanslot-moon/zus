@@ -2,9 +2,6 @@ package org.kitona.zus.api.converter;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.kitona.zus.api.audit.FgaAuditContext;
-import org.kitona.zus.api.request.common.FgaConditionRequest;
-import org.kitona.zus.api.request.common.FgaReferenceRequest;
-import org.kitona.zus.api.request.common.FgaTupleKeyFilterRequest;
 import org.kitona.zus.api.request.common.FgaTupleKeyRequest;
 import org.kitona.zus.api.request.tuple.FgaReadRequest;
 import org.kitona.zus.api.request.tuple.FgaTupleWriteItem;
@@ -14,6 +11,13 @@ import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.service.dto.command.WriteTupleCommand;
 import org.kitona.zus.service.dto.query.TupleReadQuery;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
+import org.mapstruct.Context;
+import org.mapstruct.IterableMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.NullValueMappingStrategy;
+import org.mapstruct.factory.Mappers;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,37 +25,31 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * FGA 元组相关的 API ↔ Service 转换器。
+ * FGA 元组相关的 API 与 Service 转换器。
  *
- * <p>DDD 规范：Converter 位于用户接口层（API），负责把 API 层的 Request/VO 与 Service 层的
- * Command/Query/DTO 做双向转换；不承担业务规则。
- *
- * <p>条件定义 ID 不在此层解析：写入时只携带 {@code conditionName} 与 {@code conditionContext}
- * 快照，由 Service 层通过 {@code conditionDefinitionId} 二次解析（Service 层能感知当前模型）。
- * 这避免 API 层跨越聚合边界访问条件定义仓储。
+ * <p>条件定义 ID 不在 API 层解析：写入时只携带 conditionName 与 conditionContext 快照，
+ * 由 Service 层根据当前模型解析 conditionDefinitionId，避免 API 层跨越聚合边界访问条件仓储。
  *
  * @author kitona
  * @since 2026-04-18
  */
-public final class FgaTupleConverter {
+@Mapper(componentModel = "spring")
+public interface FgaTupleConverter {
 
-    private static final TypeReference<Map<String, Object>> CONDITION_CONTEXT_TYPE =
-            new TypeReference<>() {
-            };
+    FgaTupleConverter INSTANCE = Mappers.getMapper(FgaTupleConverter.class);
 
-    private FgaTupleConverter() {
-    }
-
-    // ============ API → Service：Write ============
+    TypeReference<Map<String, Object>> CONDITION_CONTEXT_TYPE = new TypeReference<>() {
+    };
 
     /**
-     * 将写入请求拆分为「写入命令列表」。删除项由 {@link #toDeleteCommands} 单独转换。
+     * 将写入请求拆分为写入命令列表，删除项由 {@link #toDeleteCommands(FgaWriteRequest)} 单独转换。
      *
-     * @param request                 API 请求
-     * @param conditionIdResolver     条件名 → {@code conditionDefinitionId} 解析器（允许返回 null）
+     * @param request             API 写请求
+     * @param conditionIdResolver 条件名到 conditionDefinitionId 的解析器
+     * @return 写入命令列表
      */
-    public static List<WriteTupleCommand> toWriteCommands(FgaWriteRequest request,
-                                                          Function<String, Long> conditionIdResolver) {
+    default List<WriteTupleCommand> toWriteCommands(FgaWriteRequest request,
+                                                    Function<String, Long> conditionIdResolver) {
         if (request == null || request.getWrites() == null || request.getWrites().isEmpty()) {
             return Collections.emptyList();
         }
@@ -61,121 +59,125 @@ public final class FgaTupleConverter {
     }
 
     /**
-     * 将删除请求的元组键列表转换为命令列表。
+     * 将删除请求中的 tupleKey 列表转换为删除命令列表。
+     *
+     * @param request API 写请求
+     * @return 删除命令列表
      */
-    public static List<WriteTupleCommand> toDeleteCommands(FgaWriteRequest request) {
+    default List<WriteTupleCommand> toDeleteCommands(FgaWriteRequest request) {
         if (request == null || request.getDeletes() == null || request.getDeletes().isEmpty()) {
             return Collections.emptyList();
         }
         return request.getDeletes().stream()
-                .map(key -> toCommand(key, null, null, null))
+                .map(this::toDeleteCommand)
                 .toList();
     }
 
     /**
-     * 单个写入项转命令。
+     * 将单个写入项转换为写入命令。
+     *
+     * @param item                写入项
+     * @param conditionIdResolver 条件名到 conditionDefinitionId 的解析器
+     * @return 写入命令
      */
-    public static WriteTupleCommand toWriteCommand(FgaTupleWriteItem item,
-                                                   Function<String, Long> conditionIdResolver) {
-        if (item == null) {
-            return null;
-        }
-        return toCommand(item.getTupleKey(), item.getCondition(), item.getExpiresAt(), conditionIdResolver);
-    }
+    @Mapping(target = "objectType", source = "item.tupleKey.object.type")
+    @Mapping(target = "objectId", source = "item.tupleKey.object.id")
+    @Mapping(target = "relation", source = "item.tupleKey.relation")
+    @Mapping(target = "subjectType", source = "item.tupleKey.subject.type")
+    @Mapping(target = "subjectId", source = "item.tupleKey.subject.id")
+    @Mapping(target = "subjectRelation", source = "item.tupleKey.subject.relation")
+    @Mapping(target = "conditionName", source = "item.condition.name")
+    @Mapping(target = "conditionDefinitionId", source = "item.condition.name", qualifiedByName = "conditionDefinitionId")
+    @Mapping(target = "conditionContext", source = "item.condition.context", qualifiedByName = "toJsonContext")
+    @Mapping(target = "expiresAt", source = "item.expiresAt")
+    @Mapping(target = "auditMetadata", expression = "java(toAuditMetadata(org.kitona.zus.api.audit.FgaAuditContext.current()))")
+    WriteTupleCommand toWriteCommand(FgaTupleWriteItem item,
+                                     @Context Function<String, Long> conditionIdResolver);
 
-    private static WriteTupleCommand toCommand(FgaTupleKeyRequest key,
-                                               FgaConditionRequest condition,
-                                               Long expiresAt,
-                                               Function<String, Long> conditionIdResolver) {
-        if (key == null) {
-            return null;
-        }
-        FgaReferenceRequest object = key.getObject();
-        FgaReferenceRequest subject = key.getSubject();
+    /**
+     * 将删除 tupleKey 转换为应用层写命令。
+     *
+     * @param key tupleKey
+     * @return 删除命令
+     */
+    @Mapping(target = "objectType", source = "object.type")
+    @Mapping(target = "objectId", source = "object.id")
+    @Mapping(target = "relation", source = "relation")
+    @Mapping(target = "subjectType", source = "subject.type")
+    @Mapping(target = "subjectId", source = "subject.id")
+    @Mapping(target = "subjectRelation", source = "subject.relation")
+    @Mapping(target = "conditionName", ignore = true)
+    @Mapping(target = "conditionDefinitionId", ignore = true)
+    @Mapping(target = "conditionContext", ignore = true)
+    @Mapping(target = "expiresAt", ignore = true)
+    @Mapping(target = "auditMetadata", expression = "java(toAuditMetadata(org.kitona.zus.api.audit.FgaAuditContext.current()))")
+    WriteTupleCommand toDeleteCommand(FgaTupleKeyRequest key);
 
-        WriteTupleCommand.WriteTupleCommandBuilder builder = WriteTupleCommand.builder()
-                .objectType(object != null ? object.getType() : null)
-                .objectId(object != null ? object.getId() : null)
-                .relation(key.getRelation())
-                .subjectType(subject != null ? subject.getType() : null)
-                .subjectId(subject != null ? subject.getId() : null)
-                .subjectRelation(subject != null ? subject.getRelation() : null)
-                .expiresAt(expiresAt)
-                .auditMetadata(buildAuditFromContext());
+    /**
+     * 将 tuple read 请求转换为应用层查询对象。
+     *
+     * @param request API read 请求
+     * @return 应用层查询对象
+     */
+    @Mapping(target = "objectType", source = "tupleKey.object.type")
+    @Mapping(target = "objectId", source = "tupleKey.object.id")
+    @Mapping(target = "relation", source = "tupleKey.relation")
+    @Mapping(target = "subjectType", source = "tupleKey.subject.type")
+    @Mapping(target = "subjectId", source = "tupleKey.subject.id")
+    @Mapping(target = "pageSize", source = "pageSize")
+    @Mapping(target = "pageToken", source = "pageToken")
+    TupleReadQuery toReadQuery(FgaReadRequest request);
 
-        if (condition != null && condition.getName() != null && !condition.getName().isBlank()) {
-            builder.conditionName(condition.getName());
-            builder.conditionContext(toJsonContext(condition.getContext()));
-            if (conditionIdResolver != null) {
-                builder.conditionDefinitionId(conditionIdResolver.apply(condition.getName()));
-            }
-        }
-        return builder.build();
-    }
+    /**
+     * 将应用层 tuple DTO 转换为 API tuple VO。
+     *
+     * @param dto 应用层 tuple DTO
+     * @return API tuple VO
+     */
+    @Mapping(target = "objectType", source = "objectType")
+    @Mapping(target = "objectId", source = "objectId")
+    @Mapping(target = "relation", source = "relation")
+    @Mapping(target = "subjectType", source = "subjectType")
+    @Mapping(target = "subjectId", source = "subjectId")
+    @Mapping(target = "subjectRelation", source = "subjectRelation")
+    @Mapping(target = "conditionName", source = "conditionName")
+    @Mapping(target = "conditionContext", source = "conditionContext", qualifiedByName = "parseJsonContext")
+    @Mapping(target = "expiresAt", source = "expiresAt")
+    @Mapping(target = "zookie", source = "zookie")
+    FgaTupleVO toVO(TupleResultDTO dto);
 
-    // ============ API → Service：Read ============
+    /**
+     * 批量转换 tuple DTO。
+     *
+     * @param dtoList 应用层 tuple DTO 列表
+     * @return API tuple VO 列表
+     */
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<FgaTupleVO> toVOList(List<TupleResultDTO> dtoList);
 
-    public static TupleReadQuery toReadQuery(FgaReadRequest request) {
-        TupleReadQuery.TupleReadQueryBuilder builder = TupleReadQuery.builder()
-                .pageSize(request != null ? request.getPageSize() : null)
-                .pageToken(request != null ? request.getPageToken() : null);
+    @Mapping(target = "operatorId", source = "operatorId")
+    @Mapping(target = "requestId", source = "requestId")
+    @Mapping(target = "source", source = "source")
+    WriteTupleCommand.AuditMetadataInput toAuditMetadata(FgaAuditContext audit);
 
-        FgaTupleKeyFilterRequest filter = request != null ? request.getTupleKey() : null;
-        if (filter != null) {
-            builder.relation(filter.getRelation());
-            if (filter.getObject() != null) {
-                builder.objectType(filter.getObject().getType());
-                builder.objectId(filter.getObject().getId());
-            }
-            if (filter.getSubject() != null) {
-                builder.subjectType(filter.getSubject().getType());
-                builder.subjectId(filter.getSubject().getId());
-            }
-        }
-        return builder.build();
-    }
-
-    // ============ Service → API：VO ============
-
-    public static FgaTupleVO toVO(TupleResultDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        FgaTupleVO vo = new FgaTupleVO();
-        populateTupleView(vo, dto.getObjectType(), dto.getObjectId(), dto.getRelation(),
-                dto.getSubjectType(), dto.getSubjectId(), dto.getSubjectRelation(), dto.getZookie());
-        vo.setConditionName(dto.getConditionName());
-        vo.setConditionContext(parseJsonContext(dto.getConditionContext()));
-        vo.setExpiresAt(dto.getExpiresAt());
-        return vo;
-    }
-
-    public static List<FgaTupleVO> toVOList(List<TupleResultDTO> dtoList) {
-        if (dtoList == null || dtoList.isEmpty()) {
-            return Collections.emptyList();
-        }
-        return dtoList.stream().map(FgaTupleConverter::toVO).toList();
-    }
-
-    // ============ 内部工具 ============
-
-    private static WriteTupleCommand.AuditMetadataInput buildAuditFromContext() {
-        FgaAuditContext audit = FgaAuditContext.current();
-        return WriteTupleCommand.AuditMetadataInput.builder()
-                .operatorId(audit.getOperatorId())
-                .requestId(audit.getRequestId())
-                .source(audit.getSource())
-                .build();
-    }
-
-    private static String toJsonContext(Map<String, Object> context) {
+    @Named("toJsonContext")
+    default String toJsonContext(Map<String, Object> context) {
         if (context == null || context.isEmpty()) {
             return null;
         }
         return JacksonUtil.toJSONString(context);
     }
 
-    private static Map<String, Object> parseJsonContext(String json) {
+    @Named("conditionDefinitionId")
+    default Long conditionDefinitionId(String conditionName, @Context Function<String, Long> conditionIdResolver) {
+        if (conditionName == null || conditionName.isBlank() || conditionIdResolver == null) {
+            return null;
+        }
+        return conditionIdResolver.apply(conditionName);
+    }
+
+    @Named("parseJsonContext")
+    default Map<String, Object> parseJsonContext(String json) {
         if (json == null || json.isBlank()) {
             return null;
         }
@@ -184,19 +186,5 @@ public final class FgaTupleConverter {
         } catch (Exception ex) {
             return null;
         }
-    }
-
-    static void populateTupleView(FgaTupleVO tupleView, String objectType, String objectId, String relation,
-                                  String subjectType, String subjectId, String subjectRelation, String zookie) {
-        if (tupleView == null) {
-            return;
-        }
-        tupleView.setObjectType(objectType);
-        tupleView.setObjectId(objectId);
-        tupleView.setRelation(relation);
-        tupleView.setSubjectType(subjectType);
-        tupleView.setSubjectId(subjectId);
-        tupleView.setSubjectRelation(subjectRelation);
-        tupleView.setZookie(zookie);
     }
 }

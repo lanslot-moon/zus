@@ -21,6 +21,12 @@ import org.kitona.zus.service.dto.query.ListModelsQuery;
 import org.kitona.zus.service.dto.response.AuthorizationModelResultDTO;
 import org.kitona.zus.service.dto.response.AuthorizationTypeDefinitionResultDTO;
 import org.kitona.zus.service.dto.response.ConditionDefinitionResultDTO;
+import org.mapstruct.IterableMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.Named;
+import org.mapstruct.NullValueMappingStrategy;
+import org.mapstruct.factory.Mappers;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,20 +55,20 @@ import java.util.Map;
  * @author kitona
  * @since 2026-04-18
  */
-public final class FgaModelConverter {
+@Mapper(componentModel = "spring")
+public interface FgaModelConverter {
 
-    private static final String DEFAULT_SCHEMA_VERSION = "1.1";
-    private static final String UNKNOWN_STATUS_DESC = "UNKNOWN";
-    private static final String RESTRICTION_CONDITION_SEPARATOR = " with ";
-    private static final String TYPE_WILDCARD_SUFFIX = ":*";
-    private static final String USERSET_RELATION_SEPARATOR = "#";
+    FgaModelConverter INSTANCE = Mappers.getMapper(FgaModelConverter.class);
 
-    private static final TypeReference<Map<String, String>> PARAMETER_SCHEMA_TYPE =
+    String DEFAULT_SCHEMA_VERSION = "1.1";
+    String UNKNOWN_STATUS_DESC = "UNKNOWN";
+    String RESTRICTION_CONDITION_SEPARATOR = " with ";
+    String TYPE_WILDCARD_SUFFIX = ":*";
+    String USERSET_RELATION_SEPARATOR = "#";
+
+    TypeReference<Map<String, String>> PARAMETER_SCHEMA_TYPE =
             new TypeReference<>() {
             };
-
-    private FgaModelConverter() {
-    }
 
     // =========================== API → Service ===========================
 
@@ -72,72 +78,69 @@ public final class FgaModelConverter {
      * <p>当前仅支持 Schema 模式（typeDefinitions + conditions）。DSL 模式由上层
      * 在调用此方法前拒绝（目前尚未实现 DSL 解析器）。
      */
-    public static CreateModelCommand toCreateModelCommand(String storeId,
-                                                          FgaWriteAuthorizationModelRequest request) {
-        return CreateModelCommand.builder()
-                .storeId(storeId)
-                .schemaVersion(resolveSchemaVersion(request))
-                .description(request != null ? request.getDescription() : null)
-                .typeDefinitions(toTypeDefinitionInputs(request != null ? request.getTypeDefinitions() : null))
-                .conditions(toConditionDefinitionInputs(request != null ? request.getConditions() : null))
-                .build();
-    }
+    @Mapping(target = "storeId", source = "storeId")
+    @Mapping(target = "schemaVersion", source = "request", qualifiedByName = "resolveSchemaVersion")
+    @Mapping(target = "description", source = "request.description")
+    @Mapping(target = "typeDefinitions", source = "request.typeDefinitions")
+    @Mapping(target = "conditions", source = "request.conditions")
+    CreateModelCommand toCreateModelCommand(String storeId, FgaWriteAuthorizationModelRequest request);
 
-    public static ListModelsQuery toListModelsQuery(String storeId, Integer status,
-                                                    Integer pageSize, String pageToken) {
-        return ListModelsQuery.builder()
-                .storeId(storeId)
-                .status(status)
-                .pageSize(pageSize)
-                .pageToken(pageToken)
-                .build();
-    }
+    /**
+     * 将旧版模型创建请求转为创建模型命令。
+     *
+     * <p>该方法用于兼容当前 {@code IFgaModelApiService#createModel} 的入参结构。
+     * 转换语义仍集中在本 converter 中，避免 controller 承担模型组装细节。
+     */
+    @Mapping(target = "storeId", source = "storeId")
+    @Mapping(target = "schemaVersion", source = "request", qualifiedByName = "resolveLegacySchemaVersion")
+    @Mapping(target = "description", source = "request.description")
+    @Mapping(target = "typeDefinitions", source = "request.types")
+    @Mapping(target = "conditions", source = "request.conditions")
+    CreateModelCommand toCreateModelCommand(String storeId,
+                                            org.kitona.zus.api.request.FgaCreateModelRequest request);
 
-    private static String resolveSchemaVersion(FgaWriteAuthorizationModelRequest request) {
+    @Mapping(target = "storeId", source = "storeId")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "pageSize", source = "pageSize")
+    @Mapping(target = "pageToken", source = "pageToken")
+    ListModelsQuery toListModelsQuery(String storeId, Integer status, Integer pageSize, String pageToken);
+
+    @Named("resolveSchemaVersion")
+    default String resolveSchemaVersion(FgaWriteAuthorizationModelRequest request) {
         if (request == null || StringUtils.isBlank(request.getSchemaVersion())) {
             return DEFAULT_SCHEMA_VERSION;
         }
         return request.getSchemaVersion();
     }
 
-    private static List<CreateModelCommand.TypeDefinitionInput> toTypeDefinitionInputs(
-            List<FgaTypeDefinitionInput> apiInputs) {
-        if (CollectionUtils.isEmpty(apiInputs)) {
-            return Collections.emptyList();
+    @Named("resolveLegacySchemaVersion")
+    default String resolveSchemaVersion(org.kitona.zus.api.request.FgaCreateModelRequest request) {
+        if (request == null || StringUtils.isBlank(request.getSchemaVersion())) {
+            return DEFAULT_SCHEMA_VERSION;
         }
-        return apiInputs.stream()
-                .map(FgaModelConverter::toTypeDefinitionInput)
-                .toList();
+        return request.getSchemaVersion();
     }
 
-    private static CreateModelCommand.TypeDefinitionInput toTypeDefinitionInput(FgaTypeDefinitionInput api) {
-        return CreateModelCommand.TypeDefinitionInput.builder()
-                .type(api.getType())
-                .relations(toRelationInputs(api.getRelations()))
-                .build();
-    }
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<CreateModelCommand.TypeDefinitionInput> toTypeDefinitionInputs(List<FgaTypeDefinitionInput> apiInputs);
 
-    private static List<CreateModelCommand.RelationInput> toRelationInputs(List<FgaRelationDefinitionInput> apiInputs) {
-        if (CollectionUtils.isEmpty(apiInputs)) {
-            return Collections.emptyList();
-        }
-        return apiInputs.stream()
-                .map(FgaModelConverter::toRelationInput)
-                .toList();
-    }
+    @Mapping(target = "type", source = "type")
+    @Mapping(target = "relations", source = "relations")
+    CreateModelCommand.TypeDefinitionInput toTypeDefinitionInput(FgaTypeDefinitionInput api);
 
-    private static CreateModelCommand.RelationInput toRelationInput(FgaRelationDefinitionInput api) {
-        return CreateModelCommand.RelationInput.builder()
-                .relationName(api.getName())
-                .rewriteExpression(api.getRewriteExpression())
-                .allowedSubjectTypes(encodeRestrictions(api.getRestrictions()))
-                .build();
-    }
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<CreateModelCommand.RelationInput> toRelationInputs(List<FgaRelationDefinitionInput> apiInputs);
+
+    @Mapping(target = "relationName", source = "name")
+    @Mapping(target = "rewriteExpression", source = "rewriteExpression")
+    @Mapping(target = "allowedSubjectTypes", source = "restrictions", qualifiedByName = "encodeRestrictions")
+    CreateModelCommand.RelationInput toRelationInput(FgaRelationDefinitionInput api);
 
     /**
      * 将 API 的结构化限制编码为字符串列表，便于服务层 / 领域层存储。
      */
-    private static List<String> encodeRestrictions(List<FgaTypeRestrictionInput> apiRestrictions) {
+    @Named("encodeRestrictions")
+    default List<String> encodeRestrictions(List<FgaTypeRestrictionInput> apiRestrictions) {
         if (CollectionUtils.isEmpty(apiRestrictions)) {
             return Collections.emptyList();
         }
@@ -151,7 +154,7 @@ public final class FgaModelConverter {
         return encoded;
     }
 
-    private static String encodeRestriction(FgaTypeRestrictionInput r) {
+    private String encodeRestriction(FgaTypeRestrictionInput r) {
         if (r == null || StringUtils.isBlank(r.getType())) {
             return null;
         }
@@ -169,91 +172,126 @@ public final class FgaModelConverter {
         return base;
     }
 
-    private static List<CreateModelCommand.ConditionDefinitionInput> toConditionDefinitionInputs(
-            List<FgaConditionDefinitionInput> apiInputs) {
-        if (CollectionUtils.isEmpty(apiInputs)) {
-            return Collections.emptyList();
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<CreateModelCommand.ConditionDefinitionInput> toConditionDefinitionInputs(
+            List<FgaConditionDefinitionInput> apiInputs);
+
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "expression", source = "expression")
+    @Mapping(target = "parameterSchema", source = "parameterSchema", qualifiedByName = "toJsonParameterSchema")
+    @Mapping(target = "description", source = "description")
+    CreateModelCommand.ConditionDefinitionInput toConditionDefinitionInput(FgaConditionDefinitionInput api);
+
+    @Named("toJsonParameterSchema")
+    default String toJsonParameterSchema(Map<String, String> parameterSchema) {
+        if (parameterSchema == null || parameterSchema.isEmpty()) {
+            return null;
         }
-        return apiInputs.stream()
-                .map(FgaModelConverter::toConditionDefinitionInput)
-                .toList();
+        return JacksonUtil.toJSONString(parameterSchema);
     }
 
-    private static CreateModelCommand.ConditionDefinitionInput toConditionDefinitionInput(FgaConditionDefinitionInput api) {
-        String schemaJson = null;
-        if (api.getParameterSchema() != null && !api.getParameterSchema().isEmpty()) {
-            schemaJson = JacksonUtil.toJSONString(api.getParameterSchema());
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<CreateModelCommand.TypeDefinitionInput> toLegacyTypeDefinitionInputs(
+            List<org.kitona.zus.api.request.FgaTypeDefinitionInput> apiInputs);
+
+    @Mapping(target = "type", source = "type")
+    @Mapping(target = "relations", source = "relations")
+    CreateModelCommand.TypeDefinitionInput toLegacyTypeDefinitionInput(
+            org.kitona.zus.api.request.FgaTypeDefinitionInput api);
+
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<CreateModelCommand.RelationInput> toLegacyRelationInputs(
+            List<org.kitona.zus.api.request.FgaRelationDefinitionInput> apiInputs);
+
+    @Mapping(target = "relationName", source = "name")
+    @Mapping(target = "rewriteExpression", source = "rewriteExpression")
+    @Mapping(target = "allowedSubjectTypes", source = "restrictions", qualifiedByName = "encodeLegacyRestrictions")
+    CreateModelCommand.RelationInput toLegacyRelationInput(
+            org.kitona.zus.api.request.FgaRelationDefinitionInput api);
+
+    @Named("encodeLegacyRestrictions")
+    default List<String> encodeLegacyRestrictions(
+            List<org.kitona.zus.api.request.FgaTypeRestrictionInput> apiRestrictions) {
+        if (CollectionUtils.isEmpty(apiRestrictions)) {
+            return Collections.emptyList();
         }
-        return CreateModelCommand.ConditionDefinitionInput.builder()
-                .name(api.getName())
-                .expression(api.getExpression())
-                .parameterSchema(schemaJson)
-                .description(api.getDescription())
-                .build();
+        List<String> encoded = new ArrayList<>(apiRestrictions.size());
+        for (org.kitona.zus.api.request.FgaTypeRestrictionInput restriction : apiRestrictions) {
+            String value = encodeLegacyRestriction(restriction);
+            if (StringUtils.isNotBlank(value)) {
+                encoded.add(value);
+            }
+        }
+        return encoded;
     }
+
+    private String encodeLegacyRestriction(org.kitona.zus.api.request.FgaTypeRestrictionInput restriction) {
+        if (restriction == null || StringUtils.isBlank(restriction.getType())) {
+            return null;
+        }
+        if (StringUtils.isBlank(restriction.getRelation())) {
+            return restriction.getType();
+        }
+        return restriction.getType() + USERSET_RELATION_SEPARATOR + restriction.getRelation();
+    }
+
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<CreateModelCommand.ConditionDefinitionInput> toLegacyConditionDefinitionInputs(
+            List<org.kitona.zus.api.request.FgaConditionDefinitionInput> apiInputs);
+
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "expression", source = "expression")
+    @Mapping(target = "parameterSchema", source = "parameterSchema", qualifiedByName = "toJsonParameterSchema")
+    @Mapping(target = "description", source = "description")
+    CreateModelCommand.ConditionDefinitionInput toLegacyConditionDefinitionInput(
+            org.kitona.zus.api.request.FgaConditionDefinitionInput api);
 
     // =========================== Service → API ===========================
 
-    public static FgaModelVO toVO(AuthorizationModelResultDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        FgaModelVO vo = new FgaModelVO();
-        vo.setModelId(dto.getModelId());
-        vo.setSchemaVersion(dto.getSchemaVersion());
-        vo.setDslText(dto.getDslText());
-        vo.setStatus(dto.getStatus());
-        vo.setStatusDesc(statusDesc(dto.getStatus()));
-        vo.setDescription(dto.getDescription());
-        vo.setTypes(toTypeDefinitionVOList(dto.getTypeDefinitions()));
-        vo.setConditions(toConditionVOList(dto.getConditionDefinitions()));
-        vo.setCreateTime(dto.getCreateTime());
-        vo.setIsCurrent(dto.getIsCurrent());
-        return vo;
-    }
+    @Mapping(target = "modelId", source = "modelId")
+    @Mapping(target = "schemaVersion", source = "schemaVersion")
+    @Mapping(target = "dslText", source = "dslText")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "statusDesc", source = "status", qualifiedByName = "statusDesc")
+    @Mapping(target = "description", source = "description")
+    @Mapping(target = "types", source = "typeDefinitions")
+    @Mapping(target = "conditions", source = "conditionDefinitions")
+    @Mapping(target = "createTime", source = "createTime")
+    @Mapping(target = "publishTime", ignore = true)
+    @Mapping(target = "isCurrent", source = "isCurrent")
+    FgaModelVO toVO(AuthorizationModelResultDTO dto);
 
-    public static List<FgaModelVO> toVOList(List<AuthorizationModelResultDTO> dtoList) {
-        if (CollectionUtils.isEmpty(dtoList)) {
-            return Collections.emptyList();
-        }
-        return dtoList.stream().map(FgaModelConverter::toVO).toList();
-    }
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<FgaModelVO> toVOList(List<AuthorizationModelResultDTO> dtoList);
 
-    private static List<FgaTypeDefinitionVO> toTypeDefinitionVOList(List<AuthorizationTypeDefinitionResultDTO> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.emptyList();
-        }
-        List<FgaTypeDefinitionVO> result = new ArrayList<>(list.size());
-        for (AuthorizationTypeDefinitionResultDTO dto : list) {
-            FgaTypeDefinitionVO vo = new FgaTypeDefinitionVO();
-            vo.setType(dto.getType());
-            vo.setRelations(toRelationVOList(dto));
-            result.add(vo);
-        }
-        return result;
-    }
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<FgaTypeDefinitionVO> toTypeDefinitionVOList(List<AuthorizationTypeDefinitionResultDTO> list);
 
-    private static List<FgaRelationVO> toRelationVOList(AuthorizationTypeDefinitionResultDTO dto) {
+    @Mapping(target = "type", source = "type")
+    @Mapping(target = "relations", source = ".", qualifiedByName = "relationVOList")
+    FgaTypeDefinitionVO toTypeDefinitionVO(AuthorizationTypeDefinitionResultDTO dto);
+
+    @Named("relationVOList")
+    default List<FgaRelationVO> toRelationVOList(AuthorizationTypeDefinitionResultDTO dto) {
         Map<String, String> relations = dto.getRelations();
         if (relations == null || relations.isEmpty()) {
             return Collections.emptyList();
         }
         Map<String, List<String>> restrictions = dto.getRelationRestrictions();
-        List<FgaRelationVO> list = new ArrayList<>(relations.size());
-        for (Map.Entry<String, String> e : relations.entrySet()) {
-            FgaRelationVO vo = new FgaRelationVO();
-            vo.setName(e.getKey());
-            vo.setRewriteExpression(e.getValue());
-            vo.setRelationType(FgaRelationType.deriveCode(e.getValue()));
-            if (restrictions != null) {
-                vo.setRestrictions(decodeRestrictions(restrictions.get(e.getKey())));
-            }
-            list.add(vo);
-        }
-        return list;
+        return relations.entrySet().stream()
+                .map(entry -> toRelationVO(entry.getKey(), entry.getValue(),
+                        restrictions == null ? null : restrictions.get(entry.getKey())))
+                .toList();
     }
 
-    private static List<FgaTypeRestrictionVO> decodeRestrictions(List<String> encoded) {
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "rewriteExpression", source = "rewriteExpression")
+    @Mapping(target = "relationType", source = "rewriteExpression", qualifiedByName = "relationType")
+    @Mapping(target = "restrictions", source = "restrictions", qualifiedByName = "decodeRestrictions")
+    FgaRelationVO toRelationVO(String name, String rewriteExpression, List<String> restrictions);
+
+    @Named("decodeRestrictions")
+    default List<FgaTypeRestrictionVO> decodeRestrictions(List<String> encoded) {
         if (CollectionUtils.isEmpty(encoded)) {
             return Collections.emptyList();
         }
@@ -271,7 +309,7 @@ public final class FgaModelConverter {
      * 解析 OpenFGA DSL 限制字符串为结构化 VO。
      * <p>支持：{@code user} / {@code user:*} / {@code group#member} / {@code user with cond}。
      */
-    private static FgaTypeRestrictionVO decodeRestriction(String raw) {
+    private FgaTypeRestrictionVO decodeRestriction(String raw) {
         if (StringUtils.isBlank(raw)) {
             return null;
         }
@@ -282,38 +320,42 @@ public final class FgaModelConverter {
             core = raw.substring(0, withIdx).trim();
             condition = raw.substring(withIdx + RESTRICTION_CONDITION_SEPARATOR.length()).trim();
         }
-        FgaTypeRestrictionVO.FgaTypeRestrictionVOBuilder builder = FgaTypeRestrictionVO.builder()
-                .condition(StringUtils.isBlank(condition) ? null : condition);
+        String type;
+        String relation = null;
+        Boolean wildcard = null;
         if (core.endsWith(TYPE_WILDCARD_SUFFIX)) {
-            builder.type(core.substring(0, core.length() - TYPE_WILDCARD_SUFFIX.length())).wildcard(Boolean.TRUE);
+            type = core.substring(0, core.length() - TYPE_WILDCARD_SUFFIX.length());
+            wildcard = Boolean.TRUE;
         } else {
             int idx = core.indexOf(USERSET_RELATION_SEPARATOR);
             if (idx > 0) {
-                builder.type(core.substring(0, idx)).relation(core.substring(idx + 1));
+                type = core.substring(0, idx);
+                relation = core.substring(idx + 1);
             } else {
-                builder.type(core);
+                type = core;
             }
         }
-        return builder.build();
+        return toTypeRestrictionVO(new DecodedRestriction(type, relation, wildcard,
+                StringUtils.isBlank(condition) ? null : condition));
     }
 
-    private static List<FgaConditionVO> toConditionVOList(List<ConditionDefinitionResultDTO> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.emptyList();
-        }
-        List<FgaConditionVO> out = new ArrayList<>(list.size());
-        for (ConditionDefinitionResultDTO dto : list) {
-            FgaConditionVO vo = new FgaConditionVO();
-            vo.setName(dto.getName());
-            vo.setExpression(dto.getExpression());
-            vo.setParameterSchema(parseParameterSchema(dto.getParameterSchema()));
-            vo.setDescription(dto.getDescription());
-            out.add(vo);
-        }
-        return out;
-    }
+    @Mapping(target = "type", source = "type")
+    @Mapping(target = "relation", source = "relation")
+    @Mapping(target = "wildcard", source = "wildcard")
+    @Mapping(target = "condition", source = "condition")
+    FgaTypeRestrictionVO toTypeRestrictionVO(DecodedRestriction restriction);
 
-    private static Map<String, String> parseParameterSchema(String json) {
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<FgaConditionVO> toConditionVOList(List<ConditionDefinitionResultDTO> list);
+
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "expression", source = "expression")
+    @Mapping(target = "parameterSchema", source = "parameterSchema", qualifiedByName = "parseParameterSchema")
+    @Mapping(target = "description", source = "description")
+    FgaConditionVO toConditionVO(ConditionDefinitionResultDTO dto);
+
+    @Named("parseParameterSchema")
+    default Map<String, String> parseParameterSchema(String json) {
         if (StringUtils.isBlank(json)) {
             return null;
         }
@@ -324,11 +366,28 @@ public final class FgaModelConverter {
         }
     }
 
-    private static String statusDesc(Integer status) {
+    @Named("statusDesc")
+    default String statusDesc(Integer status) {
         if (status == null) {
             return null;
         }
         ModelPublishStatus publishStatus = ModelPublishStatus.fromStatus(status);
         return publishStatus != null ? publishStatus.name() : UNKNOWN_STATUS_DESC;
+    }
+
+    @Named("relationType")
+    default Integer relationType(String rewriteExpression) {
+        return FgaRelationType.deriveCode(rewriteExpression);
+    }
+
+    /**
+     * restriction 字符串解析后的中间结构，用于把解析职责和 VO 字段映射职责分开。
+     *
+     * @param type      主体类型
+     * @param relation  userset relation
+     * @param wildcard  是否为 wildcard subject
+     * @param condition 条件名称
+     */
+    record DecodedRestriction(String type, String relation, Boolean wildcard, String condition) {
     }
 }

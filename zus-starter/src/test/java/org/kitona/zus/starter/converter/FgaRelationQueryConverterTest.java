@@ -43,7 +43,7 @@ class FgaRelationQueryConverterTest {
                 .context(Map.of("ip", "127.0.0.1"))
                 .build();
 
-        ListObjectsQuery query = FgaRelationQueryConverter.toListObjectsQuery("store-1", request);
+        ListObjectsQuery query = FgaRelationQueryConverter.INSTANCE.toListObjectsQuery("store-1", request);
 
         assertThat(query.getStoreId()).isEqualTo("store-1");
         assertThat(query.getSubjectType()).isEqualTo("group");
@@ -77,7 +77,7 @@ class FgaRelationQueryConverterTest {
                 .context(Map.of("region", "cn"))
                 .build();
 
-        ListSubjectsQuery query = FgaRelationQueryConverter.toListSubjectsQuery("store-1", request);
+        ListSubjectsQuery query = FgaRelationQueryConverter.INSTANCE.toListSubjectsQuery("store-1", request);
 
         assertThat(query.getStoreId()).isEqualTo("store-1");
         assertThat(query.getObjectType()).isEqualTo("document");

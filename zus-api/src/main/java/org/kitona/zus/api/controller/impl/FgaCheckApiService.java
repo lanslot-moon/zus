@@ -15,7 +15,7 @@ import org.kitona.zus.service.dto.command.CheckCommand;
 import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -39,59 +39,96 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class FgaCheckApiService implements IFgaCheckApiService {
 
+    private static final long NANOS_PER_MILLISECOND = 1_000_000L;
+
     @Resource
     private IPermissionCheckApplicationService permissionCheckApplicationService;
 
     @Override
     public RestResult<FgaCheckResultVO> check(String storeId, FgaCheckRequest request) {
         long startNanos = System.nanoTime();
-        CheckCommand command = FgaCheckConverter.toCheckCommand(storeId, request);
+        CheckCommand command = FgaCheckConverter.INSTANCE.toCheckCommand(storeId, request);
         PermissionCheckResultDTO dto = permissionCheckApplicationService.check(command);
         if (log.isDebugEnabled()) {
-            long costMs = (System.nanoTime() - startNanos) / 1_000_000L;
+            long costMs = elapsedMillis(startNanos);
             log.debug("FgaCheckApiService.check storeId={}, cost={}ms", storeId, costMs);
         }
-        return RestResult.success(FgaCheckConverter.toVO(dto));
+        return RestResult.success(FgaCheckConverter.INSTANCE.toVO(dto));
     }
 
     @Override
     public RestResult<FgaBatchCheckResultVO> batchCheck(String storeId, FgaBatchCheckRequest request) {
         long startNanos = System.nanoTime();
-        List<FgaBatchCheckRequest.CheckItem> items = request != null ? request.getChecks() : null;
+        List<FgaBatchCheckRequest.CheckItem> items = checksOf(request);
         if (CollectionUtils.isEmpty(items)) {
-            return RestResult.success(FgaBatchCheckResultVO.builder()
-                    .results(Map.of())
-                    .durationMs(0L)
-                    .zookie(null)
-                    .build());
+            return RestResult.success(emptyBatchResult());
         }
 
-        List<CompletableFuture<Map.Entry<String, FgaCheckResultVO>>> futures = items.stream()
-                .map(item -> {
-                    CheckCommand command = FgaCheckConverter.toCheckCommand(storeId, item, request);
-                    return permissionCheckApplicationService.checkAsync(command)
-                            .thenApply(dto -> Map.entry(item.getCorrelationId(), FgaCheckConverter.toVO(dto)));
-                })
-                .toList();
+        List<CompletableFuture<BatchCheckEntry>> tasks = createBatchTasks(storeId, request, items);
+        List<BatchCheckEntry> entries = awaitBatchResults(tasks);
+        long durationMs = elapsedMillis(startNanos);
 
-        Map<String, FgaCheckResultVO> results = new HashMap<>(items.size() * 2);
-        String sharedZookie = null;
-        for (CompletableFuture<Map.Entry<String, FgaCheckResultVO>> future : futures) {
-            Map.Entry<String, FgaCheckResultVO> entry = future.join();
-            results.put(entry.getKey(), entry.getValue());
-            if (sharedZookie == null && entry.getValue() != null) {
-                sharedZookie = entry.getValue().getZookieToken();
-            }
-        }
-
-        long durationMs = (System.nanoTime() - startNanos) / 1_000_000L;
         log.info("FgaCheckApiService.batchCheck storeId={}, count={}, cost={}ms",
                 storeId, items.size(), durationMs);
 
-        return RestResult.success(FgaBatchCheckResultVO.builder()
+        return RestResult.success(toBatchResult(entries, durationMs));
+    }
+
+    private List<FgaBatchCheckRequest.CheckItem> checksOf(FgaBatchCheckRequest request) {
+        return request == null ? List.of() : request.getChecks();
+    }
+
+    private FgaBatchCheckResultVO emptyBatchResult() {
+        return FgaBatchCheckResultVO.builder()
+                .results(Map.of())
+                .durationMs(0L)
+                .zookie(null)
+                .build();
+    }
+
+    private List<CompletableFuture<BatchCheckEntry>> createBatchTasks(String storeId, FgaBatchCheckRequest request,
+                                                                      List<FgaBatchCheckRequest.CheckItem> items) {
+        return items.stream()
+                .map(item -> checkAsync(storeId, request, item))
+                .toList();
+    }
+
+    private CompletableFuture<BatchCheckEntry> checkAsync(String storeId, FgaBatchCheckRequest request,
+                                                          FgaBatchCheckRequest.CheckItem item) {
+        CheckCommand command = FgaCheckConverter.INSTANCE.toCheckCommand(storeId, item, request);
+        return permissionCheckApplicationService.checkAsync(command)
+                .thenApply(dto -> new BatchCheckEntry(item.getCorrelationId(), FgaCheckConverter.INSTANCE.toVO(dto)));
+    }
+
+    private List<BatchCheckEntry> awaitBatchResults(List<CompletableFuture<BatchCheckEntry>> tasks) {
+        return tasks.stream()
+                .map(CompletableFuture::join)
+                .toList();
+    }
+
+    private FgaBatchCheckResultVO toBatchResult(List<BatchCheckEntry> entries, long durationMs) {
+        Map<String, FgaCheckResultVO> results = new LinkedHashMap<>(entries.size() * 2);
+        String sharedZookie = null;
+
+        for (BatchCheckEntry entry : entries) {
+            FgaCheckResultVO result = entry.result();
+            results.put(entry.correlationId(), result);
+            if (sharedZookie == null && result != null) {
+                sharedZookie = result.getZookieToken();
+            }
+        }
+
+        return FgaBatchCheckResultVO.builder()
                 .results(results)
                 .durationMs(durationMs)
                 .zookie(sharedZookie)
-                .build());
+                .build();
+    }
+
+    private long elapsedMillis(long startNanos) {
+        return (System.nanoTime() - startNanos) / NANOS_PER_MILLISECOND;
+    }
+
+    private record BatchCheckEntry(String correlationId, FgaCheckResultVO result) {
     }
 }
