@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kitona.zus.infrastructure.cache.FgaCacheManager;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 import org.kitona.zus.infrastructure.persistence.mysql.mapper.IAuthorizationModelMapper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -30,7 +30,7 @@ class AuthorizationModelPersistenceRepositoryTest {
 
     @Test
     void shouldInvalidateCompiledModelCacheWhenModelUpdated() {
-        AuthorizationModelPO model = new AuthorizationModelPO();
+        AuthModelPO model = new AuthModelPO();
         model.setId(1L);
         model.setStoreId("store-1");
         model.setModelId("model-1");

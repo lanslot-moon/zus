@@ -28,10 +28,10 @@ import java.io.Serializable;
  * @since 2025-01-15
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName("fga_authorization_model")
+@TableName("fga_auth_model")
 @Data
 @Accessors(chain = true)
-public class AuthorizationModelPO extends BaseTenantSoftDeletePO implements Serializable {
+public class AuthModelPO extends BaseSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

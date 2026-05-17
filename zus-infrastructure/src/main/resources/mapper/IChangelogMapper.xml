@@ -3,7 +3,7 @@
 <mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IChangelogMapper">
 
     <!-- 通用结果映射（与 fga_tuple_changelog 表一致） -->
-    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO">
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
         <result column="zookie" property="zookie"/>

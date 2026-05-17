@@ -12,11 +12,11 @@ import org.kitona.zus.domain.authorization.model.RelationDefinition;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.AuthorizationModelConverter;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ConditionDefinitionPO;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ModelRelationPO;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictionPO;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeRestrictionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IAuthorizationModelPersistenceRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IConditionDefinitionPersistenceRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IModelRelationPersistenceRepository;
@@ -67,7 +67,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
             return Optional.empty();
         }
 
-        Optional<AuthorizationModelPO> repository = authorizationModelPersistenceRepository.findByModelIdAndStoreId(storeId, modelId);
+        Optional<AuthModelPO> repository = authorizationModelPersistenceRepository.findByModelIdAndStoreId(storeId, modelId);
         if (repository.isEmpty()) {
             return Optional.empty();
         }
@@ -95,12 +95,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         String storeId = model.getStoreId();
         String modelId = model.getModelId();
 
-        Optional<AuthorizationModelPO> existing = authorizationModelPersistenceRepository.findByModelIdAndStoreId(storeId, modelId);
+        Optional<AuthModelPO> existing = authorizationModelPersistenceRepository.findByModelIdAndStoreId(storeId, modelId);
         if (existing.isEmpty()) {
             authorizationModelPersistenceRepository.createModel(AuthorizationModelConverter.toPO(model));
         } else {
             // 已存在：更新模型本身（status / description / dslText 等）并清理关联结构后重建
-            AuthorizationModelPO updatePO = AuthorizationModelConverter.toPO(model);
+            AuthModelPO updatePO = AuthorizationModelConverter.toPO(model);
             updatePO.setId(existing.get().getId());
             authorizationModelPersistenceRepository.updateModel(updatePO);
             this.deleteModelAssociateStructure(storeId, modelId);
@@ -154,29 +154,29 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @return 按模型ID分组的类型定义Map
      */
     private Map<String, List<TypeDefinition>> assembleTypeDefinitions(String storeId, Set<String> modelIds) {
-        List<SubjectDefinitionPO> typeDefinitionPOs = subjectDefinitionPersistenceRepository.selectByModelIdList(storeId, modelIds);
+        List<TypeDefinitionPO> typeDefinitionPOs = subjectDefinitionPersistenceRepository.selectByModelIdList(storeId, modelIds);
         if (CollectionUtils.isEmpty(typeDefinitionPOs)) {
             log.info("assembleTypeDefinitions No type definition found for modelIds: {} and storeId: {}", modelIds, storeId);
             return new HashMap<>();
         }
 
-        Set<Long> typeDefIds = typeDefinitionPOs.stream().map(SubjectDefinitionPO::getId).collect(Collectors.toSet());
-        List<ModelRelationPO> relationList = modelRelationPersistenceRepository.selectByTypeDefinitionId(typeDefIds);
+        Set<Long> typeDefIds = typeDefinitionPOs.stream().map(TypeDefinitionPO::getId).collect(Collectors.toSet());
+        List<RelationDefinitionPO> relationList = modelRelationPersistenceRepository.selectByTypeDefinitionId(typeDefIds);
         if (CollectionUtils.isEmpty(relationList)) {
             log.info("assembleTypeDefinitions No relation found for typeDefinitionIds: {}", typeDefIds);
             return new HashMap<>();
         }
-        Map<Long, List<ModelRelationPO>> relationsByTypeDefId = relationList.stream()
-                .collect(Collectors.groupingBy(ModelRelationPO::getTypeDefinitionId));
+        Map<Long, List<RelationDefinitionPO>> relationsByTypeDefId = relationList.stream()
+                .collect(Collectors.groupingBy(RelationDefinitionPO::getTypeDefinitionId));
 
         Set<Long> relationIds = relationsByTypeDefId.values().stream()
                 .flatMap(List::stream)
-                .map(ModelRelationPO::getId)
+                .map(RelationDefinitionPO::getId)
                 .collect(Collectors.toSet());
-        Map<Long, List<RelationRestrictionPO>> restrictionsByRelationId = loadRestrictionsByRelationId(relationIds);
+        Map<Long, List<TypeRestrictionPO>> restrictionsByRelationId = loadRestrictionsByRelationId(relationIds);
 
         return typeDefinitionPOs.stream()
-                .collect(Collectors.groupingBy(SubjectDefinitionPO::getModelId,
+                .collect(Collectors.groupingBy(TypeDefinitionPO::getModelId,
                         Collectors.mapping(
                                 typeDefPO -> buildTypeDefinitionEntity(typeDefPO, relationsByTypeDefId, restrictionsByRelationId),
                                 Collectors.toList())));
@@ -188,15 +188,15 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @param relationIds 关系ID集合
      * @return 按关系ID分组的关系限制Map
      */
-    private Map<Long, List<RelationRestrictionPO>> loadRestrictionsByRelationId(Set<Long> relationIds) {
+    private Map<Long, List<TypeRestrictionPO>> loadRestrictionsByRelationId(Set<Long> relationIds) {
         if (CollectionUtils.isEmpty(relationIds)) {
             return Collections.emptyMap();
         }
-        List<RelationRestrictionPO> restrictions = relationRestrictionPersistenceRepository.selectByRelationDefinitionId(relationIds);
+        List<TypeRestrictionPO> restrictions = relationRestrictionPersistenceRepository.selectByRelationDefinitionId(relationIds);
         if (CollectionUtils.isEmpty(restrictions)) {
             return Collections.emptyMap();
         }
-        return restrictions.stream().collect(Collectors.groupingBy(RelationRestrictionPO::getRelationDefinitionId));
+        return restrictions.stream().collect(Collectors.groupingBy(TypeRestrictionPO::getRelationDefinitionId));
     }
 
     /**
@@ -207,16 +207,16 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @param restrictionsByRelationId 按关系ID分组的关系限制Map
      * @return 类型定义实体
      */
-    private TypeDefinition buildTypeDefinitionEntity(SubjectDefinitionPO typeDefPO,
-                                                     Map<Long, List<ModelRelationPO>> relationsByTypeDefId,
-                                                     Map<Long, List<RelationRestrictionPO>> restrictionsByRelationId) {
+    private TypeDefinition buildTypeDefinitionEntity(TypeDefinitionPO typeDefPO,
+                                                     Map<Long, List<RelationDefinitionPO>> relationsByTypeDefId,
+                                                     Map<Long, List<TypeRestrictionPO>> restrictionsByRelationId) {
         TypeDefinition typeDefEntity = TypeDefinition.reconstitute(
                 typeDefPO.getId(),
                 typeDefPO.getSubjectType(),
                 typeDefPO.getSortOrder()
         );
 
-        List<ModelRelationPO> relationPOs = relationsByTypeDefId.getOrDefault(typeDefPO.getId(), Collections.emptyList());
+        List<RelationDefinitionPO> relationPOs = relationsByTypeDefId.getOrDefault(typeDefPO.getId(), Collections.emptyList());
         relationPOs.stream()
                 .map(relationPO -> buildRelationDefinition(relationPO, restrictionsByRelationId))
                 .forEach(typeDefEntity::putRelation);
@@ -231,8 +231,8 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @param restrictionsByRelationId 按关系ID分组的关系限制Map
      * @return 关系定义实体
      */
-    private RelationDefinition buildRelationDefinition(ModelRelationPO relationPO,
-                                                       Map<Long, List<RelationRestrictionPO>> restrictionsByRelationId) {
+    private RelationDefinition buildRelationDefinition(RelationDefinitionPO relationPO,
+                                                       Map<Long, List<TypeRestrictionPO>> restrictionsByRelationId) {
         Set<String> restrictions = restrictionsByRelationId.getOrDefault(relationPO.getId(), Collections.emptyList())
                 .stream()
                 .map(this::toRestrictionValue)
@@ -255,19 +255,19 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     private void deleteModelAssociateStructure(String storeId, String modelId) {
         conditionDefinitionPersistenceRepository.deleteByModelId(storeId, modelId);
 
-        List<SubjectDefinitionPO> typeDefinitions = subjectDefinitionPersistenceRepository.selectByModelId(storeId, modelId);
+        List<TypeDefinitionPO> typeDefinitions = subjectDefinitionPersistenceRepository.selectByModelId(storeId, modelId);
         if (CollectionUtils.isEmpty(typeDefinitions)) {
             return;
         }
 
         subjectDefinitionPersistenceRepository.deleteByModelId(storeId, modelId);
-        Set<Long> typeIdSet = typeDefinitions.stream().map(SubjectDefinitionPO::getId).collect(Collectors.toSet());
-        List<ModelRelationPO> relations = modelRelationPersistenceRepository.selectByTypeDefinitionId(typeIdSet);
+        Set<Long> typeIdSet = typeDefinitions.stream().map(TypeDefinitionPO::getId).collect(Collectors.toSet());
+        List<RelationDefinitionPO> relations = modelRelationPersistenceRepository.selectByTypeDefinitionId(typeIdSet);
         modelRelationPersistenceRepository.deleteByTypeDefinitionIds(typeIdSet);
         if (CollectionUtils.isEmpty(relations)) {
             return;
         }
-        Set<Long> relationIdSet = relations.stream().map(ModelRelationPO::getId).collect(Collectors.toSet());
+        Set<Long> relationIdSet = relations.stream().map(RelationDefinitionPO::getId).collect(Collectors.toSet());
         if (CollectionUtils.isEmpty(relationIdSet)) {
             return;
         }
@@ -283,10 +283,10 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @return 按主体类型分组的ID映射Map
      */
     private Map<String, Long> saveSubjectDefinitions(String storeId, String modelId, List<TypeDefinition> typeDefinitions) {
-        List<SubjectDefinitionPO> poList = new ArrayList<>(typeDefinitions.size());
+        List<TypeDefinitionPO> poList = new ArrayList<>(typeDefinitions.size());
         for (int i = 0; i < typeDefinitions.size(); i++) {
             TypeDefinition entity = typeDefinitions.get(i);
-            SubjectDefinitionPO po = new SubjectDefinitionPO();
+            TypeDefinitionPO po = new TypeDefinitionPO();
             po.setStoreId(storeId);
             po.setModelId(modelId);
             po.setSubjectType(entity.getSubjectType());
@@ -296,7 +296,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
 
         subjectDefinitionPersistenceRepository.saveBatch(poList);
         return poList.stream()
-                .collect(Collectors.toMap(SubjectDefinitionPO::getSubjectType, SubjectDefinitionPO::getId));
+                .collect(Collectors.toMap(TypeDefinitionPO::getSubjectType, TypeDefinitionPO::getId));
     }
 
     /**
@@ -307,7 +307,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @return 按主体类型:关系名称分组的ID映射Map
      */
     private Map<String, Long> saveModelRelations(List<TypeDefinition> typeDefinitions, Map<String, Long> typeToIdMap) {
-        List<ModelRelationPO> poList = new ArrayList<>();
+        List<RelationDefinitionPO> poList = new ArrayList<>();
 
         for (TypeDefinition typeEntity : typeDefinitions) {
             Map<String, RelationDefinition> relations = typeEntity.getRelations();
@@ -317,7 +317,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
 
             Long typeDefId = typeToIdMap.get(typeEntity.getSubjectType());
             for (RelationDefinition relationDef : relations.values()) {
-                ModelRelationPO po = new ModelRelationPO();
+                RelationDefinitionPO po = new RelationDefinitionPO();
                 po.setTypeDefinitionId(typeDefId);
                 po.setSubjectType(typeEntity.getSubjectType());
                 po.setRelationName(relationDef.relationName());
@@ -334,7 +334,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
 
         return poList.stream().collect(Collectors.toMap(
                 po -> po.getSubjectType() + ":" + po.getRelationName(),
-                ModelRelationPO::getId));
+                RelationDefinitionPO::getId));
     }
 
     /**
@@ -365,7 +365,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @param relationKeyToIdMap 按主体类型:关系名称分组的ID映射Map
      */
     private void saveRelationRestrictions(List<TypeDefinition> typeDefinitions, Map<String, Long> relationKeyToIdMap) {
-        List<RelationRestrictionPO> poList = new ArrayList<>();
+        List<TypeRestrictionPO> poList = new ArrayList<>();
 
         for (TypeDefinition typeEntity : typeDefinitions) {
             Map<String, RelationDefinition> relations = typeEntity.getRelations();
@@ -388,7 +388,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
                 for (String restrictionValue : restrictions) {
                     String allowedType = extractAllowedType(restrictionValue);
                     String allowedSubjectRelation = extractAllowedSubjectRelation(restrictionValue);
-                    poList.add(new RelationRestrictionPO(relationId, allowedType, allowedSubjectRelation));
+                    poList.add(new TypeRestrictionPO(relationId, allowedType, allowedSubjectRelation));
                 }
             }
         }
@@ -405,7 +405,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * @param po 关系限制PO对象
      * @return 限制值字符串，格式为"allowedType"或"allowedType#allowedSubjectRelation"
      */
-    private String toRestrictionValue(RelationRestrictionPO po) {
+    private String toRestrictionValue(TypeRestrictionPO po) {
         if (po == null || StringUtils.isBlank(po.getAllowedType())) {
             return null;
         }

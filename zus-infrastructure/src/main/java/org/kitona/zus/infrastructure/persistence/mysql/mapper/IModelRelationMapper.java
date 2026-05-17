@@ -2,7 +2,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ModelRelationPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationDefinitionPO;
 
 /**
  * FGA 关系定义 Mapper
@@ -15,5 +15,5 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.ModelRelationPO;
  * @since 2025-01-15
  */
 @Mapper
-public interface IModelRelationMapper extends BaseMapper<ModelRelationPO> {
+public interface IModelRelationMapper extends BaseMapper<RelationDefinitionPO> {
 }

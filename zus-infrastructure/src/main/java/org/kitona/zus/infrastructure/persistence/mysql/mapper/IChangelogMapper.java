@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * @since 2025-01-15
  */
 @Mapper
-public interface IChangelogMapper extends BaseMapper<ChangelogPO> {
+public interface IChangelogMapper extends BaseMapper<TupleChangelogPO> {
 
-    int batchInsert(@Param("list") List<ChangelogPO> list);
+    int batchInsert(@Param("list") List<TupleChangelogPO> list);
 }

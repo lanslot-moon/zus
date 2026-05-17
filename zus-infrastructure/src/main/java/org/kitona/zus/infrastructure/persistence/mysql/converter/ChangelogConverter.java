@@ -2,7 +2,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.converter;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import org.kitona.zus.domain.authorization.audit.Changelog;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,7 +20,7 @@ public final class ChangelogConverter {
     /**
      * PO 转换为领域实体（持久化重建）
      */
-    public static Changelog toEntity(ChangelogPO po) {
+    public static Changelog toEntity(TupleChangelogPO po) {
         if (po == null) {
             return null;
         }
@@ -44,11 +44,11 @@ public final class ChangelogConverter {
     /**
      * 领域实体转换为 PO
      */
-    public static ChangelogPO toPO(Changelog entity) {
+    public static TupleChangelogPO toPO(Changelog entity) {
         if (entity == null) {
             return null;
         }
-        ChangelogPO po = new ChangelogPO();
+        TupleChangelogPO po = new TupleChangelogPO();
         po.setId(IdWorker.getId());
         po.setStoreId(entity.getStoreId());
         po.setZookie(entity.getZookie());
@@ -58,7 +58,7 @@ public final class ChangelogConverter {
         po.setRelation(entity.getRelation());
         po.setSubjectType(entity.getSubjectType());
         po.setSubjectId(entity.getSubjectId());
-        po.setSubjectRelation(entity.getSubjectRelation());
+        po.setSubjectRelation(normalizeSubjectRelation(entity.getSubjectRelation()));
         po.setOperatorId(entity.getOperatorId());
         po.setRequestId(entity.getRequestId());
         po.setSource(entity.getSource());
@@ -66,14 +66,18 @@ public final class ChangelogConverter {
         return po;
     }
 
-    public static List<Changelog> toEntityList(List<ChangelogPO> list) {
+    private static String normalizeSubjectRelation(String subjectRelation) {
+        return subjectRelation == null ? "" : subjectRelation;
+    }
+
+    public static List<Changelog> toEntityList(List<TupleChangelogPO> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }
         return list.stream().map(ChangelogConverter::toEntity).toList();
     }
 
-    public static List<ChangelogPO> toPOList(List<Changelog> list) {
+    public static List<TupleChangelogPO> toPOList(List<Changelog> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }

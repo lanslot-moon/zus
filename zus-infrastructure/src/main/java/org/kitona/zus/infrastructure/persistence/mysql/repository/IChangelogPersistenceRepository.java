@@ -1,7 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO;
 
 import java.util.List;
 
@@ -17,9 +17,9 @@ import java.util.List;
  * @version 1.1.0
  * @since 2025-02-06
  */
-public interface IChangelogPersistenceRepository extends IService<ChangelogPO> {
+public interface IChangelogPersistenceRepository extends IService<TupleChangelogPO> {
 
-    boolean batchCreate(List<ChangelogPO> changelogs);
+    boolean batchCreate(List<TupleChangelogPO> changelogs);
 
     /**
      * 按 Zookie 范围查询变更日志，用于 Watch 增量拉取
@@ -30,7 +30,7 @@ public interface IChangelogPersistenceRepository extends IService<ChangelogPO> {
      * @param limit       最大返回条数
      * @return 变更日志列表，按 Zookie 升序
      */
-    List<ChangelogPO> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit);
+    List<TupleChangelogPO> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit);
 
     /**
      * 查询指定 Zookie 之后的变更，用于 Watch 轮询
@@ -40,7 +40,7 @@ public interface IChangelogPersistenceRepository extends IService<ChangelogPO> {
      * @param limit       最大返回条数
      * @return 变更日志列表，按 Zookie 升序
      */
-    List<ChangelogPO> findAfterZookie(String storeId, Long afterZookie, Integer limit);
+    List<TupleChangelogPO> findAfterZookie(String storeId, Long afterZookie, Integer limit);
 
     /**
      * 获取该存储空间当前最大 Zookie
@@ -66,5 +66,5 @@ public interface IChangelogPersistenceRepository extends IService<ChangelogPO> {
      * @param limit   最大返回条数
      * @return 变更日志列表
      */
-    List<ChangelogPO> findRecentChanges(String storeId, Integer limit);
+    List<TupleChangelogPO> findRecentChanges(String storeId, Integer limit);
 }

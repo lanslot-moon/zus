@@ -30,7 +30,7 @@ import java.io.Serializable;
 @TableName("fga_tuple_changelog")
 @Data
 @Accessors(chain = true)
-public class ChangelogPO extends BaseIdPO implements Serializable {
+public class TupleChangelogPO extends BaseIdPO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

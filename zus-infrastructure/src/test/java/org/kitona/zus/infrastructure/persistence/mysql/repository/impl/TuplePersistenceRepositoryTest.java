@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kitona.zus.infrastructure.cache.FgaCacheManager;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
 import org.kitona.zus.infrastructure.persistence.mysql.mapper.ITupleMapper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -33,7 +33,7 @@ class TuplePersistenceRepositoryTest {
 
     @Test
     void shouldInvalidateTupleAndCheckCacheWhenBatchCreated() {
-        TuplePO tuple = new TuplePO();
+        RelationTuplePO tuple = new RelationTuplePO();
         tuple.setStoreId("store-1");
         tuple.setObjectType("document");
         tuple.setObjectId("doc-1");

@@ -2,7 +2,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeRestrictionPO;
 
 /**
  * FGA 关系类型限制 Mapper
@@ -15,5 +15,5 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictio
  * @since 2025-01-15
  */
 @Mapper
-public interface IRelationRestrictionMapper extends BaseMapper<RelationRestrictionPO> {
+public interface IRelationRestrictionMapper extends BaseMapper<TypeRestrictionPO> {
 }

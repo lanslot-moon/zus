@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.*;
  * FGA 授权模型 API
  *
  * 对应数据库表：
- * - fga_authorization_model: 授权模型主表
+ * - fga_auth_model: 授权模型主表
  * - fga_type_definition: 类型定义表
- * - fga_model_relation: 关系定义表
- * - fga_relation_restriction: 关系类型限制表
+ * - fga_relation_definition: 关系定义表
+ * - fga_type_restriction: 关系类型限制表
  *
  * storeId 说明：来自 URL 路径 /fga/stores/{storeId}，由调用方传入。获取方式：先调用 POST /fga/stores 创建或
  * GET /fga/stores 列出，从响应中取得 storeId；或按业务约定使用。详见 zus-api/docs/FGA_STORE_ID.md。

@@ -3,7 +3,7 @@
 <mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.ITupleMapper">
 
     <!-- 通用结果映射（与 fga_relation_tuple 表一致） -->
-    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO">
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
         <result column="object_type" property="objectType"/>
@@ -18,7 +18,6 @@
         <result column="condition_name" property="conditionName"/>
         <result column="condition_context" property="conditionContext"/>
         <result column="expires_at" property="expiresAt"/>
-        <result column="tenant_id" property="tenantId"/>
         <result column="create_time" property="createTime"/>
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
@@ -27,12 +26,12 @@
     <insert id="batchInsert">
         INSERT INTO fga_relation_tuple
             (id, store_id, object_type, object_id, relation, subject_type, subject_id,
-             subject_relation, is_wildcard, zookie, condition_definition_id, condition_name, condition_context, expires_at, tenant_id, create_time, is_deleted)
+             subject_relation, is_wildcard, zookie, condition_definition_id, condition_name, condition_context, expires_at, create_time, is_deleted)
         VALUES
         <foreach collection="list" item="item" separator=",">
             (#{item.id}, #{item.storeId}, #{item.objectType}, #{item.objectId}, #{item.relation},
              #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation}, #{item.isWildcard},
-             #{item.zookie}, #{item.conditionDefinitionId}, #{item.conditionName}, #{item.conditionContext}, #{item.expiresAt}, #{item.tenantId},
+             #{item.zookie}, #{item.conditionDefinitionId}, #{item.conditionName}, #{item.conditionContext}, #{item.expiresAt},
              #{item.createTime}, 0)
         </foreach>
     </insert>

@@ -9,7 +9,7 @@ import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
 import org.kitona.zus.domain.repository.ITupleQueryRepository;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.TupleConverter;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleSubjectQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.ITuplePersistenceRepository;
 import org.springframework.stereotype.Repository;
@@ -33,7 +33,7 @@ public class TupleQueryRepositoryAdapter implements ITupleQueryRepository, IDire
 
     @Override
     public List<RelationTuple> list(TupleQueryCriteria criteria) {
-        List<TuplePO> poList = tupleRepository.listTuplesWithFilter(
+        List<RelationTuplePO> poList = tupleRepository.listTuplesWithFilter(
                 criteria.storeId(),
                 criteria.objectType(),
                 criteria.objectId(),

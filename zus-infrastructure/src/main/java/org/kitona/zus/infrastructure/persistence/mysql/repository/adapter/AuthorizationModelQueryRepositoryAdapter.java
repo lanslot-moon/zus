@@ -5,7 +5,7 @@ import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.domain.repository.IAuthorizationModelQueryRepository;
 import org.kitona.zus.domain.valueobject.CursorPageResult;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.AuthorizationModelConverter;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IAuthorizationModelPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
@@ -27,7 +27,7 @@ public class AuthorizationModelQueryRepositoryAdapter implements IAuthorizationM
 
     @Override
     public CursorPageResult<AuthorizationModelView> findPageViewByCursor(String storeId, Integer status, String pageToken, int pageSize) {
-        List<AuthorizationModelPO> modelPOs = authorizationModelPersistenceRepository.findPageByCursor(storeId, status, pageToken, pageSize);
+        List<AuthModelPO> modelPOs = authorizationModelPersistenceRepository.findPageByCursor(storeId, status, pageToken, pageSize);
         if (CollectionUtils.isEmpty(modelPOs)) {
             return CursorPageResult.empty();
         }

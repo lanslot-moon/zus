@@ -1,7 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +17,7 @@ import java.util.Set;
  * @version 1.0.0
  * @since 2025-02-06
  */
-public interface ISubjectDefinitionPersistenceRepository extends IService<SubjectDefinitionPO> {
+public interface ISubjectDefinitionPersistenceRepository extends IService<TypeDefinitionPO> {
 
     /**
      * 按存储空间与模型 ID 查询该模型下所有类型定义，未删除，按 sort_order 与 id 升序
@@ -26,7 +26,7 @@ public interface ISubjectDefinitionPersistenceRepository extends IService<Subjec
      * @param modelId 授权模型 ID
      * @return 类型定义列表，无则返回空列表
      */
-    List<SubjectDefinitionPO> selectByModelId(String storeId, String modelId);
+    List<TypeDefinitionPO> selectByModelId(String storeId, String modelId);
 
 
     /**
@@ -36,7 +36,7 @@ public interface ISubjectDefinitionPersistenceRepository extends IService<Subjec
      * @param modelId 授权模型 ID
      * @return 类型定义列表，无则返回空列表
      */
-    List<SubjectDefinitionPO> selectByModelIdList(String storeId, Set<String> modelId);
+    List<TypeDefinitionPO> selectByModelIdList(String storeId, Set<String> modelId);
 
     /**
      * 按存储空间、模型 ID 和类型名查询类型定义
@@ -46,7 +46,7 @@ public interface ISubjectDefinitionPersistenceRepository extends IService<Subjec
      * @param type    类型名
      * @return 类型定义
      */
-    Optional<SubjectDefinitionPO> selectByType(String storeId, String modelId, String type);
+    Optional<TypeDefinitionPO> selectByType(String storeId, String modelId, String type);
 
     /**
      * 按存储空间与模型 ID 逻辑删除该模型下全部类型定义

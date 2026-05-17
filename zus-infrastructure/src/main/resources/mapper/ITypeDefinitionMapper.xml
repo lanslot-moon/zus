@@ -2,19 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.ITypeDefinitionMapper">
 
-    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO">
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO">
         <id column="id" property="id"/>
         <result column="store_id" property="storeId"/>
         <result column="model_id" property="modelId"/>
         <result column="type" property="subjectType"/>
         <result column="sort_order" property="sortOrder"/>
-        <result column="tenant_id" property="tenantId"/>
         <result column="create_time" property="createTime"/>
         <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
     <select id="selectByModelId" resultMap="BaseResultMap">
-        SELECT id, store_id, model_id, type, sort_order, tenant_id, create_time, is_deleted
+        SELECT id, store_id, model_id, type, sort_order, create_time, is_deleted
         FROM fga_type_definition
         WHERE store_id = #{storeId} AND model_id = #{modelId} AND (is_deleted = 0 OR is_deleted IS NULL)
         ORDER BY sort_order ASC, id ASC
@@ -25,4 +24,3 @@
         WHERE store_id = #{storeId} AND model_id = #{modelId}
     </update>
 </mapper>
-

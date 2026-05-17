@@ -11,7 +11,6 @@
         <result column="current_model_id" property="currentModelId"/>
         <result column="current_zookie" property="currentZookie"/>
         <result column="status" property="status"/>
-        <result column="tenant_id" property="tenantId"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
         <result column="is_deleted" property="isDeleted"/>

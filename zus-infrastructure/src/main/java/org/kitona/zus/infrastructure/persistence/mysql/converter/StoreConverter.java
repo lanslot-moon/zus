@@ -30,7 +30,6 @@ public final class StoreConverter {
                 po.getDescription(),
                 po.getCurrentModelId(),
                 StoreStatus.fromCode(po.getStatus()),
-                po.getTenantId(),
                 po.getCreateTime()
         );
         return StoreAggregate.reconstitute(snapshot);
@@ -50,7 +49,6 @@ public final class StoreConverter {
         po.setDescription(aggregate.getDescription());
         po.setCurrentModelId(aggregate.getCurrentModelId());
         po.setStatus(aggregate.getStatusCode());
-        po.setTenantId(aggregate.getTenantId());
         po.setCreateTime(aggregate.getCreateTime());
         return po;
     }

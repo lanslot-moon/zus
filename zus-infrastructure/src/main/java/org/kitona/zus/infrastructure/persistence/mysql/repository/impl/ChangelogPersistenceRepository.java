@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO;
 import org.kitona.zus.infrastructure.persistence.mysql.mapper.IChangelogMapper;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IChangelogPersistenceRepository;
 import org.springframework.stereotype.Repository;
@@ -26,7 +26,7 @@ import java.util.List;
  */
 @Slf4j
 @Repository
-public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
+public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelogPO>
         implements IChangelogPersistenceRepository {
 
     private static final int DEFAULT_LIMIT = 100;
@@ -37,7 +37,7 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean batchCreate(List<ChangelogPO> changelogs) {
+    public boolean batchCreate(List<TupleChangelogPO> changelogs) {
         if (changelogs == null || changelogs.isEmpty()) {
             return true;
         }
@@ -45,34 +45,34 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
     }
 
     @Override
-    public List<ChangelogPO> findByZookieRange(String storeId, Long startZookie,
+    public List<TupleChangelogPO> findByZookieRange(String storeId, Long startZookie,
             Long endZookie, Integer limit) {
         int effectiveLimit = resolveLimit(limit);
-        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
-                .eq(ChangelogPO::getStoreId, storeId)
-                .gt(ChangelogPO::getZookie, startZookie == null ? 0L : startZookie)
-                .le(endZookie != null, ChangelogPO::getZookie, endZookie)
-                .orderByAsc(ChangelogPO::getZookie);
+        LambdaQueryWrapper<TupleChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(TupleChangelogPO::getStoreId, storeId)
+                .gt(TupleChangelogPO::getZookie, startZookie == null ? 0L : startZookie)
+                .le(endZookie != null, TupleChangelogPO::getZookie, endZookie)
+                .orderByAsc(TupleChangelogPO::getZookie);
         return queryPage(wrapper, effectiveLimit);
     }
 
     @Override
-    public List<ChangelogPO> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
+    public List<TupleChangelogPO> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
         int effectiveLimit = resolveLimit(limit);
-        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
-                .eq(ChangelogPO::getStoreId, storeId)
-                .gt(ChangelogPO::getZookie, afterZookie == null ? 0L : afterZookie)
-                .orderByAsc(ChangelogPO::getZookie);
+        LambdaQueryWrapper<TupleChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(TupleChangelogPO::getStoreId, storeId)
+                .gt(TupleChangelogPO::getZookie, afterZookie == null ? 0L : afterZookie)
+                .orderByAsc(TupleChangelogPO::getZookie);
         return queryPage(wrapper, effectiveLimit);
     }
 
     @Override
     public Long getMaxZookie(String storeId) {
-        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
-                .eq(ChangelogPO::getStoreId, storeId)
-                .select(ChangelogPO::getZookie)
-                .orderByDesc(ChangelogPO::getZookie);
-        List<ChangelogPO> records = queryPage(wrapper, 1);
+        LambdaQueryWrapper<TupleChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(TupleChangelogPO::getStoreId, storeId)
+                .select(TupleChangelogPO::getZookie)
+                .orderByDesc(TupleChangelogPO::getZookie);
+        List<TupleChangelogPO> records = queryPage(wrapper, 1);
         if (records.isEmpty() || records.get(0).getZookie() == null) {
             return 0L;
         }
@@ -82,16 +82,16 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int cleanupBeforeZookie(String storeId, Long beforeZookie) {
-        LambdaQueryWrapper<ChangelogPO> wrapper = getLambdaQueryWrapper()
-                .eq(ChangelogPO::getStoreId, storeId)
-                .lt(ChangelogPO::getZookie, beforeZookie);
+        LambdaQueryWrapper<TupleChangelogPO> wrapper = getLambdaQueryWrapper()
+                .eq(TupleChangelogPO::getStoreId, storeId)
+                .lt(TupleChangelogPO::getZookie, beforeZookie);
         int rows = this.getBaseMapper().delete(wrapper);
         log.info("清理变更日志: storeId={}, beforeZookie={}, count={}", storeId, beforeZookie, rows);
         return rows;
     }
 
     @Override
-    public List<ChangelogPO> findRecentChanges(String storeId, Integer limit) {
+    public List<TupleChangelogPO> findRecentChanges(String storeId, Integer limit) {
         int effectiveLimit = resolveLimit(limit);
         // 先查最大 Zookie
         Long maxZookie = getMaxZookie(storeId);
@@ -103,8 +103,8 @@ public class ChangelogPersistenceRepository extends BaseRepository<ChangelogPO>
         return findByZookieRange(storeId, startZookie, maxZookie, effectiveLimit);
     }
 
-    private List<ChangelogPO> queryPage(LambdaQueryWrapper<ChangelogPO> wrapper, int pageSize) {
-        Page<ChangelogPO> page = new Page<>(1, pageSize, false);
+    private List<TupleChangelogPO> queryPage(LambdaQueryWrapper<TupleChangelogPO> wrapper, int pageSize) {
+        Page<TupleChangelogPO> page = new Page<>(1, pageSize, false);
         return this.page(page, wrapper).getRecords();
     }
 

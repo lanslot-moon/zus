@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 import org.kitona.zus.domain.authorization.audit.Changelog;
 import org.kitona.zus.domain.repository.IChangelogDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.ChangelogConverter;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ChangelogPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IChangelogPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
@@ -26,7 +26,7 @@ public class ChangelogDomainRepositoryAdapter implements IChangelogDomainReposit
         if (changelogs == null || changelogs.isEmpty()) {
             return;
         }
-        List<ChangelogPO> poList = ChangelogConverter.toPOList(changelogs);
+        List<TupleChangelogPO> poList = ChangelogConverter.toPOList(changelogs);
         changelogPersistenceRepository.batchCreate(poList);
     }
 

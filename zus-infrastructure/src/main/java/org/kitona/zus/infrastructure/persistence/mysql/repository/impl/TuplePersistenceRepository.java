@@ -6,7 +6,7 @@ import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
 import org.kitona.zus.infrastructure.cache.FgaCacheManager;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleExistsQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleKeyQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleSubjectQuery;
@@ -31,7 +31,7 @@ import java.util.*;
  * @since 2025-02-06
  */
 @Repository
-public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> implements ITuplePersistenceRepository {
+public class TuplePersistenceRepository extends SoftDeleteRepository<RelationTuplePO> implements ITuplePersistenceRepository {
 
     private static final int DEFAULT_PAGE_SIZE = 100;
     private static final int MAX_PAGE_SIZE = 1000;
@@ -53,15 +53,15 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
         return count > 0;
     }
 
-    private LambdaQueryWrapper<TuplePO> buildLambdaQueryWrapper(TupleExistsQuery query) {
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper();
-        wrapper.eq(TuplePO::getStoreId, query.getStoreId())
-                .eq(TuplePO::getObjectType, query.getObjectType())
-                .eq(TuplePO::getObjectId, query.getObjectId())
-                .eq(TuplePO::getRelation, query.getRelation())
-                .eq(TuplePO::getSubjectType, query.getSubjectType())
-                .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
+    private LambdaQueryWrapper<RelationTuplePO> buildLambdaQueryWrapper(TupleExistsQuery query) {
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper();
+        wrapper.eq(RelationTuplePO::getStoreId, query.getStoreId())
+                .eq(RelationTuplePO::getObjectType, query.getObjectType())
+                .eq(RelationTuplePO::getObjectId, query.getObjectId())
+                .eq(RelationTuplePO::getRelation, query.getRelation())
+                .eq(RelationTuplePO::getSubjectType, query.getSubjectType())
+                .eq(RelationTuplePO::getSubjectId, query.getSubjectId())
+                .le(Objects.nonNull(query.getMaxZookie()), RelationTuplePO::getZookie, query.getMaxZookie());
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
         applyActiveTupleCondition(wrapper, currentTimestamp());
         return wrapper;
@@ -82,71 +82,71 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
     }
 
     @Override
-    public List<TuplePO> findByObjectAndRelation(String storeId, String objectType,
+    public List<RelationTuplePO> findByObjectAndRelation(String storeId, String objectType,
             String objectId, String relation, Long maxZookie) {
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
-                .eq(TuplePO::getStoreId, storeId)
-                .eq(TuplePO::getObjectType, objectType)
-                .eq(TuplePO::getObjectId, objectId)
-                .eq(TuplePO::getRelation, relation)
-                .le(Objects.nonNull(maxZookie), TuplePO::getZookie, maxZookie);
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationTuplePO::getStoreId, storeId)
+                .eq(RelationTuplePO::getObjectType, objectType)
+                .eq(RelationTuplePO::getObjectId, objectId)
+                .eq(RelationTuplePO::getRelation, relation)
+                .le(Objects.nonNull(maxZookie), RelationTuplePO::getZookie, maxZookie);
         applyActiveTupleCondition(wrapper, currentTimestamp());
-        List<TuplePO> tuples = this.list(wrapper);
+        List<RelationTuplePO> tuples = this.list(wrapper);
         return tuples != null ? tuples : Collections.emptyList();
     }
 
     @Override
-    public List<TuplePO> findBySubject(TupleSubjectQuery query) {
+    public List<RelationTuplePO> findBySubject(TupleSubjectQuery query) {
         if (query == null) {
             return Collections.emptyList();
         }
-        List<TuplePO> tuples = this.list(buildLambdaQueryWrapper(query));
+        List<RelationTuplePO> tuples = this.list(buildLambdaQueryWrapper(query));
         return CollectionUtils.isEmpty(tuples) ? Collections.emptyList() : tuples;
     }
 
-    private LambdaQueryWrapper<TuplePO> buildLambdaQueryWrapper(TupleSubjectQuery query) {
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
-                .eq(TuplePO::getStoreId, query.getStoreId())
-                .eq(TuplePO::getObjectType, query.getObjectType())
-                .eq(TuplePO::getRelation, query.getRelation())
-                .eq(TuplePO::getSubjectType, query.getSubjectType())
-                .eq(TuplePO::getSubjectId, query.getSubjectId())
-                .le(Objects.nonNull(query.getMaxZookie()), TuplePO::getZookie, query.getMaxZookie());
+    private LambdaQueryWrapper<RelationTuplePO> buildLambdaQueryWrapper(TupleSubjectQuery query) {
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationTuplePO::getStoreId, query.getStoreId())
+                .eq(RelationTuplePO::getObjectType, query.getObjectType())
+                .eq(RelationTuplePO::getRelation, query.getRelation())
+                .eq(RelationTuplePO::getSubjectType, query.getSubjectType())
+                .eq(RelationTuplePO::getSubjectId, query.getSubjectId())
+                .le(Objects.nonNull(query.getMaxZookie()), RelationTuplePO::getZookie, query.getMaxZookie());
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
         applyActiveTupleCondition(wrapper, currentTimestamp());
         return wrapper;
     }
 
     @Override
-    public List<TuplePO> findByObject(String storeId, String objectType, String objectId,
+    public List<RelationTuplePO> findByObject(String storeId, String objectType, String objectId,
             String relation, Long maxZookie) {
 
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
-                .eq(StringUtils.isNotBlank(storeId), TuplePO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(objectType), TuplePO::getObjectType, objectType)
-                .eq(StringUtils.isNotBlank(objectId), TuplePO::getObjectId, objectId)
-                .eq(StringUtils.isNotBlank(relation), TuplePO::getRelation, relation)
-                .le(Objects.nonNull(maxZookie), TuplePO::getZookie, maxZookie);
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(StringUtils.isNotBlank(storeId), RelationTuplePO::getStoreId, storeId)
+                .eq(StringUtils.isNotBlank(objectType), RelationTuplePO::getObjectType, objectType)
+                .eq(StringUtils.isNotBlank(objectId), RelationTuplePO::getObjectId, objectId)
+                .eq(StringUtils.isNotBlank(relation), RelationTuplePO::getRelation, relation)
+                .le(Objects.nonNull(maxZookie), RelationTuplePO::getZookie, maxZookie);
         applyActiveTupleCondition(wrapper, currentTimestamp());
 
-        List<TuplePO> tuples = super.list(wrapper);
+        List<RelationTuplePO> tuples = super.list(wrapper);
 
         return CollectionUtils.isEmpty(tuples) ? Collections.emptyList() : tuples;
     }
 
     @Override
-    public Optional<TuplePO> findByTupleKey(TupleKeyQuery query) {
+    public Optional<RelationTuplePO> findByTupleKey(TupleKeyQuery query) {
         if (query == null) {
             return Optional.empty();
         }
         // 简单精确查询使用 MyBatis Plus
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
-                .eq(TuplePO::getStoreId, query.getStoreId())
-                .eq(TuplePO::getObjectType, query.getObjectType())
-                .eq(TuplePO::getObjectId, query.getObjectId())
-                .eq(TuplePO::getRelation, query.getRelation())
-                .eq(TuplePO::getSubjectType, query.getSubjectType())
-                .eq(TuplePO::getSubjectId, query.getSubjectId());
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationTuplePO::getStoreId, query.getStoreId())
+                .eq(RelationTuplePO::getObjectType, query.getObjectType())
+                .eq(RelationTuplePO::getObjectId, query.getObjectId())
+                .eq(RelationTuplePO::getRelation, query.getRelation())
+                .eq(RelationTuplePO::getSubjectType, query.getSubjectType())
+                .eq(RelationTuplePO::getSubjectId, query.getSubjectId());
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
         applyActiveTupleCondition(wrapper, currentTimestamp());
 
@@ -155,7 +155,7 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean batchCreate(List<TuplePO> tuples) {
+    public boolean batchCreate(List<RelationTuplePO> tuples) {
         if (tuples == null || tuples.isEmpty()) {
             return false;
         }
@@ -178,9 +178,9 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
             return false;
         }
 
-        LambdaUpdateWrapper<TuplePO> wrapper = new LambdaUpdateWrapper<TuplePO>()
-                .set(TuplePO::getIsDeleted, DeletedStatusEnum.DELETED.getCode())
-                .in(TuplePO::getId, ids).eq(TuplePO::getStoreId, storeId);
+        LambdaUpdateWrapper<RelationTuplePO> wrapper = new LambdaUpdateWrapper<RelationTuplePO>()
+                .set(RelationTuplePO::getIsDeleted, DeletedStatusEnum.DELETED.getCode())
+                .in(RelationTuplePO::getId, ids).eq(RelationTuplePO::getStoreId, storeId);
 
         boolean result = super.update(wrapper);
         if (!result) {
@@ -192,15 +192,15 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
     }
 
     @Override
-    public List<TuplePO> listTuples(String storeId, String objectType, String relation,
+    public List<RelationTuplePO> listTuples(String storeId, String objectType, String relation,
             int pageSize, Long pageToken) {
         // 分页查询使用 MyBatis Plus
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
-                .eq(TuplePO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(objectType), TuplePO::getObjectType, objectType)
-                .eq(StringUtils.isNotBlank(relation), TuplePO::getRelation, relation)
-                .gt(pageToken != null, TuplePO::getId, pageToken)
-                .orderByAsc(TuplePO::getId)
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationTuplePO::getStoreId, storeId)
+                .eq(StringUtils.isNotBlank(objectType), RelationTuplePO::getObjectType, objectType)
+                .eq(StringUtils.isNotBlank(relation), RelationTuplePO::getRelation, relation)
+                .gt(pageToken != null, RelationTuplePO::getId, pageToken)
+                .orderByAsc(RelationTuplePO::getId)
                 .last(LIMIT_CLAUSE_PREFIX + resolvePageSize(pageSize));
         applyActiveTupleCondition(wrapper, currentTimestamp());
 
@@ -208,14 +208,14 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
     }
 
     @Override
-    public List<TuplePO> findByTupleKeys(String storeId, List<TupleKeyQuery> tupleKeyQueries) {
+    public List<RelationTuplePO> findByTupleKeys(String storeId, List<TupleKeyQuery> tupleKeyQueries) {
         if (tupleKeyQueries == null || tupleKeyQueries.isEmpty()) {
             return Collections.emptyList();
         }
 
         // 使用 OR 条件组合多个 TupleKey 查询，避免 N+1 问题
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
-                .eq(TuplePO::getStoreId, storeId);
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationTuplePO::getStoreId, storeId);
         applyActiveTupleCondition(wrapper, currentTimestamp());
 
         wrapper.and(w -> {
@@ -232,50 +232,50 @@ public class TuplePersistenceRepository extends SoftDeleteRepository<TuplePO> im
         return this.list(wrapper);
     }
 
-    private void buildTupleKeyCondition(LambdaQueryWrapper<TuplePO> wrapper, TupleKeyQuery query) {
-        wrapper.eq(TuplePO::getObjectType, query.getObjectType())
-                .eq(TuplePO::getObjectId, query.getObjectId())
-                .eq(TuplePO::getRelation, query.getRelation())
-                .eq(TuplePO::getSubjectType, query.getSubjectType())
-                .eq(TuplePO::getSubjectId, query.getSubjectId());
+    private void buildTupleKeyCondition(LambdaQueryWrapper<RelationTuplePO> wrapper, TupleKeyQuery query) {
+        wrapper.eq(RelationTuplePO::getObjectType, query.getObjectType())
+                .eq(RelationTuplePO::getObjectId, query.getObjectId())
+                .eq(RelationTuplePO::getRelation, query.getRelation())
+                .eq(RelationTuplePO::getSubjectType, query.getSubjectType())
+                .eq(RelationTuplePO::getSubjectId, query.getSubjectId());
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
     }
 
     @Override
-    public List<TuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
+    public List<RelationTuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
             String relation, String subjectType, String subjectId,
             String subjectRelation, int pageSize, Long pageToken, Long maxZookie) {
-        LambdaQueryWrapper<TuplePO> wrapper = getLambdaQueryWrapper()
-                .eq(TuplePO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(objectType), TuplePO::getObjectType, objectType)
-                .eq(StringUtils.isNotBlank(objectId), TuplePO::getObjectId, objectId)
-                .eq(StringUtils.isNotBlank(relation), TuplePO::getRelation, relation)
-                .eq(StringUtils.isNotBlank(subjectType), TuplePO::getSubjectType, subjectType)
-                .eq(StringUtils.isNotBlank(subjectId), TuplePO::getSubjectId, subjectId)
-                .eq(StringUtils.isNotBlank(subjectRelation), TuplePO::getSubjectRelation, subjectRelation)
-                .le(Objects.nonNull(maxZookie), TuplePO::getZookie, maxZookie)
-                .gt(pageToken != null, TuplePO::getId, pageToken)
-                .orderByAsc(TuplePO::getId)
+        LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationTuplePO::getStoreId, storeId)
+                .eq(StringUtils.isNotBlank(objectType), RelationTuplePO::getObjectType, objectType)
+                .eq(StringUtils.isNotBlank(objectId), RelationTuplePO::getObjectId, objectId)
+                .eq(StringUtils.isNotBlank(relation), RelationTuplePO::getRelation, relation)
+                .eq(StringUtils.isNotBlank(subjectType), RelationTuplePO::getSubjectType, subjectType)
+                .eq(StringUtils.isNotBlank(subjectId), RelationTuplePO::getSubjectId, subjectId)
+                .eq(StringUtils.isNotBlank(subjectRelation), RelationTuplePO::getSubjectRelation, subjectRelation)
+                .le(Objects.nonNull(maxZookie), RelationTuplePO::getZookie, maxZookie)
+                .gt(pageToken != null, RelationTuplePO::getId, pageToken)
+                .orderByAsc(RelationTuplePO::getId)
                 .last(LIMIT_CLAUSE_PREFIX + resolvePageSize(pageSize));
         applyActiveTupleCondition(wrapper, currentTimestamp());
 
         return this.list(wrapper);
     }
 
-    private void applyExactSubjectRelationCondition(LambdaQueryWrapper<TuplePO> wrapper, String subjectRelation) {
+    private void applyExactSubjectRelationCondition(LambdaQueryWrapper<RelationTuplePO> wrapper, String subjectRelation) {
         if (StringUtils.isNotBlank(subjectRelation)) {
-            wrapper.eq(TuplePO::getSubjectRelation, subjectRelation);
+            wrapper.eq(RelationTuplePO::getSubjectRelation, subjectRelation);
             return;
         }
-        wrapper.and(condition -> condition.isNull(TuplePO::getSubjectRelation)
+        wrapper.and(condition -> condition.isNull(RelationTuplePO::getSubjectRelation)
                 .or()
-                .eq(TuplePO::getSubjectRelation, ""));
+                .eq(RelationTuplePO::getSubjectRelation, ""));
     }
 
-    private void applyActiveTupleCondition(LambdaQueryWrapper<TuplePO> wrapper, long currentTimestamp) {
-        wrapper.and(condition -> condition.isNull(TuplePO::getExpiresAt)
+    private void applyActiveTupleCondition(LambdaQueryWrapper<RelationTuplePO> wrapper, long currentTimestamp) {
+        wrapper.and(condition -> condition.isNull(RelationTuplePO::getExpiresAt)
                 .or()
-                .gt(TuplePO::getExpiresAt, currentTimestamp));
+                .gt(RelationTuplePO::getExpiresAt, currentTimestamp));
     }
 
     private long currentTimestamp() {

@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.micrometer.common.util.StringUtils;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.ISubjectDefinitionPersistenceRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,62 +21,62 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class TypeDefinitionPersistenceRepository extends SoftDeleteRepository<SubjectDefinitionPO>
+public class TypeDefinitionPersistenceRepository extends SoftDeleteRepository<TypeDefinitionPO>
         implements ISubjectDefinitionPersistenceRepository {
 
     @Override
-    public List<SubjectDefinitionPO> selectByModelId(String storeId, String modelId) {
-        LambdaQueryWrapper<SubjectDefinitionPO> wrapper = new LambdaQueryWrapper<SubjectDefinitionPO>()
-                .eq(StringUtils.isNotBlank(storeId), SubjectDefinitionPO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(modelId), SubjectDefinitionPO::getModelId, modelId)
-                .eq(SubjectDefinitionPO::getIsDeleted, false);
+    public List<TypeDefinitionPO> selectByModelId(String storeId, String modelId) {
+        LambdaQueryWrapper<TypeDefinitionPO> wrapper = new LambdaQueryWrapper<TypeDefinitionPO>()
+                .eq(StringUtils.isNotBlank(storeId), TypeDefinitionPO::getStoreId, storeId)
+                .eq(StringUtils.isNotBlank(modelId), TypeDefinitionPO::getModelId, modelId)
+                .eq(TypeDefinitionPO::getIsDeleted, false);
 
-        List<SubjectDefinitionPO> list = this.list(wrapper);
+        List<TypeDefinitionPO> list = this.list(wrapper);
         return list != null ? list : Collections.emptyList();
     }
 
     @Override
-    public List<SubjectDefinitionPO> selectByModelIdList(String storeId, Set<String> modelId) {
+    public List<TypeDefinitionPO> selectByModelIdList(String storeId, Set<String> modelId) {
         if (Objects.isNull(modelId) || modelId.isEmpty()) {
             return Collections.emptyList();
         }
-        LambdaQueryWrapper<SubjectDefinitionPO> wrapper = new LambdaQueryWrapper<SubjectDefinitionPO>()
-                .eq(StringUtils.isNotBlank(storeId), SubjectDefinitionPO::getStoreId, storeId)
-                .in(SubjectDefinitionPO::getModelId, modelId)
-                .eq(SubjectDefinitionPO::getIsDeleted, false)
-                .orderByAsc(SubjectDefinitionPO::getSortOrder)
-                .orderByAsc(SubjectDefinitionPO::getId);
-        List<SubjectDefinitionPO> list = this.list(wrapper);
+        LambdaQueryWrapper<TypeDefinitionPO> wrapper = new LambdaQueryWrapper<TypeDefinitionPO>()
+                .eq(StringUtils.isNotBlank(storeId), TypeDefinitionPO::getStoreId, storeId)
+                .in(TypeDefinitionPO::getModelId, modelId)
+                .eq(TypeDefinitionPO::getIsDeleted, false)
+                .orderByAsc(TypeDefinitionPO::getSortOrder)
+                .orderByAsc(TypeDefinitionPO::getId);
+        List<TypeDefinitionPO> list = this.list(wrapper);
         return list != null ? list : Collections.emptyList();
     }
 
     @Override
-    public Optional<SubjectDefinitionPO> selectByType(String storeId, String modelId, String type) {
-        LambdaQueryWrapper<SubjectDefinitionPO> wrapper = new LambdaQueryWrapper<SubjectDefinitionPO>()
-                .eq(StringUtils.isNotBlank(storeId), SubjectDefinitionPO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(modelId), SubjectDefinitionPO::getModelId, modelId)
-                .eq(StringUtils.isNotBlank(type), SubjectDefinitionPO::getSubjectType, type)
-                .eq(SubjectDefinitionPO::getIsDeleted, false);
+    public Optional<TypeDefinitionPO> selectByType(String storeId, String modelId, String type) {
+        LambdaQueryWrapper<TypeDefinitionPO> wrapper = new LambdaQueryWrapper<TypeDefinitionPO>()
+                .eq(StringUtils.isNotBlank(storeId), TypeDefinitionPO::getStoreId, storeId)
+                .eq(StringUtils.isNotBlank(modelId), TypeDefinitionPO::getModelId, modelId)
+                .eq(StringUtils.isNotBlank(type), TypeDefinitionPO::getSubjectType, type)
+                .eq(TypeDefinitionPO::getIsDeleted, false);
 
         return Optional.ofNullable(this.getOne(wrapper));
     }
 
     @Override
     public Boolean deleteByModelId(String storeId, String modelId) {
-        LambdaUpdateWrapper<SubjectDefinitionPO> wrapper = new LambdaUpdateWrapper<SubjectDefinitionPO>()
-                .set(SubjectDefinitionPO::getIsDeleted, true)
-                .eq(StringUtils.isNotBlank(storeId), SubjectDefinitionPO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(modelId), SubjectDefinitionPO::getModelId, modelId);
+        LambdaUpdateWrapper<TypeDefinitionPO> wrapper = new LambdaUpdateWrapper<TypeDefinitionPO>()
+                .set(TypeDefinitionPO::getIsDeleted, true)
+                .eq(StringUtils.isNotBlank(storeId), TypeDefinitionPO::getStoreId, storeId)
+                .eq(StringUtils.isNotBlank(modelId), TypeDefinitionPO::getModelId, modelId);
         return this.update(wrapper);
     }
 
     @Override
     public Boolean deleteByType(String storeId, String modelId, String type) {
-        LambdaUpdateWrapper<SubjectDefinitionPO> wrapper = new LambdaUpdateWrapper<SubjectDefinitionPO>()
-                .set(SubjectDefinitionPO::getIsDeleted, true)
-                .eq(StringUtils.isNotBlank(storeId), SubjectDefinitionPO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(modelId), SubjectDefinitionPO::getModelId, modelId)
-                .eq(StringUtils.isNotBlank(type), SubjectDefinitionPO::getSubjectType, type);
+        LambdaUpdateWrapper<TypeDefinitionPO> wrapper = new LambdaUpdateWrapper<TypeDefinitionPO>()
+                .set(TypeDefinitionPO::getIsDeleted, true)
+                .eq(StringUtils.isNotBlank(storeId), TypeDefinitionPO::getStoreId, storeId)
+                .eq(StringUtils.isNotBlank(modelId), TypeDefinitionPO::getModelId, modelId)
+                .eq(StringUtils.isNotBlank(type), TypeDefinitionPO::getSubjectType, type);
         return this.update(wrapper);
     }
 }

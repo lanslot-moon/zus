@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
 
 import java.util.List;
 
@@ -18,7 +18,7 @@ import java.util.List;
  * @since 2025-01-15
  */
 @Mapper
-public interface ITupleMapper extends BaseMapper<TuplePO> {
-    int batchInsert(@Param("list") List<TuplePO> list);
+public interface ITupleMapper extends BaseMapper<RelationTuplePO> {
+    int batchInsert(@Param("list") List<RelationTuplePO> list);
 
 }

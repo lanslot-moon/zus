@@ -2,8 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IModelRelationMapper">
 
-    <!-- 通用结果映射（与 fga_model_relation 表一致） -->
-    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.ModelRelationPO">
+    <!-- 通用结果映射（与 fga_relation_definition 表一致） -->
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.RelationDefinitionPO">
         <id column="id" property="id"/>
         <result column="type_definition_id" property="typeDefinitionId"/>
         <result column="relation_name" property="relationName"/>

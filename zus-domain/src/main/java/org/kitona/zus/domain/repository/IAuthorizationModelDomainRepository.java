@@ -41,10 +41,10 @@ public interface IAuthorizationModelDomainRepository {
      *
      * <p>加载内容包括：
      * <ul>
-     *   <li>模型基本信息（fga_authorization_model）</li>
+     *   <li>模型基本信息（fga_auth_model）</li>
      *   <li>所有类型定义（fga_type_definition）</li>
-     *   <li>所有关系定义（fga_model_relation）</li>
-     *   <li>所有类型限制（fga_relation_restriction）</li>
+     *   <li>所有关系定义（fga_relation_definition）</li>
+     *   <li>所有类型限制（fga_type_restriction）</li>
      * </ul>
      *
      * @param storeId 存储空间ID

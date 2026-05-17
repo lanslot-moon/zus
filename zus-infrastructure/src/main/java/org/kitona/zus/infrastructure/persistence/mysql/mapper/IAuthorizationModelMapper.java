@@ -2,7 +2,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 
 /**
  * 授权模型 Mapper 接口
@@ -15,5 +15,5 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModel
  * @since 2025-01-15
  */
 @Mapper
-public interface IAuthorizationModelMapper extends BaseMapper<AuthorizationModelPO> {
+public interface IAuthorizationModelMapper extends BaseMapper<AuthModelPO> {
 }

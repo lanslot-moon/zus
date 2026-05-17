@@ -32,7 +32,7 @@ import java.io.Serializable;
 @TableName("fga_relation_tuple")
 @Data
 @Accessors(chain = true)
-public class TuplePO extends BaseTenantSoftDeletePO implements Serializable {
+public class RelationTuplePO extends BaseSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -31,6 +31,13 @@
         <flatten-maven-plugin.version>1.7.0</flatten-maven-plugin.version>
         <!--脚手架插件-->
         <maven-archetype-plugin.version>3.4.1</maven-archetype-plugin.version>
+        <!--代码质量插件-->
+        <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+        <checkstyle.version>10.26.1</checkstyle.version>
+        <maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
+        <p3c-pmd.version>2.1.1</p3c-pmd.version>
+        <pmd.minimum-tokens>100</pmd.minimum-tokens>
+        <quality.failOnViolation>true</quality.failOnViolation>
 
         <spring-boot.version>3.3.0</spring-boot.version>
         <spring-cloud.version>2023.0.1</spring-cloud.version>
@@ -305,4 +312,78 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>quality</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-checkstyle-plugin</artifactId>
+                        <version>${maven-checkstyle-plugin.version}</version>
+                        <configuration>
+                            <configLocation>config/checkstyle/checkstyle.xml</configLocation>
+                            <consoleOutput>true</consoleOutput>
+                            <failOnViolation>${quality.failOnViolation}</failOnViolation>
+                            <failsOnError>false</failsOnError>
+                            <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                            <linkXRef>false</linkXRef>
+                            <violationSeverity>warning</violationSeverity>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.puppycrawl.tools</groupId>
+                                <artifactId>checkstyle</artifactId>
+                                <version>${checkstyle.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>checkstyle-check</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-pmd-plugin</artifactId>
+                        <version>${maven-pmd-plugin.version}</version>
+                        <configuration>
+                            <rulesets>
+                                <ruleset>config/pmd/pmd-ruleset.xml</ruleset>
+                            </rulesets>
+                            <targetJdk>${java.version}</targetJdk>
+                            <includeTests>true</includeTests>
+                            <linkXRef>false</linkXRef>
+                            <printFailingErrors>true</printFailingErrors>
+                            <failOnViolation>${quality.failOnViolation}</failOnViolation>
+                            <minimumTokens>${pmd.minimum-tokens}</minimumTokens>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.alibaba.p3c</groupId>
+                                <artifactId>p3c-pmd</artifactId>
+                                <version>${p3c-pmd.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>pmd-check</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                    <goal>cpd-check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.SubjectDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO;
 
 import java.util.List;
 
@@ -15,9 +15,9 @@ import java.util.List;
  * @since 2025-01-15
  */
 @Mapper
-public interface ITypeDefinitionMapper extends BaseMapper<SubjectDefinitionPO> {
+public interface ITypeDefinitionMapper extends BaseMapper<TypeDefinitionPO> {
 
-    List<SubjectDefinitionPO> selectByModelId(@Param("storeId") String storeId, @Param("modelId") String modelId);
+    List<TypeDefinitionPO> selectByModelId(@Param("storeId") String storeId, @Param("modelId") String modelId);
 
     int deleteByModelId(@Param("storeId") String storeId, @Param("modelId") String modelId, @Param("updateTime") Long updateTime);
 }

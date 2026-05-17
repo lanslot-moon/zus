@@ -6,7 +6,7 @@ import org.kitona.zus.domain.read.criteria.TupleKeyCriteria;
 import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
 import org.kitona.zus.domain.repository.ITupleDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.TupleConverter;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleExistsQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleKeyQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.WildcardTupleExistsQuery;
@@ -44,7 +44,7 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
 
     @Override
     public List<RelationTuple> findByObjectAndRelation(TupleQueryCriteria criteria) {
-        List<TuplePO> list = tupleRepository.findByObjectAndRelation(
+        List<RelationTuplePO> list = tupleRepository.findByObjectAndRelation(
                 criteria.storeId(), criteria.objectType(), criteria.objectId(), criteria.relation(), criteria.maxZookie());
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
@@ -80,7 +80,7 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
                 .map(key -> toKeyQuery(criteria.storeId(), key))
                 .collect(Collectors.toList());
 
-        List<TuplePO> poList = tupleRepository.findByTupleKeys(criteria.storeId(), queries);
+        List<RelationTuplePO> poList = tupleRepository.findByTupleKeys(criteria.storeId(), queries);
         return TupleConverter.toEntityList(poList);
     }
 

@@ -14,7 +14,6 @@ import org.kitona.zus.domain.enums.StoreStatus;
  * @param description     描述
  * @param currentModelId  当前模型ID
  * @param status          状态
- * @param tenantId        租户ID
  * @param createTime      创建时间
  * @author kitona
  */
@@ -25,7 +24,6 @@ public record StoreSnapshot(
         String description,
         String currentModelId,
         StoreStatus status,
-        String tenantId,
         Long createTime
 ) {
 }

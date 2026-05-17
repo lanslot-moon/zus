@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeRestrictionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IRelationRestrictionPersistenceRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +14,7 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * 关系类型限制持久化仓储实现（基础设施层，仅 fga_relation_restriction 单表）
+ * 关系类型限制持久化仓储实现（基础设施层，仅 fga_type_restriction 单表）
  *
  * <p>
  * 简单查询使用 MyBatis Plus LambdaQueryWrapper，
@@ -25,37 +25,37 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class RelationRestrictionPersistenceRepository extends SoftDeleteRepository<RelationRestrictionPO>
+public class RelationRestrictionPersistenceRepository extends SoftDeleteRepository<TypeRestrictionPO>
         implements IRelationRestrictionPersistenceRepository {
 
     @Override
-    public List<RelationRestrictionPO> selectByRelationDefinitionId(Long relationDefinitionId) {
-        LambdaQueryWrapper<RelationRestrictionPO> wrapper = getLambdaQueryWrapper()
-                .eq(RelationRestrictionPO::getRelationDefinitionId, relationDefinitionId)
-                .orderByAsc(RelationRestrictionPO::getId);
+    public List<TypeRestrictionPO> selectByRelationDefinitionId(Long relationDefinitionId) {
+        LambdaQueryWrapper<TypeRestrictionPO> wrapper = getLambdaQueryWrapper()
+                .eq(TypeRestrictionPO::getRelationDefinitionId, relationDefinitionId)
+                .orderByAsc(TypeRestrictionPO::getId);
 
         return this.list(wrapper);
     }
 
     @Override
-    public List<RelationRestrictionPO> selectByRelationDefinitionId(Set<Long> relationDefinitionIdSet) {
+    public List<TypeRestrictionPO> selectByRelationDefinitionId(Set<Long> relationDefinitionIdSet) {
         if (Objects.isNull(relationDefinitionIdSet) || relationDefinitionIdSet.isEmpty()) {
             return Collections.emptyList();
         }
-        LambdaQueryWrapper<RelationRestrictionPO> wrapper = getLambdaQueryWrapper()
-                .in(RelationRestrictionPO::getRelationDefinitionId, relationDefinitionIdSet)
-                .eq(RelationRestrictionPO::getIsDeleted, false)
-                .orderByAsc(RelationRestrictionPO::getId);
+        LambdaQueryWrapper<TypeRestrictionPO> wrapper = getLambdaQueryWrapper()
+                .in(TypeRestrictionPO::getRelationDefinitionId, relationDefinitionIdSet)
+                .eq(TypeRestrictionPO::getIsDeleted, false)
+                .orderByAsc(TypeRestrictionPO::getId);
         return this.list(wrapper);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteByRelationDefinitionId(Long relationDefinitionId) {
-        LambdaQueryWrapper<RelationRestrictionPO> wrapper = getLambdaQueryWrapper()
-                .eq(RelationRestrictionPO::getRelationDefinitionId, relationDefinitionId);
+        LambdaQueryWrapper<TypeRestrictionPO> wrapper = getLambdaQueryWrapper()
+                .eq(TypeRestrictionPO::getRelationDefinitionId, relationDefinitionId);
 
-        RelationRestrictionPO updatePO = new RelationRestrictionPO();
+        TypeRestrictionPO updatePO = new TypeRestrictionPO();
         updatePO.setIsDeleted(DeletedStatusEnum.DELETED.getCode());
 
         return this.update(updatePO, wrapper);
@@ -67,10 +67,10 @@ public class RelationRestrictionPersistenceRepository extends SoftDeleteReposito
         if (CollectionUtils.isEmpty(relationDefinitionIds)) {
             return true;
         }
-        LambdaQueryWrapper<RelationRestrictionPO> wrapper = getLambdaQueryWrapper()
-                .in(RelationRestrictionPO::getRelationDefinitionId, relationDefinitionIds);
+        LambdaQueryWrapper<TypeRestrictionPO> wrapper = getLambdaQueryWrapper()
+                .in(TypeRestrictionPO::getRelationDefinitionId, relationDefinitionIds);
 
-        RelationRestrictionPO updatePO = new RelationRestrictionPO();
+        TypeRestrictionPO updatePO = new TypeRestrictionPO();
         updatePO.setIsDeleted(DeletedStatusEnum.DELETED.getCode());
 
         return this.update(updatePO, wrapper);

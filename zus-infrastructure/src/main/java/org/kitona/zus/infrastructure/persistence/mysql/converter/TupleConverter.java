@@ -5,11 +5,10 @@ import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.authorization.tuple.TupleCondition;
 import org.kitona.zus.domain.authorization.tuple.TupleKey;
 import org.kitona.zus.domain.valueobject.Zookie;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Tuple PO 与领域实体 RelationTuple 转换器
@@ -24,7 +23,7 @@ public final class TupleConverter {
     /**
      * PO 转换为领域实体（持久化重建）
      */
-    public static RelationTuple toEntity(TuplePO po) {
+    public static RelationTuple toEntity(RelationTuplePO po) {
         if (po == null) {
             return null;
         }
@@ -51,11 +50,11 @@ public final class TupleConverter {
     /**
      * 领域实体转换为 PO
      */
-    public static TuplePO toPO(RelationTuple entity) {
+    public static RelationTuplePO toPO(RelationTuple entity) {
         if (entity == null) {
             return null;
         }
-        TuplePO po = new TuplePO();
+        RelationTuplePO po = new RelationTuplePO();
         po.setId(entity.getId() != null ? entity.getId() : IdWorker.getId());
         po.setCreateTime(entity.getCreateTime());
         po.setStoreId(entity.getStoreId());
@@ -64,7 +63,7 @@ public final class TupleConverter {
         po.setRelation(entity.getRelation());
         po.setSubjectType(entity.getSubjectType());
         po.setSubjectId(entity.getSubjectId());
-        po.setSubjectRelation(entity.getSubjectRelation());
+        po.setSubjectRelation(normalizeSubjectRelation(entity.getSubjectRelation()));
         po.setIsWildcard(entity.isWildcard());
         po.setZookie(entity.getZookie() != null ? entity.getZookie().getVersion() : null);
         po.setConditionDefinitionId(entity.getConditionDefinitionId());
@@ -74,14 +73,18 @@ public final class TupleConverter {
         return po;
     }
 
-    public static List<RelationTuple> toEntityList(List<TuplePO> list) {
+    private static String normalizeSubjectRelation(String subjectRelation) {
+        return subjectRelation == null ? "" : subjectRelation;
+    }
+
+    public static List<RelationTuple> toEntityList(List<RelationTuplePO> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }
         return list.stream().map(TupleConverter::toEntity).toList();
     }
 
-    public static List<TuplePO> toPOList(List<RelationTuple> list) {
+    public static List<RelationTuplePO> toPOList(List<RelationTuple> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
         }

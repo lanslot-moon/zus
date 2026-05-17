@@ -19,10 +19,10 @@ import java.io.Serializable;
  * @since 2025-01-15
  */
 @EqualsAndHashCode(callSuper = true)
-@TableName("fga_model_relation")
+@TableName("fga_relation_definition")
 @Data
 @Accessors(chain = true)
-public class ModelRelationPO extends BaseSoftDeletePO implements Serializable {
+public class RelationDefinitionPO extends BaseSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

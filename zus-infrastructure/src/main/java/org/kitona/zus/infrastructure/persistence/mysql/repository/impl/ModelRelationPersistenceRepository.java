@@ -3,7 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.micrometer.common.util.StringUtils;
 import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.ModelRelationPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IModelRelationPersistenceRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * 关系定义持久化仓储实现（基础设施层，仅 fga_model_relation 单表）
+ * 关系定义持久化仓储实现（基础设施层，仅 fga_relation_definition 单表）
  *
  * <p>
  * 简单查询使用 MyBatis Plus LambdaQueryWrapper，
@@ -26,35 +26,35 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class ModelRelationPersistenceRepository extends SoftDeleteRepository<ModelRelationPO>
+public class ModelRelationPersistenceRepository extends SoftDeleteRepository<RelationDefinitionPO>
         implements IModelRelationPersistenceRepository {
 
     @Override
-    public List<ModelRelationPO> selectByTypeDefinitionId(Long typeDefinitionId) {
-        LambdaQueryWrapper<ModelRelationPO> wrapper = getLambdaQueryWrapper()
-                .eq(ModelRelationPO::getTypeDefinitionId, typeDefinitionId)
-                .orderByAsc(ModelRelationPO::getId);
+    public List<RelationDefinitionPO> selectByTypeDefinitionId(Long typeDefinitionId) {
+        LambdaQueryWrapper<RelationDefinitionPO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationDefinitionPO::getTypeDefinitionId, typeDefinitionId)
+                .orderByAsc(RelationDefinitionPO::getId);
 
         return this.list(wrapper);
     }
 
     @Override
-    public List<ModelRelationPO> selectByTypeDefinitionId(Set<Long> typeDefinitionId) {
+    public List<RelationDefinitionPO> selectByTypeDefinitionId(Set<Long> typeDefinitionId) {
         if (Objects.isNull(typeDefinitionId) || typeDefinitionId.isEmpty()) {
             return Collections.emptyList();
         }
-        LambdaQueryWrapper<ModelRelationPO> wrapper = getLambdaQueryWrapper()
-                .in(ModelRelationPO::getTypeDefinitionId, typeDefinitionId)
-                .eq(ModelRelationPO::getIsDeleted, false)
-                .orderByAsc(ModelRelationPO::getId);
+        LambdaQueryWrapper<RelationDefinitionPO> wrapper = getLambdaQueryWrapper()
+                .in(RelationDefinitionPO::getTypeDefinitionId, typeDefinitionId)
+                .eq(RelationDefinitionPO::getIsDeleted, false)
+                .orderByAsc(RelationDefinitionPO::getId);
         return this.list(wrapper);
     }
 
     @Override
-    public Optional<ModelRelationPO> selectByRelationName(Long typeDefinitionId, String relationName) {
-        LambdaQueryWrapper<ModelRelationPO> wrapper = getLambdaQueryWrapper()
-                .eq(ModelRelationPO::getTypeDefinitionId, typeDefinitionId)
-                .eq(StringUtils.isNotBlank(relationName), ModelRelationPO::getRelationName, relationName);
+    public Optional<RelationDefinitionPO> selectByRelationName(Long typeDefinitionId, String relationName) {
+        LambdaQueryWrapper<RelationDefinitionPO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationDefinitionPO::getTypeDefinitionId, typeDefinitionId)
+                .eq(StringUtils.isNotBlank(relationName), RelationDefinitionPO::getRelationName, relationName);
 
         return Optional.ofNullable(this.getOne(wrapper));
     }
@@ -62,10 +62,10 @@ public class ModelRelationPersistenceRepository extends SoftDeleteRepository<Mod
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteByTypeDefinitionId(Long typeDefinitionId) {
-        LambdaQueryWrapper<ModelRelationPO> wrapper = getLambdaQueryWrapper()
-                .eq(ModelRelationPO::getTypeDefinitionId, typeDefinitionId);
+        LambdaQueryWrapper<RelationDefinitionPO> wrapper = getLambdaQueryWrapper()
+                .eq(RelationDefinitionPO::getTypeDefinitionId, typeDefinitionId);
 
-        ModelRelationPO modelRelationPO = new ModelRelationPO();
+        RelationDefinitionPO modelRelationPO = new RelationDefinitionPO();
         modelRelationPO.setIsDeleted(DeletedStatusEnum.DELETED.getCode());
         return this.update(modelRelationPO, wrapper);
     }
@@ -75,10 +75,10 @@ public class ModelRelationPersistenceRepository extends SoftDeleteRepository<Mod
         if (Objects.isNull(typeDefinitionIds) || typeDefinitionIds.isEmpty()) {
             return true;
         }
-        LambdaQueryWrapper<ModelRelationPO> wrapper = getLambdaQueryWrapper()
-                .in(ModelRelationPO::getTypeDefinitionId, typeDefinitionIds);
+        LambdaQueryWrapper<RelationDefinitionPO> wrapper = getLambdaQueryWrapper()
+                .in(RelationDefinitionPO::getTypeDefinitionId, typeDefinitionIds);
 
-        ModelRelationPO modelRelationPO = new ModelRelationPO();
+        RelationDefinitionPO modelRelationPO = new RelationDefinitionPO();
         modelRelationPO.setIsDeleted(DeletedStatusEnum.DELETED.getCode());
         return this.update(modelRelationPO, wrapper);
     }

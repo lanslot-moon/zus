@@ -1,7 +1,7 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleExistsQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleKeyQuery;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.query.TupleSubjectQuery;
@@ -18,14 +18,14 @@ import java.util.Optional;
  * {@link org.kitona.zus.domain.repository.ITupleQueryRepository} 职责不同：
  * <ul>
  *   <li>领域层接口：操作领域实体（RelationTuple），定义业务契约</li>
- *   <li>本接口：操作持久化对象（TuplePO），定义技术契约</li>
+ *   <li>本接口：操作持久化对象（RelationTuplePO），定义技术契约</li>
  * </ul>
  *
  * @author kitona
  * @version 1.0.0
  * @since 2025-02-06
  */
-public interface ITuplePersistenceRepository extends IService<TuplePO> {
+public interface ITuplePersistenceRepository extends IService<RelationTuplePO> {
 
     /**
      * 检查指定元组是否存在，支持按 maxZookie 做一致性读取
@@ -53,7 +53,7 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      * @param maxZookie  最大 Zookie，传 null 表示读最新
      * @return 元组列表，无则返回空列表
      */
-    List<TuplePO> findByObjectAndRelation(String storeId, String objectType,
+    List<RelationTuplePO> findByObjectAndRelation(String storeId, String objectType,
                                           String objectId, String relation, Long maxZookie);
 
     /**
@@ -62,7 +62,7 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      * @param query 按主体查询参数（storeId、subject、objectType、relation、maxZookie）
      * @return 元组列表，无则返回空列表
      */
-    List<TuplePO> findBySubject(TupleSubjectQuery query);
+    List<RelationTuplePO> findBySubject(TupleSubjectQuery query);
 
     /**
      * 按资源查询元组列表，用于 ListSubjects 等，可按 relation 过滤
@@ -74,16 +74,16 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      * @param maxZookie  最大 Zookie，传 null 表示读最新
      * @return 元组列表，无则返回空列表
      */
-    List<TuplePO> findByObject(String storeId, String objectType, String objectId,
+    List<RelationTuplePO> findByObject(String storeId, String objectType, String objectId,
                                String relation, Long maxZookie);
 
     /**
      * 按完整元组键查询单条元组
      *
      * @param query 元组键查询参数（storeId、object、relation、subject）
-     * @return 存在则返回 Optional 包装的 TuplePO，否则 empty
+     * @return 存在则返回 Optional 包装的 RelationTuplePO，否则 empty
      */
-    Optional<TuplePO> findByTupleKey(TupleKeyQuery query);
+    Optional<RelationTuplePO> findByTupleKey(TupleKeyQuery query);
 
     /**
      * 批量插入元组
@@ -91,7 +91,7 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      * @param tuples 元组列表
      * @return 实际插入行数
      */
-    boolean batchCreate(List<TuplePO> tuples);
+    boolean batchCreate(List<RelationTuplePO> tuples);
 
     /**
      * 按 ID 批量逻辑删除元组
@@ -112,7 +112,7 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      * @param pageToken  分页游标，上一页最后一条 id，首页传 null
      * @return 元组列表
      */
-    List<TuplePO> listTuples(String storeId, String objectType, String relation, int pageSize, Long pageToken);
+    List<RelationTuplePO> listTuples(String storeId, String objectType, String relation, int pageSize, Long pageToken);
 
     /**
      * 根据多个元组键批量查询（避免 N+1 问题）
@@ -121,7 +121,7 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      * @param tupleKeyQueries 元组键查询参数列表
      * @return 存在的元组列表
      */
-    List<TuplePO> findByTupleKeys(String storeId, List<TupleKeyQuery> tupleKeyQueries);
+    List<RelationTuplePO> findByTupleKeys(String storeId, List<TupleKeyQuery> tupleKeyQueries);
 
     /**
      * 分页列出关系元组（支持完整过滤条件）
@@ -137,7 +137,7 @@ public interface ITuplePersistenceRepository extends IService<TuplePO> {
      * @param pageToken       分页游标（上一页最后一条的ID），首页传 null
      * @return 关系元组 PO 列表
      */
-    List<TuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
+    List<RelationTuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
                                        String relation, String subjectType, String subjectId,
                                        String subjectRelation, int pageSize, Long pageToken,
                                        Long maxZookie);

@@ -41,10 +41,10 @@ public abstract class AbstractControllerTest {
      */
     private static final List<String> TABLES = List.of(
             "fga_store",
-            "fga_authorization_model",
+            "fga_auth_model",
             "fga_type_definition",
-            "fga_model_relation",
-            "fga_relation_restriction",
+            "fga_relation_definition",
+            "fga_type_restriction",
             "fga_condition_definition",
             "fga_relation_tuple",
             "fga_tuple_changelog"

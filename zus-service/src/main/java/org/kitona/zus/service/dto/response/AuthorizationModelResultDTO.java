@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 授权模型结果 DTO
  *
- * 对应数据库表 fga_authorization_model
+ * 对应数据库表 fga_auth_model
  *
  * @author kitona
  * @version 1.0.0

@@ -3,7 +3,7 @@
 -- ============================================================
 --
 -- 表名规范：fga_ 前缀（Fine-Grained Authorization）+ 领域概念
---   fga_store                → 存储空间（多租户隔离单元）
+--   fga_store                → 存储空间（授权模型与关系事实的隔离单元）
 --   fga_auth_model           → 授权模型（DSL 版本化管理）
 --   fga_type_definition      → 类型定义（model 内的 type）
 --   fga_relation_definition  → 关系定义（type 内的 relation + rewrite rule）
@@ -19,15 +19,35 @@
 --   旧名 fga_changelog            → fga_tuple_changelog（明确是元组变更日志，区分未来可能的模型变更日志）
 --   新增 fga_condition_definition → ABAC 条件定义，使 tuple 可通过 condition_definition_id 稳定关联条件
 --
+-- 【租户建模说明】
+--   ReBAC/FGA 中的业务租户不建议建成每张表的 tenant_id 物理列。
+--   推荐把租户、组织、空间等业务边界建模为授权图中的 type，例如 tenant / organization / workspace，
+--   再通过 tuple 表达用户属于哪个租户、资源挂在哪个租户、租户成员拥有哪些权限。
+--   这样可以自然支持用户多租户身份、跨租户共享、组织层级继承和 Explain 授权路径。
+--   Store 只负责承载一组授权模型、tuple 事实、zookie 和 Watch 流，是授权数据空间边界；
+--   tenant 是业务领域节点，不是基础设施层的行级过滤字段。因此核心表不再保留 tenant_id。
+--   ZUS 自身作为多租户 SaaS 时，也不通过每张核心表的 tenant_id 表达平台租户，
+--   而是推荐创建一个控制面 Store，使用 ZUS 自己的 ReBAC 模型表达：
+--     platform_tenant / platform_user / store / api_client 等控制面资源和关系。
+--   例如：store:store_a_prod#parent@platform_tenant:tenant_a，
+--   再通过 check platform_user:alice can_manage_model store:store_a_prod 判断管理权限。
+--   这样可以让 ZUS 通过自身授权引擎管理自身，实现自省机制，并避免 SQL tenant_id
+--   过滤与 ReBAC check 两套权限体系并存导致 Explain、Watch、审计和跨租户管理语义分裂。
+--
 -- ============================================================
 
 -- -----------------------------------------------------------
 -- 1. 存储空间表 (fga_store)
 -- -----------------------------------------------------------
--- 顶层隔离单元，每个 Store 拥有独立的授权模型和元组空间。
+-- 顶层授权数据空间，每个 Store 拥有独立的授权模型和元组事实。
+-- 注意：Store 不是业务租户本身。业务租户应通过模型 type tenant / organization
+-- 以及 relation tuple 表达，而不是通过 tenant_id 物理列过滤。
+-- ZUS 平台租户与 Store 的归属关系也不在本表通过 tenant_id 保存；
+-- 推荐由控制面 Store 的 tuple 表达，以便复用 Check / Explain / Watch / Audit 全链路能力。
 -- 对应领域聚合根：StoreAggregate
 -- 状态机：NORMAL(0) ⇄ DISABLE(1)
 -- -----------------------------------------------------------
+use zus;
 CREATE TABLE IF NOT EXISTS `fga_store` (
     `id`               BIGINT       NOT NULL COMMENT '主键ID（雪花算法）',
     `store_id`         VARCHAR(64)  NOT NULL COMMENT '存储空间唯一标识',
@@ -36,13 +56,11 @@ CREATE TABLE IF NOT EXISTS `fga_store` (
     `current_model_id` VARCHAR(64)  DEFAULT NULL COMMENT '当前激活的授权模型ID，实现模型版本锁定与无损切换',
     `current_zookie`   BIGINT       NOT NULL DEFAULT 0 COMMENT '当前最新Zookie版本号，保障分布式一致性',
     `status`           TINYINT      NOT NULL DEFAULT 0 COMMENT '状态: 0-正常, 1-禁用',
-    `tenant_id`        VARCHAR(64)  DEFAULT NULL COMMENT '租户ID',
     `create_time`      BIGINT       DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
     `update_time`      BIGINT       DEFAULT NULL COMMENT '更新时间(毫秒时间戳)',
     `is_deleted`       TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_store_id` (`store_id`),
-    KEY `idx_tenant` (`tenant_id`)
+    UNIQUE KEY `uk_store_id` (`store_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='FGA存储空间表';
 
@@ -62,16 +80,15 @@ CREATE TABLE IF NOT EXISTS `fga_auth_model` (
     `dsl_text`       TEXT         DEFAULT NULL COMMENT '原始DSL文本（完整保留，支持对比和回放）',
     `status`         TINYINT      NOT NULL DEFAULT 0 COMMENT '状态: 0-草稿, 1-已发布, 2-已废弃',
     `description`    VARCHAR(512) DEFAULT NULL COMMENT '模型描述',
-    `tenant_id`      VARCHAR(64)  DEFAULT NULL,
     `create_time`    BIGINT       DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
     `update_time`    BIGINT       DEFAULT NULL COMMENT '最后更新时间(毫秒时间戳)',
     `publish_time`   BIGINT       DEFAULT NULL COMMENT '发布时间(毫秒时间戳)，DRAFT→PUBLISHED 时写入',
-    `is_deleted`     TINYINT(1)   NOT NULL DEFAULT 0,
+    `is_deleted`     TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_store_model` (`store_id`, `model_id`),
     KEY `idx_store_status` (`store_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='FGA授权模型表';
+  COMMENT='FGA授权模型表，存储 Store 下的模型版本、DSL 快照与发布状态';
 
 
 -- -----------------------------------------------------------
@@ -83,17 +100,16 @@ CREATE TABLE IF NOT EXISTS `fga_auth_model` (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `fga_type_definition` (
     `id`          BIGINT      NOT NULL COMMENT '主键ID',
-    `store_id`    VARCHAR(64) NOT NULL,
-    `model_id`    VARCHAR(64) NOT NULL,
+    `store_id`    VARCHAR(64) NOT NULL COMMENT '所属存储空间ID',
+    `model_id`    VARCHAR(64) NOT NULL COMMENT '所属授权模型ID',
     `type`        VARCHAR(64) NOT NULL COMMENT '类型名（如: document, folder, user）',
     `sort_order`  INT         NOT NULL DEFAULT 0 COMMENT '排序序号（控制DSL输出顺序）',
-    `tenant_id`   VARCHAR(64) DEFAULT NULL,
-    `create_time` BIGINT      DEFAULT NULL,
-    `is_deleted`  TINYINT(1)  NOT NULL DEFAULT 0,
+    `create_time` BIGINT      DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `is_deleted`  TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_model_type` (`store_id`, `model_id`, `type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='FGA类型定义表';
+  COMMENT='FGA类型定义表，存储授权模型中的 object/user type 声明';
 
 
 -- -----------------------------------------------------------
@@ -109,12 +125,12 @@ CREATE TABLE IF NOT EXISTS `fga_relation_definition` (
     `relation_name`        VARCHAR(64)  NOT NULL COMMENT '关系名（如: viewer, editor, owner）',
     `rewrite_expression`   VARCHAR(512) NOT NULL COMMENT '重写表达式（如: self, self or editor, viewer from parent）',
     `relation_type`        TINYINT      NOT NULL DEFAULT 0 COMMENT '关系类型: 0-direct_only, 1-computed_userset, 2-ttu, 3-composite(含多种)',
-    `create_time`          BIGINT       DEFAULT NULL,
-    `is_deleted`           TINYINT(1)   NOT NULL DEFAULT 0,
+    `create_time`          BIGINT       DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `is_deleted`           TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_type_relation` (`type_definition_id`, `relation_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='FGA关系定义表';
+  COMMENT='FGA关系定义表，存储 type 下的 relation 名称、rewrite 表达式与关系类型';
 
 
 -- -----------------------------------------------------------
@@ -128,12 +144,12 @@ CREATE TABLE IF NOT EXISTS `fga_type_restriction` (
     `relation_definition_id`   BIGINT      NOT NULL COMMENT '所属关系定义ID',
     `allowed_type`             VARCHAR(64) NOT NULL COMMENT '允许的主体类型（如: user, group）',
     `allowed_subject_relation` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '允许的主体关系（如: member）；空字符串表示直接用户',
-    `create_time`              BIGINT      DEFAULT NULL,
-    `is_deleted`               TINYINT(1)  NOT NULL DEFAULT 0,
+    `create_time`              BIGINT      DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `is_deleted`               TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_restriction` (`relation_definition_id`, `allowed_type`, `allowed_subject_relation`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='FGA类型限制表';
+  COMMENT='FGA类型限制表，存储 relation 允许写入的 subject type / userset 限制';
 
 
 -- -----------------------------------------------------------
@@ -156,12 +172,12 @@ CREATE TABLE IF NOT EXISTS `fga_condition_definition` (
     `expression`       VARCHAR(1024)  NOT NULL COMMENT '条件表达式（CEL语法）',
     `parameter_schema` JSON           DEFAULT NULL COMMENT '参数结构定义，描述 condition_context 的字段和类型',
     `description`      VARCHAR(256)   DEFAULT NULL COMMENT '条件描述',
-    `create_time`      BIGINT         DEFAULT NULL,
-    `is_deleted`       TINYINT(1)     NOT NULL DEFAULT 0,
+    `create_time`      BIGINT         DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `is_deleted`       TINYINT(1)     NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_condition` (`store_id`, `model_id`, `condition_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='FGA条件定义表——ABAC混合模式';
+  COMMENT='FGA条件定义表，存储 ABAC 混合模式下的 CEL 条件定义与参数结构';
 
 
 -- -----------------------------------------------------------
@@ -169,10 +185,22 @@ CREATE TABLE IF NOT EXISTS `fga_condition_definition` (
 -- -----------------------------------------------------------
 -- 核心数据表：存储所有权限关系实例。
 -- 一条元组 = 关系图上的一条边：subject --relation--> object
+-- 业务租户也是一类 subject/object，例如 tenant:SaaSA、tenant:SaaSB。
+-- 资源归属、租户成员、租户角色都应通过 tuple 表达，而不是额外写入 tenant_id。
+-- 对 ZUS 自身控制面也一样：platform_tenant、store、api_client 等都应作为图节点，
+-- 通过 relation tuple 表达归属、管理、调用和审计权限，避免底层表字段绕过授权引擎。
 --
 -- 关键设计决策：
---   a) subject_relation 使用 NOT NULL DEFAULT '' 而非 NULL，
---      解决 MySQL 唯一索引中 NULL != NULL 导致的重复元组问题
+--   a) subject_relation 使用 NOT NULL DEFAULT '' 而非 NULL：
+--      - ReBAC 中直接主体（如 user:alice）语义上不是“未知关系”，
+--        而是“明确没有 subject relation”，因此用空字符串作为规范化值。
+--      - MySQL 唯一索引中多个 NULL 不会被视为相等。如果允许 NULL，
+--        同一个 direct tuple 可以重复插入多次，破坏 tuple 作为唯一事实源的约束。
+--      - 空字符串能让 tuple key、缓存 key、Watch 事件和 Explain 证据保持同一种表达，
+--        避免同一业务主体在系统里同时出现 NULL 与 '' 两套形态。
+--      - 查询 direct subject 时可以稳定使用等值条件命中索引，不需要写
+--        subject_relation IS NULL OR subject_relation = '' 这类分支条件。
+--      - API / DTO 层可以接收 NULL，但进入持久化层前必须统一规范化为 ''。
 --   b) expires_at 支持临时授权（如7天审计员、24小时分享链接）
 --   c) is_wildcard 标记通配符元组（subject_id='*'），
 --      Check 时需同时匹配精确主体和通配符
@@ -180,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `fga_condition_definition` (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `fga_relation_tuple` (
     `id`                BIGINT       NOT NULL COMMENT '主键ID（雪花算法，天然时间序）',
-    `store_id`          VARCHAR(64)  NOT NULL,
+    `store_id`          VARCHAR(64)  NOT NULL COMMENT '所属存储空间ID',
     `object_type`       VARCHAR(64)  NOT NULL COMMENT 'object 类型',
     `object_id`         VARCHAR(128) NOT NULL COMMENT 'object 标识',
     `relation`          VARCHAR(64)  NOT NULL COMMENT '关系名称',
@@ -193,9 +221,8 @@ CREATE TABLE IF NOT EXISTS `fga_relation_tuple` (
     `condition_context` JSON         DEFAULT NULL COMMENT 'ABAC 上下文参数，由 Check 引擎结合条件表达式动态求值',
     `expires_at`        BIGINT       DEFAULT NULL COMMENT '元组过期时间(毫秒时间戳)，NULL表示永不过期',
     `zookie`            BIGINT       NOT NULL COMMENT 'Zookie版本号，保障分布式读写一致性',
-    `tenant_id`         VARCHAR(64)  DEFAULT NULL,
-    `create_time`       BIGINT       DEFAULT NULL,
-    `is_deleted`        TINYINT(1)   NOT NULL DEFAULT 0,
+    `create_time`       BIGINT       DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `is_deleted`        TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
 
     PRIMARY KEY (`id`),
 
@@ -220,7 +247,7 @@ CREATE TABLE IF NOT EXISTS `fga_relation_tuple` (
     KEY `idx_expires` (`is_deleted`, `expires_at`)
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='FGA关系元组表';
+  COMMENT='FGA关系元组表，存储 subject 与 object 之间的 relation 实例数据';
 
 
 -- -----------------------------------------------------------
@@ -236,15 +263,15 @@ CREATE TABLE IF NOT EXISTS `fga_relation_tuple` (
 -- -----------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `fga_tuple_changelog` (
     `id`                BIGINT       NOT NULL COMMENT '主键ID',
-    `store_id`          VARCHAR(64)  NOT NULL,
+    `store_id`          VARCHAR(64)  NOT NULL COMMENT '所属存储空间ID',
     `zookie`            BIGINT       NOT NULL COMMENT '版本令牌，Watch API 和审计使用',
     `operation`         TINYINT      NOT NULL DEFAULT 0 COMMENT '操作类型: 0=WRITE, 1=DELETE',
-    `object_type`       VARCHAR(64)  NOT NULL,
-    `object_id`         VARCHAR(128) NOT NULL,
-    `relation`          VARCHAR(64)  NOT NULL,
-    `subject_type`      VARCHAR(64)  NOT NULL,
-    `subject_id`        VARCHAR(128) NOT NULL,
-    `subject_relation`  VARCHAR(64)  NOT NULL DEFAULT '',
+    `object_type`       VARCHAR(64)  NOT NULL COMMENT 'object 类型',
+    `object_id`         VARCHAR(128) NOT NULL COMMENT 'object 标识',
+    `relation`          VARCHAR(64)  NOT NULL COMMENT '关系名称',
+    `subject_type`      VARCHAR(64)  NOT NULL COMMENT 'subject 类型',
+    `subject_id`        VARCHAR(128) NOT NULL COMMENT 'subject 标识（通配符为 *）',
+    `subject_relation`  VARCHAR(64)  NOT NULL DEFAULT '' COMMENT 'userset 关系（如 member）；直接用户为空字符串',
     `operator_id`       VARCHAR(128) DEFAULT NULL COMMENT '操作人标识（用户ID或服务账号）',
     `request_id`        VARCHAR(64)  DEFAULT NULL COMMENT '请求追踪ID，关联调用链（如 traceId）',
     `source`            VARCHAR(32)  DEFAULT NULL COMMENT '操作来源: API / SYNC / CLEANUP / MIGRATION',
@@ -254,7 +281,7 @@ CREATE TABLE IF NOT EXISTS `fga_tuple_changelog` (
     KEY `idx_store_time` (`store_id`, `operation_time`),
     KEY `idx_operator` (`operator_id`, `operation_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='FGA元组变更日志表';
+  COMMENT='FGA元组变更日志表，记录 tuple 写入/删除操作以支持审计、Watch 与增量同步';
 
 
 -- ============================================================
@@ -316,7 +343,7 @@ CREATE TABLE IF NOT EXISTS `fga_tuple_changelog` (
 --
 -- 【多租户】
 --   ✓ Store 级逻辑隔离      → store_id 作为所有表的前缀
---   ✓ 租户级物理隔离        → tenant_id 字段
+--   ✓ 业务租户建模          → type tenant / organization + relation tuple
 --
 -- 【模型生命周期】
 --   ✓ DRAFT → PUBLISHED → ABANDONED → fga_auth_model.status

@@ -4,7 +4,7 @@ import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelSnapshot;
 import org.kitona.zus.domain.enums.ModelPublishStatus;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthorizationModelPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 
 /**
  * AuthorizationModel PO 与领域聚合根 AuthorizationModelAggregate 转换器
@@ -19,7 +19,7 @@ public final class AuthorizationModelConverter {
     /**
      * PO 转换为聚合根（通过 reconstitute 重建，不绕过领域创建规则）
      */
-    public static AuthorizationModelAggregate toAggregate(AuthorizationModelPO po) {
+    public static AuthorizationModelAggregate toAggregate(AuthModelPO po) {
         if (po == null) {
             return null;
         }
@@ -39,11 +39,11 @@ public final class AuthorizationModelConverter {
     /**
      * 聚合根转换为 PO
      */
-    public static AuthorizationModelPO toPO(AuthorizationModelAggregate aggregate) {
+    public static AuthModelPO toPO(AuthorizationModelAggregate aggregate) {
         if (aggregate == null) {
             return null;
         }
-        AuthorizationModelPO po = new AuthorizationModelPO();
+        AuthModelPO po = new AuthModelPO();
         po.setStoreId(aggregate.getStoreId());
         po.setModelId(aggregate.getModelId());
         po.setSchemaVersion(aggregate.getSchemaVersion());
@@ -57,7 +57,7 @@ public final class AuthorizationModelConverter {
     /**
      * PO 转换为读侧视图
      */
-    public static AuthorizationModelView toView(AuthorizationModelPO po) {
+    public static AuthorizationModelView toView(AuthModelPO po) {
         if (po == null) {
             return null;
         }

@@ -12,7 +12,7 @@ import java.util.Objects;
 /**
  * 存储空间聚合根
  *
- * StoreAggregate 是权限数据的逻辑隔离单元，是 FGA 系统的顶层聚合根之一。
+ * StoreAggregate 是权限模型与关系事实的逻辑隔离单元，是 FGA 系统的顶层聚合根之一。
  * 它负责维护 store 级别的元数据、当前生效模型指针以及生命周期状态。
  *
  * <p>创建方式（符合 DDD）：
@@ -73,11 +73,6 @@ public class StoreAggregate {
     private StoreStatus status;
 
     /**
-     * 租户ID
-     */
-    private String tenantId;
-
-    /**
      * 创建时间
      */
     private Long createTime;
@@ -136,7 +131,6 @@ public class StoreAggregate {
         store.description = snapshot.description();
         store.currentModelId = snapshot.currentModelId();
         store.status = snapshot.status() != null ? snapshot.status() : StoreStatus.NORMAL;
-        store.tenantId = snapshot.tenantId();
         store.createTime = snapshot.createTime();
         return store;
     }

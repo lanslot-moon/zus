@@ -2,8 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.kitona.zus.infrastructure.persistence.mysql.mapper.IRelationRestrictionMapper">
 
-    <!-- 通用结果映射（与 fga_relation_restriction 表一致） -->
-    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.RelationRestrictionPO">
+    <!-- 通用结果映射（与 fga_type_restriction 表一致） -->
+    <resultMap id="BaseResultMap" type="org.kitona.zus.infrastructure.persistence.mysql.entity.TypeRestrictionPO">
         <id column="id" property="id"/>
         <result column="relation_definition_id" property="relationDefinitionId"/>
         <result column="allowed_type" property="allowedType"/>

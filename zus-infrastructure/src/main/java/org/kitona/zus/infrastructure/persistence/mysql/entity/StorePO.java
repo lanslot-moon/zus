@@ -11,13 +11,16 @@ import java.io.Serializable;
 /**
  * 存储空间持久化对象
  * 
- * Store 是权限数据的逻辑隔离单元，类似于数据库的 Schema 或租户概念。
+ * Store 是权限模型与关系事实的隔离单元，类似于 FGA 命名空间。
  * 该 PO 是持久化与读侧查询载体，不等同于领域聚合本身。
  * 
  * 使用场景：
- * - 多租户隔离：每个租户一个 Store
  * - 环境隔离：dev/staging/prod 各一个 Store
  * - 业务隔离：不同业务系统各一个 Store
+ * - 授权空间隔离：不同产品线或安全域各一个 Store
+ *
+ * <p>业务租户不作为 Store 的物理字段保存，而应建模为 ReBAC 图中的
+ * tenant / organization / workspace 类型，并通过 relation tuple 表达成员和资源归属。
  * 
  * @author kitona
  * @version 1.0.0
@@ -27,7 +30,7 @@ import java.io.Serializable;
 @TableName("fga_store")
 @Data
 @Accessors(chain = true)
-public class StorePO extends BaseTenantTrackableSoftDeletePO implements Serializable {
+public class StorePO extends BaseTrackableSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -54,7 +57,7 @@ public class StorePO extends BaseTenantTrackableSoftDeletePO implements Serializ
 
     /**
      * 当前使用的授权模型ID
-     * 关联 fga_authorization_model 表的 model_id
+     * 关联 fga_auth_model 表的 model_id
      * 为空表示尚未配置授权模型
      */
     private String currentModelId;

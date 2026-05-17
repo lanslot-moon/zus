@@ -22,15 +22,15 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@TableName("fga_relation_restriction")
+@TableName("fga_type_restriction")
 @Data
 @Accessors(chain = true)
-public class RelationRestrictionPO extends BaseSoftDeletePO implements Serializable {
+public class TypeRestrictionPO extends BaseSoftDeletePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /** 关系定义ID（fga_model_relation.id） */
+    /** 关系定义ID（fga_relation_definition.id） */
     private Long relationDefinitionId;
 
     /** 允许的主体类型，如 user、folder */

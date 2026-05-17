@@ -26,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * {@link IFgaAuthModelApiService} 端到端真实链路测试。
  *
  * <p>真实写库：创建 Store → writeModel 草稿 → publish → activate → deprecate / delete，
- * 走完 {@code fga_authorization_model / fga_type_definition / fga_model_relation / fga_relation_restriction}
+ * 走完 {@code fga_auth_model / fga_type_definition / fga_relation_definition / fga_type_restriction}
  * 的所有关联表 CRUD。断言通过接口返回 VO 与 JdbcTemplate 直查双向验证。
  */
 @DisplayName("FGA Authorization Model API 端到端测试")
@@ -54,7 +54,7 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
         assertThat(vo.getStatus()).isEqualTo(0);
 
         Integer modelRows = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM fga_authorization_model WHERE store_id = ? AND model_id = ? AND status = 0",
+                "SELECT count(*) FROM fga_auth_model WHERE store_id = ? AND model_id = ? AND status = 0",
                 Integer.class, storeId, vo.getModelId());
         assertThat(modelRows).isEqualTo(1);
 
@@ -64,7 +64,7 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
         assertThat(typeRows).isGreaterThanOrEqualTo(2);
 
         Integer relationRows = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM fga_model_relation WHERE is_deleted = 0",
+                "SELECT count(*) FROM fga_relation_definition WHERE is_deleted = 0",
                 Integer.class);
         assertThat(relationRows).isGreaterThanOrEqualTo(2);
     }
@@ -81,7 +81,7 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
 
         assertThat(result.getCode()).isEqualTo(501);
         Integer rows = jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM fga_authorization_model WHERE store_id = ?",
+                "SELECT count(*) FROM fga_auth_model WHERE store_id = ?",
                 Integer.class, storeId);
         assertThat(rows).isEqualTo(0);
     }
@@ -224,7 +224,7 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
 
     private Integer queryModelStatus(String storeId, String modelId) {
         return jdbcTemplate.queryForObject(
-                "SELECT status FROM fga_authorization_model WHERE store_id = ? AND model_id = ?",
+                "SELECT status FROM fga_auth_model WHERE store_id = ? AND model_id = ?",
                 Integer.class, storeId, modelId);
     }
 
