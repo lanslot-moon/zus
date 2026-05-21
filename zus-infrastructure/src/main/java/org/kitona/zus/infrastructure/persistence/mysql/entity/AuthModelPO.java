@@ -31,7 +31,7 @@ import java.io.Serializable;
 @TableName("fga_auth_model")
 @Data
 @Accessors(chain = true)
-public class AuthModelPO extends BaseSoftDeletePO implements Serializable {
+public class AuthModelPO extends BasePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

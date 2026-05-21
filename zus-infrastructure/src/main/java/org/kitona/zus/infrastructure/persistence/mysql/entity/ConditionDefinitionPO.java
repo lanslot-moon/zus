@@ -15,7 +15,7 @@ import java.io.Serializable;
 @TableName("fga_condition_definition")
 @Data
 @Accessors(chain = true)
-public class ConditionDefinitionPO extends BaseSoftDeletePO implements Serializable {
+public class ConditionDefinitionPO extends BasePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

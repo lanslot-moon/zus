@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.kitona.zus.api.controller.IFgaAuthModelApiService;
 import org.kitona.zus.api.controller.IFgaStoreApiService;
 import org.kitona.zus.api.request.FgaCreateStoreRequest;
+import org.kitona.zus.api.request.model.FgaConditionDefinitionInput;
 import org.kitona.zus.api.request.model.FgaRelationDefinitionInput;
 import org.kitona.zus.api.request.model.FgaTypeDefinitionInput;
 import org.kitona.zus.api.request.model.FgaTypeRestrictionInput;
@@ -18,6 +19,7 @@ import org.kitona.zus.starter.controller.support.AbstractControllerTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -99,7 +101,7 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
     @DisplayName("完整生命周期：草稿 → 发布 → 激活 → 废弃")
     void fullLifecycle_draftPublishActivateDeprecate() {
         String storeId = newStore();
-        String modelId = modelApi.writeModel(storeId, simpleDocumentModel("viewer")).getData().getModelId();
+        String modelId = modelApi.writeModel(storeId, simpleDocumentModelWithCondition("viewer")).getData().getModelId();
 
         assertThat(modelApi.publishModel(storeId, modelId).getCode()).isEqualTo(200);
         assertThat(queryModelStatus(storeId, modelId)).isEqualTo(1);
@@ -220,6 +222,17 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
                 .description("e2e test model")
                 .typeDefinitions(List.of(documentType, userType))
                 .build();
+    }
+
+    private static FgaWriteAuthorizationModelRequest simpleDocumentModelWithCondition(String... relations) {
+        FgaWriteAuthorizationModelRequest request = simpleDocumentModel(relations);
+        request.setConditions(List.of(FgaConditionDefinitionInput.builder()
+                .name("is_working_hours")
+                .expression("request.hour >= params.start_hour && request.hour < params.end_hour")
+                .parameterSchema(Map.of("start_hour", "int", "end_hour", "int"))
+                .description("工作时间访问")
+                .build()));
+        return request;
     }
 
     private Integer queryModelStatus(String storeId, String modelId) {

@@ -22,7 +22,7 @@ import java.io.Serializable;
 @TableName("user_info")
 @Data
 @Accessors(chain = true)
-public class UserInfoPO extends BaseTrackableSoftDeletePO implements Serializable {
+public class UserInfoPO extends BasePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = -8843592676316039867L;

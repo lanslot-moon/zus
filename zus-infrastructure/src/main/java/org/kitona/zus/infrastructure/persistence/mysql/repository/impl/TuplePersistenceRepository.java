@@ -31,7 +31,7 @@ import java.util.*;
  * @since 2025-02-06
  */
 @Repository
-public class TuplePersistenceRepository extends SoftDeleteRepository<RelationTuplePO> implements ITuplePersistenceRepository {
+public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> implements ITuplePersistenceRepository {
 
     private static final int DEFAULT_PAGE_SIZE = 100;
     private static final int MAX_PAGE_SIZE = 1000;

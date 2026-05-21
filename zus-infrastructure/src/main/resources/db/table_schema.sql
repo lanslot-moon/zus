@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS `fga_type_definition` (
     `type`        VARCHAR(64) NOT NULL COMMENT '类型名（如: document, folder, user）',
     `sort_order`  INT         NOT NULL DEFAULT 0 COMMENT '排序序号（控制DSL输出顺序）',
     `create_time` BIGINT      DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `update_time` BIGINT      DEFAULT NULL COMMENT '更新时间(毫秒时间戳)',
     `is_deleted`  TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_model_type` (`store_id`, `model_id`, `type`)
@@ -126,6 +127,7 @@ CREATE TABLE IF NOT EXISTS `fga_relation_definition` (
     `rewrite_expression`   VARCHAR(512) NOT NULL COMMENT '重写表达式（如: self, self or editor, viewer from parent）',
     `relation_type`        TINYINT      NOT NULL DEFAULT 0 COMMENT '关系类型: 0-direct_only, 1-computed_userset, 2-ttu, 3-composite(含多种)',
     `create_time`          BIGINT       DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `update_time`          BIGINT       DEFAULT NULL COMMENT '更新时间(毫秒时间戳)',
     `is_deleted`           TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_type_relation` (`type_definition_id`, `relation_name`)
@@ -145,6 +147,7 @@ CREATE TABLE IF NOT EXISTS `fga_type_restriction` (
     `allowed_type`             VARCHAR(64) NOT NULL COMMENT '允许的主体类型（如: user, group）',
     `allowed_subject_relation` VARCHAR(64) NOT NULL DEFAULT '' COMMENT '允许的主体关系（如: member）；空字符串表示直接用户',
     `create_time`              BIGINT      DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `update_time`              BIGINT      DEFAULT NULL COMMENT '更新时间(毫秒时间戳)',
     `is_deleted`               TINYINT(1)  NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_restriction` (`relation_definition_id`, `allowed_type`, `allowed_subject_relation`)
@@ -173,6 +176,7 @@ CREATE TABLE IF NOT EXISTS `fga_condition_definition` (
     `parameter_schema` JSON           DEFAULT NULL COMMENT '参数结构定义，描述 condition_context 的字段和类型',
     `description`      VARCHAR(256)   DEFAULT NULL COMMENT '条件描述',
     `create_time`      BIGINT         DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `update_time`      BIGINT         DEFAULT NULL COMMENT '更新时间(毫秒时间戳)',
     `is_deleted`       TINYINT(1)     NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     UNIQUE KEY `uk_condition` (`store_id`, `model_id`, `condition_name`)
@@ -222,6 +226,7 @@ CREATE TABLE IF NOT EXISTS `fga_relation_tuple` (
     `expires_at`        BIGINT       DEFAULT NULL COMMENT '元组过期时间(毫秒时间戳)，NULL表示永不过期',
     `zookie`            BIGINT       NOT NULL COMMENT 'Zookie版本号，保障分布式读写一致性',
     `create_time`       BIGINT       DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `update_time`       BIGINT       DEFAULT NULL COMMENT '更新时间(毫秒时间戳)',
     `is_deleted`        TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
 
     PRIMARY KEY (`id`),
@@ -265,7 +270,7 @@ CREATE TABLE IF NOT EXISTS `fga_tuple_changelog` (
     `id`                BIGINT       NOT NULL COMMENT '主键ID',
     `store_id`          VARCHAR(64)  NOT NULL COMMENT '所属存储空间ID',
     `zookie`            BIGINT       NOT NULL COMMENT '版本令牌，Watch API 和审计使用',
-    `operation`         TINYINT      NOT NULL DEFAULT 0 COMMENT '操作类型: 0=WRITE, 1=DELETE',
+    `operation`         VARCHAR(16)  NOT NULL COMMENT '操作类型: WRITE/DELETE',
     `object_type`       VARCHAR(64)  NOT NULL COMMENT 'object 类型',
     `object_id`         VARCHAR(128) NOT NULL COMMENT 'object 标识',
     `relation`          VARCHAR(64)  NOT NULL COMMENT '关系名称',
@@ -276,6 +281,9 @@ CREATE TABLE IF NOT EXISTS `fga_tuple_changelog` (
     `request_id`        VARCHAR(64)  DEFAULT NULL COMMENT '请求追踪ID，关联调用链（如 traceId）',
     `source`            VARCHAR(32)  DEFAULT NULL COMMENT '操作来源: API / SYNC / CLEANUP / MIGRATION',
     `operation_time`    BIGINT       NOT NULL COMMENT '操作时间(毫秒时间戳)',
+    `create_time`       BIGINT       DEFAULT NULL COMMENT '创建时间(毫秒时间戳)',
+    `update_time`       BIGINT       DEFAULT NULL COMMENT '更新时间(毫秒时间戳)',
+    `is_deleted`        TINYINT(1)   NOT NULL DEFAULT 0 COMMENT '逻辑删除: 0-否, 1-是',
     PRIMARY KEY (`id`),
     KEY `idx_store_zookie` (`store_id`, `zookie`),
     KEY `idx_store_time` (`store_id`, `operation_time`),

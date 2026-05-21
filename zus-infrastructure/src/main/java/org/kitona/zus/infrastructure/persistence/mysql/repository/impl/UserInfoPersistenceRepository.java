@@ -23,7 +23,7 @@ import java.util.Optional;
  * @since 2025-02-06
  */
 @Repository
-public class UserInfoPersistenceRepository extends SoftDeleteRepository<UserInfoPO>
+public class UserInfoPersistenceRepository extends BaseRepository<UserInfoPO>
         implements IUserInfoPersistenceRepository {
 
     @Resource

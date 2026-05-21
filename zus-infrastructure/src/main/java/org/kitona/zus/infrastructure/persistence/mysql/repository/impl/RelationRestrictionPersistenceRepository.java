@@ -25,7 +25,7 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class RelationRestrictionPersistenceRepository extends SoftDeleteRepository<TypeRestrictionPO>
+public class RelationRestrictionPersistenceRepository extends BaseRepository<TypeRestrictionPO>
         implements IRelationRestrictionPersistenceRepository {
 
     @Override

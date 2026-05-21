@@ -22,7 +22,7 @@ import java.util.Set;
  * @since 2025-02-06
  */
 @Repository
-public class TypeDefinitionPersistenceRepository extends SoftDeleteRepository<TypeDefinitionPO>
+public class TypeDefinitionPersistenceRepository extends BaseRepository<TypeDefinitionPO>
         implements ISubjectDefinitionPersistenceRepository {
 
     @Override

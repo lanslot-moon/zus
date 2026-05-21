@@ -31,7 +31,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Repository
-public class StorePersistenceRepository extends SoftDeleteRepository<StorePO> implements IStorePersistenceRepository {
+public class StorePersistenceRepository extends BaseRepository<StorePO> implements IStorePersistenceRepository {
 
     private static final int DEFAULT_PAGE_SIZE = 100;
     private static final int MAX_PAGE_SIZE = 1000;

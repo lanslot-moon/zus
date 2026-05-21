@@ -48,6 +48,7 @@ public final class ChangelogConverter {
         if (entity == null) {
             return null;
         }
+        long operationTime = entity.getOperationTime() != null ? entity.getOperationTime() : System.currentTimeMillis();
         TupleChangelogPO po = new TupleChangelogPO();
         po.setId(IdWorker.getId());
         po.setStoreId(entity.getStoreId());
@@ -62,7 +63,9 @@ public final class ChangelogConverter {
         po.setOperatorId(entity.getOperatorId());
         po.setRequestId(entity.getRequestId());
         po.setSource(entity.getSource());
-        po.setOperationTime(entity.getOperationTime());
+        po.setOperationTime(operationTime);
+        po.setCreateTime(operationTime);
+        po.setUpdateTime(operationTime);
         return po;
     }
 

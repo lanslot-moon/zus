@@ -3,14 +3,11 @@
 --
 -- 与生产 table_schema.sql 的差异：
 --   1) 按 PO 层真实 @TableName 命名：
---      fga_authorization_model / fga_model_relation / fga_relation_restriction
+--      fga_auth_model / fga_relation_definition / fga_type_restriction
 --   2) 去掉 MySQL 特有的 ENGINE / CHARSET / COLLATE / COMMENT 等 DDL 选项
 --   3) JSON 列替换为 VARCHAR（PO 侧本就存字符串）
 --   4) TINYINT(1) 替换为 TINYINT，Boolean 字段用 0/1
---   5) 软删除表不加业务唯一约束：仓储层采用"软删除 + 重新插入"模式，
---      生产 MySQL 下可接受（is_deleted=1 占位会阻塞同键写入，是已知实现约束），
---      但 H2 测试需要在一条事务里完成 publish/update 等"重写关联结构"流程，
---      因此这里仅保留 PRIMARY KEY，业务唯一性由应用层 + 领域约束保证。
+--   5) 保留核心业务唯一约束，确保 H2 端到端测试能覆盖 MySQL 的唯一键行为。
 --
 -- 作用：让 @SpringBootTest 启动 DataSource 后可以执行真实 Mapper/Repository。
 -- ==========================================================================
@@ -24,15 +21,14 @@ CREATE TABLE fga_store (
     current_model_id VARCHAR(64)  DEFAULT NULL,
     current_zookie   BIGINT       NOT NULL DEFAULT 0,
     status           TINYINT      NOT NULL DEFAULT 0,
-    tenant_id        VARCHAR(64)  DEFAULT NULL,
     create_time      BIGINT       DEFAULT NULL,
     update_time      BIGINT       DEFAULT NULL,
     is_deleted       TINYINT      NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
 
-DROP TABLE IF EXISTS fga_authorization_model;
-CREATE TABLE fga_authorization_model (
+DROP TABLE IF EXISTS fga_auth_model;
+CREATE TABLE fga_auth_model (
     id             BIGINT       NOT NULL,
     store_id       VARCHAR(64)  NOT NULL,
     model_id       VARCHAR(64)  NOT NULL,
@@ -40,8 +36,8 @@ CREATE TABLE fga_authorization_model (
     dsl_text       CLOB         DEFAULT NULL,
     status         TINYINT      NOT NULL DEFAULT 0,
     description    VARCHAR(512) DEFAULT NULL,
-    tenant_id      VARCHAR(64)  DEFAULT NULL,
     create_time    BIGINT       DEFAULT NULL,
+    update_time    BIGINT       DEFAULT NULL,
     is_deleted     TINYINT      NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
@@ -53,31 +49,34 @@ CREATE TABLE fga_type_definition (
     model_id    VARCHAR(64) NOT NULL,
     type        VARCHAR(64) NOT NULL,
     sort_order  INT         NOT NULL DEFAULT 0,
-    tenant_id   VARCHAR(64) DEFAULT NULL,
     create_time BIGINT      DEFAULT NULL,
+    update_time BIGINT      DEFAULT NULL,
     is_deleted  TINYINT     NOT NULL DEFAULT 0,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_model_type (store_id, model_id, type)
 );
 
-DROP TABLE IF EXISTS fga_model_relation;
-CREATE TABLE fga_model_relation (
+DROP TABLE IF EXISTS fga_relation_definition;
+CREATE TABLE fga_relation_definition (
     id                 BIGINT       NOT NULL,
     type_definition_id BIGINT       NOT NULL,
     subject_type       VARCHAR(64)  DEFAULT NULL,
     relation_name      VARCHAR(64)  NOT NULL,
     rewrite_expression VARCHAR(512) NOT NULL,
     create_time        BIGINT       DEFAULT NULL,
+    update_time        BIGINT       DEFAULT NULL,
     is_deleted         TINYINT      NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
 
-DROP TABLE IF EXISTS fga_relation_restriction;
-CREATE TABLE fga_relation_restriction (
+DROP TABLE IF EXISTS fga_type_restriction;
+CREATE TABLE fga_type_restriction (
     id                       BIGINT      NOT NULL,
     relation_definition_id   BIGINT      NOT NULL,
     allowed_type             VARCHAR(64) NOT NULL,
     allowed_subject_relation VARCHAR(64) NOT NULL DEFAULT '',
     create_time              BIGINT      DEFAULT NULL,
+    update_time              BIGINT      DEFAULT NULL,
     is_deleted               TINYINT     NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
@@ -92,8 +91,10 @@ CREATE TABLE fga_condition_definition (
     parameter_schema VARCHAR(2048) DEFAULT NULL,
     description      VARCHAR(256)  DEFAULT NULL,
     create_time      BIGINT        DEFAULT NULL,
+    update_time      BIGINT        DEFAULT NULL,
     is_deleted       TINYINT       NOT NULL DEFAULT 0,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_condition (store_id, model_id, condition_name)
 );
 
 DROP TABLE IF EXISTS fga_relation_tuple;
@@ -112,8 +113,8 @@ CREATE TABLE fga_relation_tuple (
     condition_context       VARCHAR(2048) DEFAULT NULL,
     expires_at              BIGINT       DEFAULT NULL,
     zookie                  BIGINT       NOT NULL,
-    tenant_id               VARCHAR(64)  DEFAULT NULL,
     create_time             BIGINT       DEFAULT NULL,
+    update_time             BIGINT       DEFAULT NULL,
     is_deleted              TINYINT      NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );
@@ -134,5 +135,8 @@ CREATE TABLE fga_tuple_changelog (
     request_id       VARCHAR(64)  DEFAULT NULL,
     source           VARCHAR(32)  DEFAULT NULL,
     operation_time   BIGINT       NOT NULL,
+    create_time      BIGINT       DEFAULT NULL,
+    update_time      BIGINT       DEFAULT NULL,
+    is_deleted       TINYINT      NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 );

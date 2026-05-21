@@ -25,7 +25,7 @@ import java.io.Serializable;
 @TableName("fga_type_restriction")
 @Data
 @Accessors(chain = true)
-public class TypeRestrictionPO extends BaseSoftDeletePO implements Serializable {
+public class TypeRestrictionPO extends BasePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

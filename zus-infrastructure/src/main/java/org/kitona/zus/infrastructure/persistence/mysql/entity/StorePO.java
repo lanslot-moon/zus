@@ -30,7 +30,7 @@ import java.io.Serializable;
 @TableName("fga_store")
 @Data
 @Accessors(chain = true)
-public class StorePO extends BaseTrackableSoftDeletePO implements Serializable {
+public class StorePO extends BasePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

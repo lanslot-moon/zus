@@ -22,7 +22,7 @@ import java.io.Serializable;
 @TableName("fga_type_definition")
 @Data
 @Accessors(chain = true)
-public class TypeDefinitionPO extends BaseSoftDeletePO implements Serializable {
+public class TypeDefinitionPO extends BasePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

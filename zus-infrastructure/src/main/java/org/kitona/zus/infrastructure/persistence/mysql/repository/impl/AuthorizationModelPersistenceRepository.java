@@ -25,7 +25,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Repository
-public class AuthorizationModelPersistenceRepository extends SoftDeleteRepository<AuthModelPO>
+public class AuthorizationModelPersistenceRepository extends BaseRepository<AuthModelPO>
         implements IAuthorizationModelPersistenceRepository {
 
     private static final int DEFAULT_PAGE_SIZE = 100;

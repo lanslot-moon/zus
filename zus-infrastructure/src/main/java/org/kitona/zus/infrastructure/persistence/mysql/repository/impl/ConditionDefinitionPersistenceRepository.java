@@ -13,7 +13,7 @@ import java.util.List;
  * 条件定义持久化仓储实现。
  */
 @Repository
-public class ConditionDefinitionPersistenceRepository extends SoftDeleteRepository<ConditionDefinitionPO>
+public class ConditionDefinitionPersistenceRepository extends BaseRepository<ConditionDefinitionPO>
         implements IConditionDefinitionPersistenceRepository {
 
     @Override

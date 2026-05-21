@@ -6,8 +6,11 @@ import org.junit.jupiter.api.Test;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ConditionDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationTuplePO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeRestrictionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -68,6 +71,75 @@ class InfrastructureSchemaAlignmentTest {
                 .containsPattern(createTablePattern(tableName))
                 .contains("`condition_name`")
                 .contains("`parameter_schema`");
+    }
+
+    @Test
+    @DisplayName("元组变更日志操作类型字段使用字符串枚举")
+    void changelogOperationColumnUsesStringEnum() throws IOException {
+        String schema = loadSchema();
+        String tableName = TupleChangelogPO.class.getAnnotation(TableName.class).value();
+
+        assertThat(extractCreateTable(schema, tableName))
+                .contains("`operation`         varchar(16)")
+                .contains("操作类型: write/delete");
+    }
+
+    @Test
+    @DisplayName("核心表都包含创建时间和更新时间字段")
+    void coreTablesContainCreateTimeAndUpdateTime() throws IOException {
+        String schema = loadSchema();
+        List<Class<?>> coreTypes = List.of(
+                StorePO.class,
+                AuthModelPO.class,
+                TypeDefinitionPO.class,
+                RelationDefinitionPO.class,
+                TypeRestrictionPO.class,
+                ConditionDefinitionPO.class,
+                RelationTuplePO.class,
+                TupleChangelogPO.class
+        );
+
+        for (Class<?> coreType : coreTypes) {
+            String tableName = coreType.getAnnotation(TableName.class).value();
+            assertThat(extractCreateTable(schema, tableName))
+                    .as("%s 映射表 %s 必须包含 create_time 和 update_time", coreType.getSimpleName(), tableName)
+                    .contains("`create_time`")
+                    .contains("`update_time`");
+        }
+    }
+
+    @Test
+    @DisplayName("核心表都包含逻辑删除字段")
+    void coreTablesContainSoftDeleteColumn() throws IOException {
+        String schema = loadSchema();
+        List<Class<?>> coreTypes = List.of(
+                StorePO.class,
+                AuthModelPO.class,
+                TypeDefinitionPO.class,
+                RelationDefinitionPO.class,
+                TypeRestrictionPO.class,
+                ConditionDefinitionPO.class,
+                RelationTuplePO.class,
+                TupleChangelogPO.class
+        );
+
+        for (Class<?> coreType : coreTypes) {
+            String tableName = coreType.getAnnotation(TableName.class).value();
+            assertThat(extractCreateTable(schema, tableName))
+                    .as("%s 映射表 %s 必须包含 is_deleted", coreType.getSimpleName(), tableName)
+                    .contains("`is_deleted`");
+        }
+    }
+
+    @Test
+    @DisplayName("旧库补丁包含变更日志 operation 字段类型修复")
+    void legacyPatchMigratesChangelogOperationColumn() throws IOException {
+        String patch = loadResource("/db/patch/20260521_fix_tuple_changelog_operation.sql");
+        String tableName = TupleChangelogPO.class.getAnnotation(TableName.class).value();
+
+        assertThat(patch)
+                .contains(tableName)
+                .contains("modify column operation varchar(16)");
     }
 
     private static String loadSchema() throws IOException {

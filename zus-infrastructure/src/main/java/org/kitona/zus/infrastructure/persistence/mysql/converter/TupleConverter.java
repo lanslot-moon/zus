@@ -57,6 +57,7 @@ public final class TupleConverter {
         RelationTuplePO po = new RelationTuplePO();
         po.setId(entity.getId() != null ? entity.getId() : IdWorker.getId());
         po.setCreateTime(entity.getCreateTime());
+        po.setUpdateTime(entity.getCreateTime());
         po.setStoreId(entity.getStoreId());
         po.setObjectType(entity.getObjectType());
         po.setObjectId(entity.getObjectId());

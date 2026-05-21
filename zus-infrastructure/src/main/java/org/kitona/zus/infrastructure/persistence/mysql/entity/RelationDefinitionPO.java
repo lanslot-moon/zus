@@ -22,7 +22,7 @@ import java.io.Serializable;
 @TableName("fga_relation_definition")
 @Data
 @Accessors(chain = true)
-public class RelationDefinitionPO extends BaseSoftDeletePO implements Serializable {
+public class RelationDefinitionPO extends BasePO implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

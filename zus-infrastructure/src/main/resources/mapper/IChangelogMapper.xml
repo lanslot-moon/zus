@@ -18,17 +18,22 @@
         <result column="request_id" property="requestId"/>
         <result column="source" property="source"/>
         <result column="operation_time" property="operationTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_deleted" property="isDeleted"/>
     </resultMap>
 
     <insert id="batchInsert">
         INSERT INTO fga_tuple_changelog
             (id, store_id, zookie, operation, object_type, object_id, relation,
-             subject_type, subject_id, subject_relation, operator_id, request_id, source, operation_time)
+             subject_type, subject_id, subject_relation, operator_id, request_id, source, operation_time,
+             create_time, update_time, is_deleted)
         VALUES
         <foreach collection="list" item="item" separator=",">
             (#{item.id}, #{item.storeId}, #{item.zookie}, #{item.operation}, #{item.objectType}, #{item.objectId},
              #{item.relation}, #{item.subjectType}, #{item.subjectId}, #{item.subjectRelation},
-             #{item.operatorId}, #{item.requestId}, #{item.source}, #{item.operationTime})
+             #{item.operatorId}, #{item.requestId}, #{item.source}, #{item.operationTime},
+             #{item.createTime}, #{item.updateTime}, 0)
         </foreach>
     </insert>
 
