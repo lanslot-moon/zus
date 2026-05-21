@@ -3,6 +3,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.micrometer.common.util.StringUtils;
+import org.kitona.zus.infrastructure.enums.DeletedStatusEnum;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.ISubjectDefinitionPersistenceRepository;
 import org.springframework.stereotype.Repository;
@@ -66,7 +67,8 @@ public class TypeDefinitionPersistenceRepository extends SoftDeleteRepository<Ty
         LambdaUpdateWrapper<TypeDefinitionPO> wrapper = new LambdaUpdateWrapper<TypeDefinitionPO>()
                 .set(TypeDefinitionPO::getIsDeleted, true)
                 .eq(StringUtils.isNotBlank(storeId), TypeDefinitionPO::getStoreId, storeId)
-                .eq(StringUtils.isNotBlank(modelId), TypeDefinitionPO::getModelId, modelId);
+                .eq(StringUtils.isNotBlank(modelId), TypeDefinitionPO::getModelId, modelId)
+                .eq(TypeDefinitionPO::getIsDeleted, DeletedStatusEnum.NOT_DELETED.getCode());
         return this.update(wrapper);
     }
 
@@ -76,7 +78,8 @@ public class TypeDefinitionPersistenceRepository extends SoftDeleteRepository<Ty
                 .set(TypeDefinitionPO::getIsDeleted, true)
                 .eq(StringUtils.isNotBlank(storeId), TypeDefinitionPO::getStoreId, storeId)
                 .eq(StringUtils.isNotBlank(modelId), TypeDefinitionPO::getModelId, modelId)
-                .eq(StringUtils.isNotBlank(type), TypeDefinitionPO::getSubjectType, type);
+                .eq(StringUtils.isNotBlank(type), TypeDefinitionPO::getSubjectType, type)
+                .eq(TypeDefinitionPO::getIsDeleted, DeletedStatusEnum.NOT_DELETED.getCode());
         return this.update(wrapper);
     }
 }

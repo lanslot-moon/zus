@@ -226,7 +226,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
 
         if (!model.isPublished()) {
             log.warn("AuthorizationModelApplicationService.activateModel 只能激活已发布的模型");
-            throw new ApplicationException(IError.DATA_STATUS_ERROR);
+            throw new ApplicationException(IError.MODEL_NOT_PUBLISH);
         }
 
         if (modelId.equals(store.getCurrentModelId())) {

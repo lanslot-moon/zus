@@ -24,6 +24,9 @@ public enum IError {
     DATA_EXIST_ERROR(4004, "data already exist", "数据已存在"),
 
     DATA_STATUS_ERROR(4005, "data status error", "数据状态异常"),
+
+    MODEL_NOT_PUBLISH(4006, "model not publish", "模型未发布")
+
     ;
 
     private final Integer code;
