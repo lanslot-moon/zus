@@ -3,8 +3,10 @@ package org.kitona.zus.api.controller;
 import jakarta.validation.Valid;
 import org.kitona.zus.api.request.authorization.FgaBatchCheckRequest;
 import org.kitona.zus.api.request.authorization.FgaCheckRequest;
+import org.kitona.zus.api.request.authorization.FgaExplainRequest;
 import org.kitona.zus.api.response.FgaBatchCheckResultVO;
 import org.kitona.zus.api.response.FgaCheckResultVO;
+import org.kitona.zus.api.response.FgaExplainResultVO;
 import org.kitona.zus.api.response.RestResult;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,6 +48,12 @@ public interface IFgaCheckApiService {
      */
     @PostMapping("/check")
     RestResult<FgaCheckResultVO> check(@PathVariable String storeId, @Valid @RequestBody FgaCheckRequest request);
+
+    /**
+     * 解释一次权限检查的证明过程。
+     */
+    @PostMapping("/check/explain")
+    RestResult<FgaExplainResultVO> explain(@PathVariable String storeId, @Valid @RequestBody FgaExplainRequest request);
 
     /**
      * 批量权限检查 —— 一次请求、多条 TupleKey；用于渲染权限列表 / 批量过滤。

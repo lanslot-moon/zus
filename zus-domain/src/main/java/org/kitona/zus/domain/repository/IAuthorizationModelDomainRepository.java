@@ -24,9 +24,9 @@ import java.util.Optional;
  *
  * <p>模型有生命周期状态：草稿(DRAFT) -> 已发布(PUBLISHED) -> 已废弃(ABANDONED)
  *
- * <p>按照 DDD 严格规范，本 Repository 只操作完整聚合根
- * {@link AuthorizationModelAggregate}，包括级联加载/保存所有聚合内实体。
- * 列表/分页等读侧查询由独立的查询仓储承担。
+ * <p>按照 DDD 严格规范，本 Repository 只暴露领域层需要的聚合根访问能力。
+ * 列表/分页等读侧查询由独立的查询仓储承担；创建、发布、废弃、删除等用例动作
+ * 不应该以技术化方法名泄漏到领域仓储接口。
  *
  * @author kitona
  * @version 1.0.0
@@ -52,38 +52,5 @@ public interface IAuthorizationModelDomainRepository {
      * @return 完整的授权模型聚合根，不存在返回 empty
      */
     Optional<AuthorizationModelAggregate> findByModelId(String storeId, String modelId);
-
-    /**
-     * 保存完整聚合根（新增或更新）
-     *
-     * <p>级联保存内容：
-     * <ul>
-     *   <li>模型基本信息</li>
-     *   <li>所有类型定义（先删除再插入）</li>
-     *   <li>所有关系定义（先删除再插入）</li>
-     *   <li>所有类型限制（先删除再插入）</li>
-     * </ul>
-     *
-     * @param aggregate 授权模型聚合根
-     * @return 保存成功返回 true
-     */
-    boolean saveOrUpdateModel(AuthorizationModelAggregate aggregate);
-
-    /**
-     * 删除草稿状态的完整聚合根（级联删除）
-     *
-     * <p>级联删除内容：
-     * <ul>
-     *   <li>模型基本信息</li>
-     *   <li>所有类型定义</li>
-     *   <li>所有关系定义</li>
-     *   <li>所有类型限制</li>
-     * </ul>
-     *
-     * @param storeId 存储空间ID
-     * @param modelId 授权模型ID
-     * @return 删除成功返回 true
-     */
-    boolean deleteDraftModel(String storeId, String modelId);
 
 }

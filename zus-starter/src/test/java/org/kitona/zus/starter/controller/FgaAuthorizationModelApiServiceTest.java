@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.kitona.zus.api.controller.IFgaAuthModelApiService;
 import org.kitona.zus.api.controller.IFgaStoreApiService;
 import org.kitona.zus.api.request.FgaCreateStoreRequest;
-import org.kitona.zus.api.request.model.FgaConditionDefinitionInput;
-import org.kitona.zus.api.request.model.FgaRelationDefinitionInput;
-import org.kitona.zus.api.request.model.FgaTypeDefinitionInput;
+import org.kitona.zus.api.request.model.FgaConditionSchemaInput;
+import org.kitona.zus.api.request.model.FgaRelationSchemaInput;
+import org.kitona.zus.api.request.model.FgaTypeSchemaInput;
 import org.kitona.zus.api.request.model.FgaTypeRestrictionInput;
 import org.kitona.zus.api.request.model.FgaWriteAuthorizationModelRequest;
 import org.kitona.zus.api.response.FgaModelVO;
@@ -18,6 +18,7 @@ import org.kitona.zus.service.exception.ApplicationException;
 import org.kitona.zus.starter.controller.support.AbstractControllerTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -114,6 +115,32 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    @DisplayName("publish 再次保存：全量替换结构，不产生重复行或唯一键冲突")
+    void publishModel_replacesStructureWithoutDuplicateRows() {
+        String storeId = newStore();
+        String modelId = modelApi.writeModel(storeId, simpleDocumentModel("viewer")).getData().getModelId();
+
+        assertThat(modelApi.publishModel(storeId, modelId).getCode()).isEqualTo(200);
+
+        Integer activeTypeRows = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM fga_type_definition WHERE store_id = ? AND model_id = ? AND is_deleted = 0",
+                Integer.class, storeId, modelId);
+        Integer documentRows = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM fga_type_definition WHERE store_id = ? AND model_id = ? AND type = 'document' AND is_deleted = 0",
+                Integer.class, storeId, modelId);
+        Integer viewerRows = jdbcTemplate.queryForObject(
+                "SELECT count(*) FROM fga_relation_definition r "
+                        + "JOIN fga_type_definition t ON r.type_definition_id = t.id "
+                        + "WHERE t.store_id = ? AND t.model_id = ? AND t.type = 'document' "
+                        + "AND r.relation_name = 'viewer' AND t.is_deleted = 0 AND r.is_deleted = 0",
+                Integer.class, storeId, modelId);
+
+        assertThat(activeTypeRows).isEqualTo(2);
+        assertThat(documentRows).isEqualTo(1);
+        assertThat(viewerRows).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("deleteModel 可以删除草稿，已发布模型会抛 ApplicationException")
     void deleteModel_draftOnly() {
         String storeId = newStore();
@@ -165,7 +192,7 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
         FgaModelVO vo = modelApi.getModel(storeId, modelId, "FULL").getData();
         assertThat(vo.getModelId()).isEqualTo(modelId);
         assertThat(vo.getTypes()).isNotNull();
-        assertThat(vo.getTypes()).extracting("type").contains("document", "user");
+        assertThat(vo.getTypes()).containsKeys("document", "user");
 
         assertThatThrownBy(() -> modelApi.getModel(storeId, "missing-id", "FULL"))
                 .isInstanceOf(ApplicationException.class);
@@ -198,36 +225,28 @@ class FgaAuthorizationModelApiServiceTest extends AbstractControllerTest {
     }
 
     private static FgaWriteAuthorizationModelRequest simpleDocumentModel(String... relations) {
-        List<FgaRelationDefinitionInput> relationDefs = List.of(relations).stream()
-                .map(r -> FgaRelationDefinitionInput.builder()
-                        .name(r)
-                        .rewriteExpression("self")
-                        .restrictions(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
-                        .build())
-                .toList();
+        Map<String, FgaRelationSchemaInput> documentRelations = new LinkedHashMap<>();
+        List.of(relations).forEach(relation -> documentRelations.put(relation, FgaRelationSchemaInput.builder()
+                .rewrite("self")
+                .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
+                .build()));
 
-        FgaTypeDefinitionInput documentType = FgaTypeDefinitionInput.builder()
-                .type("document")
-                .relations(relationDefs)
-                .build();
-
-        FgaTypeDefinitionInput userType = FgaTypeDefinitionInput.builder()
-                .type("user")
-                .relations(List.of(FgaRelationDefinitionInput.builder()
-                        .name("self").rewriteExpression("self").build()))
-                .build();
+        Map<String, FgaTypeSchemaInput> types = new LinkedHashMap<>();
+        types.put("document", FgaTypeSchemaInput.builder().relations(documentRelations).build());
+        types.put("user", FgaTypeSchemaInput.builder()
+                .relations(Map.of("self", FgaRelationSchemaInput.builder().rewrite("self").build()))
+                .build());
 
         return FgaWriteAuthorizationModelRequest.builder()
                 .schemaVersion("1.1")
                 .description("e2e test model")
-                .typeDefinitions(List.of(documentType, userType))
+                .types(types)
                 .build();
     }
 
     private static FgaWriteAuthorizationModelRequest simpleDocumentModelWithCondition(String... relations) {
         FgaWriteAuthorizationModelRequest request = simpleDocumentModel(relations);
-        request.setConditions(List.of(FgaConditionDefinitionInput.builder()
-                .name("is_working_hours")
+        request.setConditions(Map.of("is_working_hours", FgaConditionSchemaInput.builder()
                 .expression("request.hour >= params.start_hour && request.hour < params.end_hour")
                 .parameterSchema(Map.of("start_hour", "int", "end_hour", "int"))
                 .description("工作时间访问")

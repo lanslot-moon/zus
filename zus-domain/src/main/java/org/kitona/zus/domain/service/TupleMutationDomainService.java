@@ -20,20 +20,19 @@ import java.util.List;
  *
  * <p>集中处理 tuple 写入/删除的核心业务规则：
  * 生成 zookie、构造 tuple、决定实际删除集合，并同步落库 changelog。
+ *
+ * <h3>架构设计说明：为什么只处理 Tuple 变更？</h3>
+ * <p>在 FGA 模型中，Store、AuthorizationModel 和 Tuple 的生命周期与变更频率完全不同：
+ * <ul>
+ *   <li><b>Tuple（元组）</b>：高频业务数据。每次授权分配都会触发增删，且必须严格生成连续的 {@code zookie} 并强制落库到 {@code fga_tuple_changelog} 以支持强一致性 Check 和 Watch 流。</li>
+ *   <li><b>AuthorizationModel（模型）</b>：低频元数据。一旦发布（Publish）即不可变，其变更不需要写入 Tuple Changelog。</li>
+ *   <li><b>Store（空间）</b>：极低频租户数据。仅在租户生命周期变更时发生。</li>
+ * </ul>
+ * <p>为了遵循 DDD 的<b>高内聚、低耦合</b>与<b>单一职责原则</b>，本服务被设计为仅聚焦于核心的、高并发的 Tuple 变更逻辑。Store 和 Model 的变更由它们各自的聚合根及领域/应用服务独立处理，以此实现变更副作用的物理隔离。
  */
-public final class TupleMutationDomainService {
-
-    private final ITupleDomainRepository tupleRepository;
-    private final IChangelogDomainRepository changelogRepository;
-    private final IZookieSequencePort zookieSequencePort;
-
-    public TupleMutationDomainService(ITupleDomainRepository tupleRepository,
-                                      IChangelogDomainRepository changelogRepository,
-                                      IZookieSequencePort zookieSequencePort) {
-        this.tupleRepository = tupleRepository;
-        this.changelogRepository = changelogRepository;
-        this.zookieSequencePort = zookieSequencePort;
-    }
+public record TupleMutationDomainService(ITupleDomainRepository tupleRepository,
+                                         IChangelogDomainRepository changelogRepository,
+                                         IZookieSequencePort zookieSequencePort) {
 
     /**
      * 写入一批 tuple，并为这批变更分配同一个新的 zookie。
@@ -119,7 +118,7 @@ public final class TupleMutationDomainService {
      * 根据操作类型构造对应的领域审计对象。
      */
     private Changelog buildChangelogEntity(String storeId, TupleKey key, Long zookieVersion,
-                                                 String operation, AuditMetadata auditMetadata) {
+                                           String operation, AuditMetadata auditMetadata) {
         if (Changelog.OPERATION_WRITE.equals(operation)) {
             return Changelog.createWriteLog(storeId, key, zookieVersion, auditMetadata);
         }

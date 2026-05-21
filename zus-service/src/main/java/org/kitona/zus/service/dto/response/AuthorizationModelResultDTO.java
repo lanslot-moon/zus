@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.List;
+import java.util.Map;
 
 /**
  * 授权模型结果 DTO
@@ -54,16 +54,16 @@ public class AuthorizationModelResultDTO implements Serializable {
     private String description;
 
     /**
-     * 类型定义列表（内部使用，不参与 JSON 序列化）
+     * 类型定义映射（内部使用，不参与 JSON 序列化），key 为类型名。
      */
     @JsonIgnore
-    private List<AuthorizationTypeDefinitionResultDTO> typeDefinitions;
+    private Map<String, AuthorizationTypeDefinitionResultDTO> typeDefinitions;
 
     /**
-     * 条件定义列表（ABAC，内部使用，不参与 JSON 序列化）
+     * 条件定义映射（ABAC，内部使用，不参与 JSON 序列化），key 为条件名。
      */
     @JsonIgnore
-    private List<ConditionDefinitionResultDTO> conditionDefinitions;
+    private Map<String, ConditionDefinitionResultDTO> conditionDefinitions;
 
     /**
      * 创建时间（毫秒时间戳）

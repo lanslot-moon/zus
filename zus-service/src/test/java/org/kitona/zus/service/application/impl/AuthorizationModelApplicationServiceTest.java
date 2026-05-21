@@ -56,14 +56,14 @@ class AuthorizationModelApplicationServiceTest {
         AuthorizationModelAggregate model = createDraftModel("store-1", "model-1");
         when(storeDomainRepository.findByStoreId("store-1")).thenReturn(Optional.of(store));
         when(modelDomainRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(model));
-        when(modelDomainRepository.saveOrUpdateModel(any(AuthorizationModelAggregate.class))).thenReturn(true);
+        when(modelDomainRepository.updateModelMetadata(any(AuthorizationModelAggregate.class))).thenReturn(true);
         when(modelSnapshotRenderer.render(any(AuthorizationModelAggregate.class))).thenReturn("model model-1");
 
         boolean result = modelApplicationService.publishModel("store-1", "model-1");
 
         assertTrue(result);
         ArgumentCaptor<AuthorizationModelAggregate> captor = ArgumentCaptor.forClass(AuthorizationModelAggregate.class);
-        verify(modelDomainRepository).saveOrUpdateModel(captor.capture());
+        verify(modelDomainRepository).updateModelMetadata(captor.capture());
         assertTrue(captor.getValue().isPublished());
         assertEquals("model model-1", captor.getValue().getDslText());
     }

@@ -11,8 +11,8 @@ import org.kitona.zus.api.request.authorization.FgaBatchCheckRequest;
 import org.kitona.zus.api.request.authorization.FgaCheckRequest;
 import org.kitona.zus.api.request.common.FgaReferenceRequest;
 import org.kitona.zus.api.request.common.FgaTupleKeyRequest;
-import org.kitona.zus.api.request.model.FgaRelationDefinitionInput;
-import org.kitona.zus.api.request.model.FgaTypeDefinitionInput;
+import org.kitona.zus.api.request.model.FgaRelationSchemaInput;
+import org.kitona.zus.api.request.model.FgaTypeSchemaInput;
 import org.kitona.zus.api.request.model.FgaTypeRestrictionInput;
 import org.kitona.zus.api.request.model.FgaWriteAuthorizationModelRequest;
 import org.kitona.zus.api.request.tuple.FgaTupleWriteItem;
@@ -26,6 +26,7 @@ import org.kitona.zus.starter.controller.support.AbstractControllerTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -135,22 +136,19 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
     }
 
     private static FgaWriteAuthorizationModelRequest simpleModel() {
-        FgaTypeDefinitionInput document = FgaTypeDefinitionInput.builder()
-                .type("document")
-                .relations(List.of(FgaRelationDefinitionInput.builder()
-                        .name("viewer")
-                        .rewriteExpression("self")
-                        .restrictions(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
-                        .build()))
-                .build();
-        FgaTypeDefinitionInput user = FgaTypeDefinitionInput.builder()
-                .type("user")
-                .relations(List.of(FgaRelationDefinitionInput.builder()
-                        .name("self").rewriteExpression("self").build()))
-                .build();
         return FgaWriteAuthorizationModelRequest.builder()
                 .schemaVersion("1.1")
-                .typeDefinitions(List.of(document, user))
+                .types(Map.of(
+                        "document", FgaTypeSchemaInput.builder()
+                                .relations(Map.of("viewer", FgaRelationSchemaInput.builder()
+                                        .rewrite("self")
+                                        .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
+                                        .build()))
+                                .build(),
+                        "user", FgaTypeSchemaInput.builder()
+                                .relations(Map.of("self", FgaRelationSchemaInput.builder().rewrite("self").build()))
+                                .build()
+                ))
                 .build();
     }
 }

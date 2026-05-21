@@ -1,7 +1,9 @@
 package org.kitona.zus.service.application;
 
 import org.kitona.zus.service.dto.command.CheckCommand;
+import org.kitona.zus.service.dto.command.ExplainCommand;
 import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
+import org.kitona.zus.service.dto.response.PermissionExplainResultDTO;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -23,6 +25,11 @@ public interface IPermissionCheckApplicationService {
      * @return 检查响应
      */
     PermissionCheckResultDTO check(CheckCommand request);
+
+    /**
+     * 执行独立 explain 用例。
+     */
+    PermissionExplainResultDTO explain(ExplainCommand command);
 
     /**
      * 异步执行权限检查

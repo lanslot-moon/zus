@@ -12,6 +12,7 @@ import lombok.Setter;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 创建授权模型命令
@@ -47,11 +48,11 @@ public class CreateModelCommand implements Serializable {
     private String schemaVersion;
 
     /**
-     * 类型定义列表（结构化模型输入）
+     * 类型定义映射，key 为模型内唯一的类型名。
      */
     @Valid
-    @NotEmpty(message = "typeDefinitions 不能为空")
-    private List<TypeDefinitionInput> typeDefinitions;
+    @NotEmpty(message = "types 不能为空")
+    private Map<String, TypeDefinitionInput> types;
 
     /**
      * 模型描述
@@ -59,10 +60,10 @@ public class CreateModelCommand implements Serializable {
     private String description;
 
     /**
-     * 条件定义列表。
+     * 条件定义映射，key 为模型内唯一的条件名。
      */
     @Valid
-    private List<ConditionDefinitionInput> conditions;
+    private Map<String, ConditionDefinitionInput> conditions;
 
     /**
      * 类型定义输入（内部类）
@@ -77,15 +78,9 @@ public class CreateModelCommand implements Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
 
-        /**
-         * 资源类型名，如 document、folder、user
-         */
-        @NotBlank(message = "type 不能为空")
-        private String type;
-
         @Valid
         @NotEmpty(message = "relations 不能为空")
-        private List<RelationInput> relations;
+        private Map<String, RelationInput> relations;
     }
 
     @Getter
@@ -97,12 +92,6 @@ public class CreateModelCommand implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
-
-        /**
-         * viewer,editer,owner
-         */
-        @NotBlank(message = "relationName 不能为空")
-        private String relationName;
 
         @NotBlank(message = "rewriteExpression 不能为空")
         private String rewriteExpression;
@@ -119,9 +108,6 @@ public class CreateModelCommand implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
-
-        @NotBlank(message = "name 不能为空")
-        private String name;
 
         @NotBlank(message = "expression 不能为空")
         private String expression;

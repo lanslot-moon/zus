@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * 写授权模型请求 —— 统一「创建 / 编辑草稿」入口
@@ -20,11 +20,11 @@ import java.util.List;
  * <ol>
  *   <li><b>DSL 模式</b>：仅填 {@code dslText}，服务端解析为结构化并入库。
  *       适合 CI / 开发者直接粘贴 {@code .fga} 文件。</li>
- *   <li><b>Schema 模式</b>：填 {@code schemaVersion + typeDefinitions + conditions}，
+ *   <li><b>Schema 模式</b>：填 {@code schemaVersion + types + conditions}，
  *       不经 DSL 解析直接入库。适合 UI 可视化编辑器或程序化生成场景。</li>
  * </ol>
  *
- * <p>服务端校验规则：{@code dslText} 与 {@code typeDefinitions} 不能同时为空，且互斥。
+ * <p>服务端校验规则：{@code dslText} 与 {@code types} 不能同时为空，且互斥。
  *
  * <h3>创建后语义</h3>
  * 模型默认 {@code status = DRAFT(0)}，需显式 {@code publish} 才可用于 Check，
@@ -41,7 +41,7 @@ public class FgaWriteAuthorizationModelRequest {
 
     /**
      * 原始 DSL 文本（OpenFGA DSL 方言）。
-     * <p>与 {@link #typeDefinitions} 二选一。
+     * <p>与 {@link #types} 二选一。
      */
     private String dslText;
 
@@ -52,17 +52,19 @@ public class FgaWriteAuthorizationModelRequest {
     private String schemaVersion;
 
     /**
-     * 结构化类型定义列表。
+     * 结构化类型定义映射。
      * <p>与 {@link #dslText} 二选一。
+     * <p>key 为 type name，value 不再重复携带 type 名称。
      */
     @Valid
-    private List<FgaTypeDefinitionInput> typeDefinitions;
+    private Map<String, FgaTypeSchemaInput> types;
 
     /**
-     * 条件定义列表（ABAC 混合模式）
+     * 条件定义映射（ABAC 混合模式）。
+     * <p>key 为 condition name，value 不再重复携带 condition 名称。
      */
     @Valid
-    private List<FgaConditionDefinitionInput> conditions;
+    private Map<String, FgaConditionSchemaInput> conditions;
 
     /**
      * 模型描述

@@ -32,11 +32,11 @@ class PermissionExplainApplicationServiceTest {
     @Mock
     private PermissionExplainCoordinator permissionExplainCoordinator;
 
-    private PermissionExplainApplicationService applicationService;
+    private PermissionCheckApplicationService applicationService;
 
     @BeforeEach
     void setUp() {
-        applicationService = new PermissionExplainApplicationService();
+        applicationService = new PermissionCheckApplicationService();
         ReflectionTestUtils.setField(Objects.requireNonNull(applicationService), "permissionExplainCoordinator",
                 permissionExplainCoordinator);
     }

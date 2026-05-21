@@ -19,6 +19,13 @@ import java.util.List;
  */
 public interface IChangelogPersistenceRepository extends IService<TupleChangelogPO> {
 
+    /**
+     * 批量创建变更日志记录。
+     *
+     * @param changelogs 包含待创建的变更日志对象的列表，类型为 List<TupleChangelogPO>
+     * @return 如果所有变更日志均成功创建则返回 {@code true}，否则返回 {@code false}
+     *
+     */
     boolean batchCreate(List<TupleChangelogPO> changelogs);
 
     /**

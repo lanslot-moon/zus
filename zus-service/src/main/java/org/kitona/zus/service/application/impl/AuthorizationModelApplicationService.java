@@ -8,8 +8,6 @@ import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
-import org.kitona.zus.domain.authorization.model.ConditionDefinition;
-import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
@@ -21,7 +19,7 @@ import org.kitona.zus.domain.port.IModelSnapshotRenderer;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
 import org.kitona.zus.service.application.IAuthorizationModelApplicationService;
 import org.kitona.zus.service.conv.assembler.AuthorizationModelAssembler;
-import org.kitona.zus.service.conv.assembler.AuthorizationTypeDefinitionAssembler;
+import org.kitona.zus.service.conv.assembler.AuthorizationModelStructureAssembler;
 import org.kitona.zus.service.dto.command.CreateModelCommand;
 import org.kitona.zus.service.dto.query.ListModelsQuery;
 import org.kitona.zus.service.dto.response.AuthorizationModelResultDTO;
@@ -75,65 +73,19 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         String storeId = command.getStoreId();
         ensureStoreActive(storeId);
 
-        AuthorizationModelAggregate modelAggregate = assembleDraft(command);
-        log.info("AuthorizationModelApplicationService.createModel 创建授权模型: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
-
-        modelDomainRepository.saveOrUpdateModel(modelAggregate);
-        log.info("AuthorizationModelApplicationService.createModel 创建授权模型成功: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
-
-        String currentModelId = getCurrentModelId(storeId);
-        return AuthorizationModelAssembler.toDTO(modelAggregate, currentModelId);
-    }
-
-    /**
-     * 依据 {@link CreateModelCommand} 组装草稿态授权模型聚合：
-     * 生成模型 ID、装配类型定义与条件定义。调用方负责后续持久化与状态流转。
-     */
-    private AuthorizationModelAggregate assembleDraft(CreateModelCommand command) {
-        AuthorizationModelAggregate aggregate = AuthorizationModelAggregate.createWithGeneratedId(
+        AuthorizationModelAggregate modelAggregate = AuthorizationModelAggregate.createWithGeneratedId(
                 command.getStoreId(),
                 command.getSchemaVersion(),
                 command.getDescription()
         );
-        aggregate.addTypeDefinitions(buildTypeDefinitions(command.getTypeDefinitions()));
-        aggregate.replaceConditionDefinitions(buildConditionDefinitions(command.getConditions()));
-        return aggregate;
-    }
+        modelAggregate.replaceStructure(AuthorizationModelStructureAssembler.fromCreateModelCommand(command));
+        log.info("AuthorizationModelApplicationService.createModel 创建授权模型: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
 
-    /**
-     * 根据输入的类型定义列表构建类型定义对象列表
-     *
-     * @param inputs 包含类型定义和关系的输入列表
-     * @return 构建好的类型定义列表，如果输入为空则返回空列表
-     */
-    private List<TypeDefinition> buildTypeDefinitions(List<CreateModelCommand.TypeDefinitionInput> inputs) {
-        if (CollectionUtils.isEmpty(inputs)) {
-            return List.of();
-        }
+        modelDomainRepository.createModel(modelAggregate);
+        log.info("AuthorizationModelApplicationService.createModel 创建授权模型成功: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
 
-        // 每个输入都被映射为TypeDefinition对象，并处理其关系定义
-        return inputs.stream()
-                .map(input -> TypeDefinition.createWithRelations(input.getType(),
-                        AuthorizationTypeDefinitionAssembler.toRelationDefinitions(input.getRelations())))
-                .toList();
-    }
-
-    /**
-     * 根据输入的条件定义列表构建条件定义对象列表
-     * @param inputs 包含条件定义信息的输入列表
-     * @return 构建好的条件定义对象列表，如果输入为空则返回空列表
-     */
-    private List<ConditionDefinition> buildConditionDefinitions(List<CreateModelCommand.ConditionDefinitionInput> inputs) {
-        if (CollectionUtils.isEmpty(inputs)) {
-            return List.of();
-        }
-        return inputs.stream()
-                .map(input -> ConditionDefinition.create(
-                        input.getName(),
-                        input.getExpression(),
-                        input.getParameterSchema(),
-                        input.getDescription()))
-                .toList();
+        String currentModelId = getCurrentModelId(storeId);
+        return AuthorizationModelAssembler.toDTO(modelAggregate, currentModelId);
     }
 
 
@@ -204,7 +156,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
 
         model.publish(modelSnapshotRenderer.render(model));
-        boolean result = modelDomainRepository.saveOrUpdateModel(model);
+        boolean result = modelDomainRepository.updateModelMetadata(model);
         if (!result) {
             log.info("发布授权模型失败: storeId={}, modelId={}", storeId, modelId);
             return false;
@@ -255,7 +207,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
 
         model.deprecate();
-        boolean result = modelDomainRepository.saveOrUpdateModel(model);
+        boolean result = modelDomainRepository.updateModelMetadata(model);
         if (!result) {
             log.info("废弃授权模型失败: storeId={}, modelId={}", storeId, modelId);
             return false;

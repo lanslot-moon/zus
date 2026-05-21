@@ -4,9 +4,8 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.kitona.zus.common.utils.JacksonUtil;
-import org.kitona.zus.common.utils.MapstructUtil;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelStructure;
 import org.kitona.zus.domain.authorization.model.ConditionDefinition;
 import org.kitona.zus.domain.authorization.model.RelationDefinition;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
@@ -15,8 +14,8 @@ import org.kitona.zus.infrastructure.persistence.mysql.converter.AuthorizationMo
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.ConditionDefinitionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.RelationDefinitionPO;
-import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeRestrictionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeDefinitionPO;
+import org.kitona.zus.infrastructure.persistence.mysql.entity.TypeRestrictionPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IAuthorizationModelPersistenceRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IConditionDefinitionPersistenceRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IModelRelationPersistenceRepository;
@@ -25,14 +24,17 @@ import org.kitona.zus.infrastructure.persistence.mysql.repository.ISubjectDefini
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
  * 授权模型仓储领域接口适配器
- *
- * <p>实现 domain 层 {@link IAuthorizationModelDomainRepository}，
- * 委托基础设施层持久化契约并完成 PO 到聚合根的转换。
  */
 @Slf4j
 @Repository
@@ -53,14 +55,9 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     @Resource
     private IConditionDefinitionPersistenceRepository conditionDefinitionPersistenceRepository;
 
+    @Resource
+    private AuthorizationModelStructureSynchronizer structureSynchronizer;
 
-    /**
-     * 根据门店ID和模型ID查找授权模型聚合根
-     *
-     * @param storeId 门店ID
-     * @param modelId 模型ID
-     * @return 授权模型聚合根的Optional对象，如果不存在则返回空
-     */
     @Override
     public Optional<AuthorizationModelAggregate> findByModelId(String storeId, String modelId) {
         if (StringUtils.isAnyBlank(modelId, storeId)) {
@@ -77,38 +74,54 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
             return Optional.empty();
         }
 
-        aggregate.reconstituteTypeDefinitions(loadTypeDefinitions(storeId, modelId));
-        aggregate.reconstituteConditionDefinitions(loadConditionDefinitions(storeId, modelId));
+        aggregate.reconstituteStructure(loadStructure(storeId, modelId));
         return Optional.of(aggregate);
     }
 
     /**
-     * 保存或更新授权模型
+     * 创建授权模型，并一次性写入模型结构化子表。
      *
      * @param model 授权模型聚合根
      * @return 操作是否成功
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean saveOrUpdateModel(AuthorizationModelAggregate model) {
-        log.info("saveOrUpdateModel 参数为: {}", JacksonUtil.toJSONString(model));
+    public boolean createModel(AuthorizationModelAggregate model) {
+        String storeId = model.getStoreId();
+        String modelId = model.getModelId();
+        if (authorizationModelPersistenceRepository.findByModelIdAndStoreId(storeId, modelId).isPresent()) {
+            log.warn("创建授权模型失败，模型已存在: storeId={}, modelId={}", storeId, modelId);
+            return false;
+        }
+
+        authorizationModelPersistenceRepository.createModel(AuthorizationModelConverter.toPO(model));
+        structureSynchronizer.insert(storeId, modelId, model.getStructure());
+        log.info("创建授权模型完成: storeId={}, modelId={}", storeId, modelId);
+        return true;
+    }
+
+    /**
+     * 更新授权模型主表元信息，不重写模型结构化子表。
+     *
+     * @param model 授权模型聚合根
+     * @return 操作是否成功
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateModelMetadata(AuthorizationModelAggregate model) {
         String storeId = model.getStoreId();
         String modelId = model.getModelId();
 
         Optional<AuthModelPO> existing = authorizationModelPersistenceRepository.findByModelIdAndStoreId(storeId, modelId);
         if (existing.isEmpty()) {
-            authorizationModelPersistenceRepository.createModel(AuthorizationModelConverter.toPO(model));
-        } else {
-            // 已存在：更新模型本身（status / description / dslText 等）并清理关联结构后重建
-            AuthModelPO updatePO = AuthorizationModelConverter.toPO(model);
-            updatePO.setId(existing.get().getId());
-            authorizationModelPersistenceRepository.updateModel(updatePO);
-            this.deleteModelAssociateStructure(storeId, modelId);
-            log.info("saveOrUpdateModel 模型关联结构已删除,storeId:{}, modelId:{}", storeId, modelId);
+            log.warn("更新授权模型元信息失败，模型不存在: storeId={}, modelId={}", storeId, modelId);
+            return false;
         }
 
-        saveTypeDefinitions(storeId, modelId, model.getTypeDefinitions());
-        saveConditionDefinitions(storeId, modelId, model.getConditionDefinitions());
+        AuthModelPO updatePO = AuthorizationModelConverter.toPO(model);
+        updatePO.setId(existing.get().getId());
+        authorizationModelPersistenceRepository.updateModel(updatePO);
+        log.info("更新授权模型元信息完成: storeId={}, modelId={}", storeId, modelId);
         return true;
     }
 
@@ -130,17 +143,16 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         if (!deleted) {
             return false;
         }
-        this.deleteModelAssociateStructure(storeId, modelId);
+        structureSynchronizer.deleteAll(storeId, modelId);
         return true;
     }
 
-    /**
-     * 加载指定模型的类型定义列表
-     *
-     * @param storeId 门店ID
-     * @param modelId 模型ID
-     * @return 类型定义列表
-     */
+    private AuthorizationModelStructure loadStructure(String storeId, String modelId) {
+        return AuthorizationModelStructure.fromTypesAndConditions(
+                loadTypeDefinitions(storeId, modelId),
+                loadConditionDefinitions(storeId, modelId));
+    }
+
     private List<TypeDefinition> loadTypeDefinitions(String storeId, String modelId) {
         Map<String, List<TypeDefinition>> typeDefinitionsByModelId = assembleTypeDefinitions(storeId, Set.of(modelId));
         return typeDefinitionsByModelId.getOrDefault(modelId, Collections.emptyList());
@@ -156,16 +168,20 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     private Map<String, List<TypeDefinition>> assembleTypeDefinitions(String storeId, Set<String> modelIds) {
         List<TypeDefinitionPO> typeDefinitionPOs = subjectDefinitionPersistenceRepository.selectByModelIdList(storeId, modelIds);
         if (CollectionUtils.isEmpty(typeDefinitionPOs)) {
-            log.info("assembleTypeDefinitions No type definition found for modelIds: {} and storeId: {}", modelIds, storeId);
             return new HashMap<>();
         }
 
         Set<Long> typeDefIds = typeDefinitionPOs.stream().map(TypeDefinitionPO::getId).collect(Collectors.toSet());
         List<RelationDefinitionPO> relationList = modelRelationPersistenceRepository.selectByTypeDefinitionId(typeDefIds);
+
         if (CollectionUtils.isEmpty(relationList)) {
-            log.info("assembleTypeDefinitions No relation found for typeDefinitionIds: {}", typeDefIds);
-            return new HashMap<>();
+            return typeDefinitionPOs.stream()
+                    .collect(Collectors.groupingBy(TypeDefinitionPO::getModelId,
+                            Collectors.mapping(
+                                    po -> TypeDefinition.reconstitute(po.getId(), po.getSubjectType(), po.getSortOrder()),
+                                    Collectors.toList())));
         }
+
         Map<Long, List<RelationDefinitionPO>> relationsByTypeDefId = relationList.stream()
                 .collect(Collectors.groupingBy(RelationDefinitionPO::getTypeDefinitionId));
 
@@ -246,165 +262,6 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         );
     }
 
-    /**
-     * 删除模型关联结构（包括类型定义、关系定义和关系限制,不删除Model本身）
-     *
-     * @param storeId 门店ID
-     * @param modelId 模型ID
-     */
-    private void deleteModelAssociateStructure(String storeId, String modelId) {
-        conditionDefinitionPersistenceRepository.deleteByModelId(storeId, modelId);
-
-        List<TypeDefinitionPO> typeDefinitions = subjectDefinitionPersistenceRepository.selectByModelId(storeId, modelId);
-        if (CollectionUtils.isEmpty(typeDefinitions)) {
-            return;
-        }
-
-        subjectDefinitionPersistenceRepository.deleteByModelId(storeId, modelId);
-        Set<Long> typeIdSet = typeDefinitions.stream().map(TypeDefinitionPO::getId).collect(Collectors.toSet());
-        List<RelationDefinitionPO> relations = modelRelationPersistenceRepository.selectByTypeDefinitionId(typeIdSet);
-        modelRelationPersistenceRepository.deleteByTypeDefinitionIds(typeIdSet);
-        if (CollectionUtils.isEmpty(relations)) {
-            return;
-        }
-        Set<Long> relationIdSet = relations.stream().map(RelationDefinitionPO::getId).collect(Collectors.toSet());
-        if (CollectionUtils.isEmpty(relationIdSet)) {
-            return;
-        }
-        relationRestrictionPersistenceRepository.deleteByRelationDefinitionIds(relationIdSet);
-    }
-
-    /**
-     * 保存主体定义
-     *
-     * @param storeId         门店ID
-     * @param modelId         模型ID
-     * @param typeDefinitions 类型定义列表
-     * @return 按主体类型分组的ID映射Map
-     */
-    private Map<String, Long> saveSubjectDefinitions(String storeId, String modelId, List<TypeDefinition> typeDefinitions) {
-        List<TypeDefinitionPO> poList = new ArrayList<>(typeDefinitions.size());
-        for (int i = 0; i < typeDefinitions.size(); i++) {
-            TypeDefinition entity = typeDefinitions.get(i);
-            TypeDefinitionPO po = new TypeDefinitionPO();
-            po.setStoreId(storeId);
-            po.setModelId(modelId);
-            po.setSubjectType(entity.getSubjectType());
-            po.setSortOrder(i);
-            poList.add(po);
-        }
-
-        subjectDefinitionPersistenceRepository.saveBatch(poList);
-        return poList.stream()
-                .collect(Collectors.toMap(TypeDefinitionPO::getSubjectType, TypeDefinitionPO::getId));
-    }
-
-    /**
-     * 保存模型关系
-     *
-     * @param typeDefinitions 类型定义列表
-     * @param typeToIdMap     按主体类型分组的ID映射Map
-     * @return 按主体类型:关系名称分组的ID映射Map
-     */
-    private Map<String, Long> saveModelRelations(List<TypeDefinition> typeDefinitions, Map<String, Long> typeToIdMap) {
-        List<RelationDefinitionPO> poList = new ArrayList<>();
-
-        for (TypeDefinition typeEntity : typeDefinitions) {
-            Map<String, RelationDefinition> relations = typeEntity.getRelations();
-            if (relations == null || relations.isEmpty()) {
-                continue;
-            }
-
-            Long typeDefId = typeToIdMap.get(typeEntity.getSubjectType());
-            for (RelationDefinition relationDef : relations.values()) {
-                RelationDefinitionPO po = new RelationDefinitionPO();
-                po.setTypeDefinitionId(typeDefId);
-                po.setSubjectType(typeEntity.getSubjectType());
-                po.setRelationName(relationDef.relationName());
-                po.setRewriteExpression(relationDef.rewriteExpression());
-                poList.add(po);
-            }
-        }
-
-        if (poList.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        modelRelationPersistenceRepository.saveBatch(poList);
-
-        return poList.stream().collect(Collectors.toMap(
-                po -> po.getSubjectType() + ":" + po.getRelationName(),
-                RelationDefinitionPO::getId));
-    }
-
-    /**
-     * 保存类型定义及其关联关系
-     *
-     * @param storeId         门店ID
-     * @param modelId         模型ID
-     * @param typeDefinitions 类型定义列表
-     */
-    private void saveTypeDefinitions(String storeId, String modelId, List<TypeDefinition> typeDefinitions) {
-        if (CollectionUtils.isEmpty(typeDefinitions)) {
-            return;
-        }
-
-        Map<String, Long> typeToIdMap = saveSubjectDefinitions(storeId, modelId, typeDefinitions);
-        Map<String, Long> relationKeyToIdMap = saveModelRelations(typeDefinitions, typeToIdMap);
-        if (relationKeyToIdMap.isEmpty()) {
-            return;
-        }
-
-        saveRelationRestrictions(typeDefinitions, relationKeyToIdMap);
-    }
-
-    /**
-     * 保存关系限制
-     *
-     * @param typeDefinitions    类型定义列表
-     * @param relationKeyToIdMap 按主体类型:关系名称分组的ID映射Map
-     */
-    private void saveRelationRestrictions(List<TypeDefinition> typeDefinitions, Map<String, Long> relationKeyToIdMap) {
-        List<TypeRestrictionPO> poList = new ArrayList<>();
-
-        for (TypeDefinition typeEntity : typeDefinitions) {
-            Map<String, RelationDefinition> relations = typeEntity.getRelations();
-            if (relations == null || relations.isEmpty()) {
-                continue;
-            }
-
-            for (Map.Entry<String, RelationDefinition> entry : relations.entrySet()) {
-                String relationName = entry.getKey();
-                RelationDefinition relationDef = entry.getValue();
-                Set<String> restrictions = relationDef.restrictions();
-
-                if (CollectionUtils.isEmpty(restrictions)) {
-                    continue;
-                }
-
-                String relationKey = typeEntity.getSubjectType() + ":" + relationName;
-                Long relationId = relationKeyToIdMap.get(relationKey);
-
-                for (String restrictionValue : restrictions) {
-                    String allowedType = extractAllowedType(restrictionValue);
-                    String allowedSubjectRelation = extractAllowedSubjectRelation(restrictionValue);
-                    poList.add(new TypeRestrictionPO(relationId, allowedType, allowedSubjectRelation));
-                }
-            }
-        }
-
-        if (poList.isEmpty()) {
-            return;
-        }
-        relationRestrictionPersistenceRepository.saveBatch(poList);
-    }
-
-    /**
-     * 将关系限制PO转换为限制值字符串
-     *
-     * @param po 关系限制PO对象
-     * @return 限制值字符串，格式为"allowedType"或"allowedType#allowedSubjectRelation"
-     */
     private String toRestrictionValue(TypeRestrictionPO po) {
         if (po == null || StringUtils.isBlank(po.getAllowedType())) {
             return null;
@@ -415,47 +272,6 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return po.getAllowedType() + "#" + po.getAllowedSubjectRelation();
     }
 
-    /**
-     * 从限制值字符串中提取允许的类型
-     *
-     * @param restrictionValue 限制值字符串
-     * @return 允许的类型
-     */
-    private String extractAllowedType(String restrictionValue) {
-        if (StringUtils.isBlank(restrictionValue)) {
-            return restrictionValue;
-        }
-        int relationIndex = restrictionValue.indexOf('#');
-        if (relationIndex < 0) {
-            return restrictionValue;
-        }
-        return restrictionValue.substring(0, relationIndex);
-    }
-
-    /**
-     * 从限制值字符串中提取允许的主体关系
-     *
-     * @param restrictionValue 限制值字符串
-     * @return 允许的主体关系，如果不存在则返回null
-     */
-    private String extractAllowedSubjectRelation(String restrictionValue) {
-        if (StringUtils.isBlank(restrictionValue)) {
-            return null;
-        }
-        int relationIndex = restrictionValue.indexOf('#');
-        if (relationIndex < 0 || relationIndex == restrictionValue.length() - 1) {
-            return null;
-        }
-        return restrictionValue.substring(relationIndex + 1);
-    }
-
-    /**
-     * 加载条件定义列表
-     *
-     * @param storeId 门店ID
-     * @param modelId 模型ID
-     * @return 条件定义列表
-     */
     private List<ConditionDefinition> loadConditionDefinitions(String storeId, String modelId) {
         List<ConditionDefinitionPO> list = conditionDefinitionPersistenceRepository.selectByModelId(storeId, modelId);
         if (CollectionUtils.isEmpty(list)) {
@@ -469,24 +285,5 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
                         po.getParameterSchema(),
                         po.getDescription()))
                 .toList();
-    }
-
-    /**
-     * 保存条件定义列表
-     *
-     * @param storeId     门店ID
-     * @param modelId     模型ID
-     * @param definitions 条件定义列表
-     */
-    private void saveConditionDefinitions(String storeId, String modelId, List<ConditionDefinition> definitions) {
-        if (CollectionUtils.isEmpty(definitions)) {
-            return;
-        }
-        List<ConditionDefinitionPO> poList = definitions.stream()
-                .map(definition -> MapstructUtil.convert(definition, ConditionDefinitionPO.class))
-                .toList();
-
-        poList.forEach(item -> item.setModelId(modelId).setStoreId(storeId));
-        conditionDefinitionPersistenceRepository.saveBatch(poList);
     }
 }

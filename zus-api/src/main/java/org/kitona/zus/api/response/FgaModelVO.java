@@ -2,7 +2,7 @@ package org.kitona.zus.api.response;
 
 import lombok.Data;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * FGA 授权模型 VO —— 对应数据库表 {@code fga_auth_model}
@@ -48,14 +48,16 @@ public class FgaModelVO {
     private String description;
 
     /**
-     * 类型定义列表（对应 {@code fga_type_definition} + 下挂的 relation / restriction）
+     * 类型定义映射（对应 {@code fga_type_definition} + 下挂的 relation / restriction）。
+     * <p>key 为 type name。
      */
-    private List<FgaTypeDefinitionVO> types;
+    private Map<String, FgaTypeSchemaVO> types;
 
     /**
-     * 条件定义列表（对应 {@code fga_condition_definition}）
+     * 条件定义映射（对应 {@code fga_condition_definition}）。
+     * <p>key 为 condition name。
      */
-    private List<FgaConditionVO> conditions;
+    private Map<String, FgaConditionSchemaVO> conditions;
 
     /**
      * 创建时间（毫秒时间戳）

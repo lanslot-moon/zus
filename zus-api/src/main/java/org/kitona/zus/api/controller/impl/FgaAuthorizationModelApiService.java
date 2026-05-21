@@ -47,7 +47,7 @@ public class FgaAuthorizationModelApiService implements IFgaAuthModelApiService 
     public RestResult<FgaModelVO> writeModel(String storeId, FgaWriteAuthorizationModelRequest request) {
         if (request != null && StringUtils.isNotBlank(request.getDslText())) {
             log.warn("FgaAuthorizationModelApiService.writeModel 暂未支持 DSL 模式: storeId={}", storeId);
-            return RestResult.error(501, "暂未支持 DSL 文本模式，请使用 Schema 模式传入 typeDefinitions");
+            return RestResult.error(501, "暂未支持 DSL 文本模式，请使用 Schema 模式传入 types");
         }
 
         CreateModelCommand command = FgaModelConverter.INSTANCE.toCreateModelCommand(storeId, request);

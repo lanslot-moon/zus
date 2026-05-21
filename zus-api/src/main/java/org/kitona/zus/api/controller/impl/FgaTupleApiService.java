@@ -28,7 +28,6 @@ import org.kitona.zus.service.exception.ApplicationException;
 import org.kitona.zus.common.exception.IError;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -142,17 +141,14 @@ public class FgaTupleApiService implements IFgaTupleApiService {
             return name -> null;
         }
 
-        List<ConditionDefinitionResultDTO> conditions = model.getConditionDefinitions();
+        Map<String, ConditionDefinitionResultDTO> conditions = model.getConditionDefinitions();
         if (conditions == null || conditions.isEmpty()) {
             return name -> null;
         }
 
-        Map<String, Long> index = new HashMap<>(conditions.size() * 2);
-        for (ConditionDefinitionResultDTO c : conditions) {
-            if (c != null && StringUtils.isNotBlank(c.getName())) {
-                index.put(c.getName(), c.getId());
-            }
-        }
+        Map<String, Long> index = conditions.entrySet().stream()
+                .filter(entry -> StringUtils.isNotBlank(entry.getKey()) && entry.getValue() != null)
+                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getId()));
         return name -> {
             if (StringUtils.isBlank(name)) {
                 return null;

@@ -13,8 +13,13 @@ import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
 import org.kitona.zus.service.application.IPermissionCheckApplicationService;
 import org.kitona.zus.service.application.coordinator.PermissionCheckCoordinator;
+import org.kitona.zus.service.application.coordinator.PermissionExplainCoordinator;
+import org.kitona.zus.service.application.coordinator.PermissionExplainOutcome;
 import org.kitona.zus.service.dto.command.CheckCommand;
+import org.kitona.zus.service.dto.command.ExplainCommand;
+import org.kitona.zus.service.dto.response.ExplainResolutionDTO;
 import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
+import org.kitona.zus.service.dto.response.PermissionExplainResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -42,6 +47,9 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
     private PermissionCheckCoordinator permissionCheckCoordinator;
 
     @Resource
+    private PermissionExplainCoordinator permissionExplainCoordinator;
+
+    @Resource
     private IChangelogQueryRepository changelogQueryRepository;
 
     @Override
@@ -64,6 +72,42 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         }
         log.warn("权限检查未能产出权限判定: params:{}, result={}, duration={}ms", JacksonUtil.toJSONString(request), result.status(), duration);
         return response;
+    }
+
+
+
+
+    @Override
+    public PermissionExplainResultDTO explain(ExplainCommand command) {
+        ValidationUtil.validate(command);
+        long startTime = System.currentTimeMillis();
+        PermissionExplainOutcome outcome = permissionExplainCoordinator.explain(
+                command.getStoreId(),
+                ObjectRef.of(command.getObjectType(), command.getObjectId()),
+                command.getRelation(),
+                buildSubject(command),
+                Zookie.parse(command.getConsistencyToken()),
+                command.getContext()
+        );
+        long durationMs = System.currentTimeMillis() - startTime;
+        return toResultDTO(outcome, durationMs);
+    }
+
+    private Subject buildSubject(ExplainCommand command) {
+        if (StringUtils.isBlank(command.getSubjectRelation())) {
+            return Subject.user(command.getSubjectType(), command.getSubjectId());
+        }
+        return Subject.userset(command.getSubjectType(), command.getSubjectId(), command.getSubjectRelation());
+    }
+
+    private PermissionExplainResultDTO toResultDTO(PermissionExplainOutcome outcome, long durationMs) {
+        if (outcome.isAllowed() || outcome.isDenied()) {
+            ExplainResolutionDTO resolution = ExplainResolutionDTO.from(outcome.trace());
+            String zookieToken = resolution != null ? resolution.getCurrentZookie() : "";
+            return PermissionExplainResultDTO.of(outcome.isAllowed(), outcome.status().name(), zookieToken,
+                    durationMs, resolution);
+        }
+        return PermissionExplainResultDTO.error(outcome.status().name(), outcome.status().getDesc(), durationMs);
     }
 
     @Override

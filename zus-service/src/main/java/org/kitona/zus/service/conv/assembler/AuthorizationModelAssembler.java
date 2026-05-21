@@ -9,7 +9,9 @@ import org.kitona.zus.service.dto.response.AuthorizationTypeDefinitionResultDTO;
 import org.kitona.zus.service.dto.response.ConditionDefinitionResultDTO;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 授权模型聚合根 Assembler
@@ -80,7 +82,8 @@ public final class AuthorizationModelAssembler {
                 .dslText(view.dslText())
                 .status(view.status())
                 .description(view.description())
-                .typeDefinitions(Collections.emptyList())
+                .typeDefinitions(Collections.emptyMap())
+                .conditionDefinitions(Collections.emptyMap())
                 .createTime(view.createTime())
                 .isCurrent(isCurrent)
                 .build();
@@ -129,33 +132,41 @@ public final class AuthorizationModelAssembler {
     }
 
     /**
-     * 转换类型定义列表
+     * 转换类型定义映射
      *
      * @param typeDefinitions 类型定义实体列表
-     * @return 类型定义 DTO 列表
+     * @return 类型定义 DTO 映射
      */
-    private static List<AuthorizationTypeDefinitionResultDTO> convertTypeDefinitions(List<TypeDefinition> typeDefinitions) {
+    private static Map<String, AuthorizationTypeDefinitionResultDTO> convertTypeDefinitions(
+            List<TypeDefinition> typeDefinitions) {
         if (typeDefinitions == null || typeDefinitions.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
-        return AuthorizationTypeDefinitionAssembler.toDTOList(typeDefinitions);
+        Map<String, AuthorizationTypeDefinitionResultDTO> result = new LinkedHashMap<>();
+        for (TypeDefinition typeDefinition : typeDefinitions) {
+            result.put(typeDefinition.getSubjectType(), AuthorizationTypeDefinitionAssembler.toDTO(typeDefinition));
+        }
+        return result;
     }
 
     /**
-     * 转换条件定义列表
+     * 转换条件定义映射
      */
-    private static List<ConditionDefinitionResultDTO> convertConditionDefinitions(List<ConditionDefinition> conditionDefinitions) {
+    private static Map<String, ConditionDefinitionResultDTO> convertConditionDefinitions(
+            List<ConditionDefinition> conditionDefinitions) {
         if (conditionDefinitions == null || conditionDefinitions.isEmpty()) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
-        return conditionDefinitions.stream()
-                .map(def -> ConditionDefinitionResultDTO.builder()
+        Map<String, ConditionDefinitionResultDTO> result = new LinkedHashMap<>();
+        for (ConditionDefinition def : conditionDefinitions) {
+            result.put(def.getConditionName(), ConditionDefinitionResultDTO.builder()
                         .id(def.getId())
                         .name(def.getConditionName())
                         .expression(def.getExpression())
                         .parameterSchema(def.getParameterSchema())
                         .description(def.getDescription())
-                        .build())
-                .toList();
+                        .build());
+        }
+        return result;
     }
 }

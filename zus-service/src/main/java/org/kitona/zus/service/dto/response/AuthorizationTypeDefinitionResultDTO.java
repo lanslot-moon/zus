@@ -32,12 +32,24 @@ public class AuthorizationTypeDefinitionResultDTO {
     private String type;
 
     /**
-     * 关系名到重写表达式的映射
+     * 关系定义映射，key 为 relation 名称。
      */
-    private Map<String, String> relations;
+    private Map<String, RelationDefinitionResultDTO> relations;
 
     /**
-     * 关系的类型限制
+     * 关系定义结果 DTO。
      */
-    private Map<String, List<String>> relationRestrictions;
+    @Data
+    public static class RelationDefinitionResultDTO {
+
+        /**
+         * rewrite 表达式。
+         */
+        private String rewriteExpression;
+
+        /**
+         * 允许的 subject 类型限制。
+         */
+        private List<String> restrictions;
+    }
 }

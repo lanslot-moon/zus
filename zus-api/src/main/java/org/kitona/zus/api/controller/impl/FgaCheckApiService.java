@@ -5,14 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.kitona.zus.api.controller.IFgaCheckApiService;
 import org.kitona.zus.api.converter.FgaCheckConverter;
+import org.kitona.zus.api.converter.FgaExplainConverter;
 import org.kitona.zus.api.request.authorization.FgaBatchCheckRequest;
 import org.kitona.zus.api.request.authorization.FgaCheckRequest;
+import org.kitona.zus.api.request.authorization.FgaExplainRequest;
 import org.kitona.zus.api.response.FgaBatchCheckResultVO;
 import org.kitona.zus.api.response.FgaCheckResultVO;
+import org.kitona.zus.api.response.FgaExplainResultVO;
 import org.kitona.zus.api.response.RestResult;
 import org.kitona.zus.service.application.IPermissionCheckApplicationService;
 import org.kitona.zus.service.dto.command.CheckCommand;
+import org.kitona.zus.service.dto.command.ExplainCommand;
 import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
+import org.kitona.zus.service.dto.response.PermissionExplainResultDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -54,6 +59,16 @@ public class FgaCheckApiService implements IFgaCheckApiService {
             log.debug("FgaCheckApiService.check storeId={}, cost={}ms", storeId, costMs);
         }
         return RestResult.success(FgaCheckConverter.INSTANCE.toVO(dto));
+    }
+
+    @Override
+    public RestResult<FgaExplainResultVO> explain(String storeId, FgaExplainRequest request) {
+        long startNanos = System.nanoTime();
+        ExplainCommand command = FgaExplainConverter.INSTANCE.toExplainCommand(storeId, request);
+        PermissionExplainResultDTO dto = permissionCheckApplicationService.explain(command);
+        long costMs = (System.nanoTime() - startNanos) / 1_000_000L;
+        log.debug("FgaExplainApiService.explain storeId={}, cost={}ms", storeId, costMs);
+        return RestResult.success(FgaExplainConverter.INSTANCE.toVO(dto));
     }
 
     @Override
