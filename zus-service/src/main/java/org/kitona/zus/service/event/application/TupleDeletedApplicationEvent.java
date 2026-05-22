@@ -19,6 +19,14 @@ public class TupleDeletedApplicationEvent extends ApplicationEvent {
     private final Zookie zookie;
     private final AuditMetadata auditMetadata;
 
+    /**
+     * 创建 tuple 删除应用事件。
+     *
+     * @param storeId       Store 标识
+     * @param tupleKeys     已删除的 tuple key 列表
+     * @param zookie        本次删除产生的一致性版本
+     * @param auditMetadata 审计元数据
+     */
     public TupleDeletedApplicationEvent(String storeId, List<TupleKey> tupleKeys, Zookie zookie,
                                         AuditMetadata auditMetadata) {
         super(storeId);

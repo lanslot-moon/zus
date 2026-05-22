@@ -26,6 +26,10 @@ public class ListObjectsResultDTO implements Serializable {
     /** 对象标识列表，格式 type:id */
     private List<String> objects;
 
+    /**
+     * 创建空结果。
+     * @return 构建结果
+     */
     public static ListObjectsResultDTO empty() {
         return ListObjectsResultDTO.builder().objects(List.of()).build();
     }

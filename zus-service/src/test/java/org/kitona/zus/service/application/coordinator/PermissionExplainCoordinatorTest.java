@@ -10,17 +10,18 @@ import org.kitona.zus.domain.enums.EvaluationNodeType;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTrace;
 import org.kitona.zus.domain.authorization.evaluation.explain.StaleSnapshotDiagnosis;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
-import org.kitona.zus.domain.port.ICompiledModelCache;
 import org.kitona.zus.domain.port.ICompiledModelCompiler;
+import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
-import org.kitona.zus.domain.repository.IStoreQueryRepository;
 import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.PermissionCheckStatus;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
+import org.kitona.zus.service.port.ICompiledModelCache;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -40,7 +41,7 @@ import static org.mockito.Mockito.when;
 class PermissionExplainCoordinatorTest {
 
     @Mock
-    private IStoreQueryRepository storeQueryRepository;
+    private IStoreQueryPort storeQueryRepository;
 
     @Mock
     private IAuthorizationModelDomainRepository modelRepository;
@@ -76,7 +77,7 @@ class PermissionExplainCoordinatorTest {
     void shouldDiagnoseStaleSnapshotWhenLatestSnapshotAllows() {
         when(storeQueryRepository.findViewByStoreId("store-1"))
                 .thenReturn(Optional.of(new StoreView("store-1", "name", "desc", "model-1", 9L, 1, 1L)));
-        when(modelRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(aggregate));
+        when(modelRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.of(aggregate));
         when(aggregate.getTypeDefinitions()).thenReturn(List.of(TypeDefinition.create("document")));
         when(compiledModelCache.get("store-1", "model-1")).thenReturn(Optional.of(compiledModel));
         when(permissionCheckEvaluator.checkWithExplain(any(), any())).thenReturn(deniedDecision());

@@ -1,6 +1,7 @@
 package org.kitona.zus.service.conv.assembler;
 
 import org.kitona.zus.domain.authorization.audit.Changelog;
+import org.kitona.zus.domain.read.view.ChangelogView;
 import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 
 import java.util.Collections;
@@ -18,6 +19,9 @@ import java.util.List;
  */
 public final class ChangelogAssembler {
 
+    /**
+     * 创建 ChangelogAssembler 工具类私有构造方法，防止外部实例化。
+     */
     private ChangelogAssembler() {
     }
 
@@ -48,16 +52,42 @@ public final class ChangelogAssembler {
     }
 
     /**
+     * 将变更日志读侧视图转换为 DTO。
+     *
+     * @param view 变更日志读侧视图
+     * @return Watch 变更结果 DTO，view 为 null 时返回 null
+     */
+    public static TupleChangeResultDTO toDTO(ChangelogView view) {
+        if (view == null) {
+            return null;
+        }
+        return TupleChangeResultDTO.builder()
+                .zookie(view.zookie() != null ? view.zookie().toString() : null)
+                .operation(view.operation())
+                .objectType(view.objectType())
+                .objectId(view.objectId())
+                .relation(view.relation())
+                .subjectType(view.subjectType())
+                .subjectId(view.subjectId())
+                .subjectRelation(view.subjectRelation())
+                .operatorId(view.operatorId())
+                .requestId(view.requestId())
+                .source(view.source())
+                .operationTime(view.operationTime())
+                .build();
+    }
+
+    /**
      * 批量将变更日志实体转换为 DTO
      *
      * @param entities 变更日志实体列表
      * @return DTO 列表，entities 为 null 或空时返回空列表
      */
-    public static List<TupleChangeResultDTO> toDTOList(List<Changelog> entities) {
-        if (entities == null || entities.isEmpty()) {
+    public static List<TupleChangeResultDTO> toDTOList(List<ChangelogView> views) {
+        if (views == null || views.isEmpty()) {
             return Collections.emptyList();
         }
-        return entities.stream()
+        return views.stream()
                 .map(ChangelogAssembler::toDTO)
                 .toList();
     }

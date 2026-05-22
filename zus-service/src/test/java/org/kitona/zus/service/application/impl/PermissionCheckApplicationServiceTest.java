@@ -3,11 +3,11 @@ package org.kitona.zus.service.application.impl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kitona.zus.domain.repository.IChangelogQueryRepository;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.service.application.coordinator.PermissionCheckCoordinator;
 import org.kitona.zus.service.dto.command.CheckCommand;
 import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
+import org.kitona.zus.service.port.IConsistencyTokenReader;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -30,7 +30,7 @@ class PermissionCheckApplicationServiceTest {
     private PermissionCheckCoordinator permissionCheckCoordinator;
 
     @Mock
-    private IChangelogQueryRepository changelogQueryRepository;
+    private IConsistencyTokenReader consistencyTokenReader;
 
     private PermissionCheckApplicationService checkApplicationService;
 
@@ -38,14 +38,14 @@ class PermissionCheckApplicationServiceTest {
     void setUp() {
         checkApplicationService = new PermissionCheckApplicationService();
         ReflectionTestUtils.setField(Objects.requireNonNull(checkApplicationService), "permissionCheckCoordinator", permissionCheckCoordinator);
-        ReflectionTestUtils.setField(Objects.requireNonNull(checkApplicationService), "changelogQueryRepository", changelogQueryRepository);
+        ReflectionTestUtils.setField(Objects.requireNonNull(checkApplicationService), "consistencyTokenReader", consistencyTokenReader);
     }
 
     @Test
     void shouldMapDeniedResultToDeniedDto() {
         when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
                 .thenReturn(PermissionCheckResult.denied());
-        when(changelogQueryRepository.getMaxZookie("store-1")).thenReturn(7L);
+        when(consistencyTokenReader.currentMaxZookie("store-1")).thenReturn(7L);
 
         PermissionCheckResultDTO dto = checkApplicationService.check(buildCommand());
 
@@ -59,7 +59,7 @@ class PermissionCheckApplicationServiceTest {
     void shouldExposeAbnormalAuthorizationState() {
         when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
                 .thenReturn(PermissionCheckResult.modelNotFound());
-        when(changelogQueryRepository.getMaxZookie("store-1")).thenReturn(9L);
+        when(consistencyTokenReader.currentMaxZookie("store-1")).thenReturn(9L);
 
         PermissionCheckResultDTO dto = checkApplicationService.check(buildCommand());
 
@@ -79,7 +79,7 @@ class PermissionCheckApplicationServiceTest {
 
         assertEquals("STORE_NOT_FOUND", dto.getDecision());
         assertEquals("", dto.getZookieToken());
-        verify(changelogQueryRepository, never()).getMaxZookie(any());
+        verify(consistencyTokenReader, never()).currentMaxZookie(any());
     }
 
     private CheckCommand buildCommand() {

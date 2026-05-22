@@ -4,9 +4,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 import org.kitona.zus.domain.authorization.model.RelationDefinition;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.port.IModelSnapshotRenderer;
+import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
@@ -38,6 +40,9 @@ class AuthorizationModelApplicationServiceTest {
     private IStoreDomainRepository storeDomainRepository;
 
     @Mock
+    private IStoreQueryPort storeQueryRepository;
+
+    @Mock
     private IModelSnapshotRenderer modelSnapshotRenderer;
 
     private AuthorizationModelApplicationService modelApplicationService;
@@ -47,6 +52,7 @@ class AuthorizationModelApplicationServiceTest {
         modelApplicationService = new AuthorizationModelApplicationService();
         ReflectionTestUtils.setField(Objects.requireNonNull(modelApplicationService), "modelDomainRepository", modelDomainRepository);
         ReflectionTestUtils.setField(Objects.requireNonNull(modelApplicationService), "storeDomainRepository", storeDomainRepository);
+        ReflectionTestUtils.setField(Objects.requireNonNull(modelApplicationService), "storeQueryRepository", storeQueryRepository);
         ReflectionTestUtils.setField(Objects.requireNonNull(modelApplicationService), "modelSnapshotRenderer", modelSnapshotRenderer);
     }
 
@@ -54,16 +60,15 @@ class AuthorizationModelApplicationServiceTest {
     void publishModelShouldPersistPublishedAggregate() {
         StoreAggregate store = StoreAggregate.create("store-1", "store", "desc");
         AuthorizationModelAggregate model = createDraftModel("store-1", "model-1");
-        when(storeDomainRepository.findByStoreId("store-1")).thenReturn(Optional.of(store));
-        when(modelDomainRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(model));
-        when(modelDomainRepository.updateModelMetadata(any(AuthorizationModelAggregate.class))).thenReturn(true);
+        when(storeDomainRepository.findById("store-1")).thenReturn(Optional.of(store));
+        when(modelDomainRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.of(model));
         when(modelSnapshotRenderer.render(any(AuthorizationModelAggregate.class))).thenReturn("model model-1");
 
         boolean result = modelApplicationService.publishModel("store-1", "model-1");
 
         assertTrue(result);
         ArgumentCaptor<AuthorizationModelAggregate> captor = ArgumentCaptor.forClass(AuthorizationModelAggregate.class);
-        verify(modelDomainRepository).updateModelMetadata(captor.capture());
+        verify(modelDomainRepository).save(captor.capture());
         assertTrue(captor.getValue().isPublished());
         assertEquals("model model-1", captor.getValue().getDslText());
     }
@@ -73,15 +78,14 @@ class AuthorizationModelApplicationServiceTest {
         StoreAggregate store = StoreAggregate.create("store-1", "store", "desc");
         AuthorizationModelAggregate model = createDraftModel("store-1", "model-1");
         model.publish("dsl");
-        when(storeDomainRepository.findByStoreId("store-1")).thenReturn(Optional.of(store));
-        when(modelDomainRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(model));
-        when(storeDomainRepository.saveOrUpdateStore(any(StoreAggregate.class))).thenReturn(true);
+        when(storeDomainRepository.findById("store-1")).thenReturn(Optional.of(store));
+        when(modelDomainRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.of(model));
 
         boolean result = modelApplicationService.activateModel("store-1", "model-1");
 
         assertTrue(result);
         ArgumentCaptor<StoreAggregate> captor = ArgumentCaptor.forClass(StoreAggregate.class);
-        verify(storeDomainRepository).saveOrUpdateStore(captor.capture());
+        verify(storeDomainRepository).save(captor.capture());
         assertEquals("model-1", captor.getValue().getCurrentModelId());
     }
 
@@ -89,14 +93,13 @@ class AuthorizationModelApplicationServiceTest {
     void deleteModelShouldDelegateToDraftDeleteRepositoryMethod() {
         StoreAggregate store = StoreAggregate.create("store-1", "store", "desc");
         AuthorizationModelAggregate model = createDraftModel("store-1", "model-1");
-        when(storeDomainRepository.findByStoreId("store-1")).thenReturn(Optional.of(store));
-        when(modelDomainRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(model));
-        when(modelDomainRepository.deleteDraftModel("store-1", "model-1")).thenReturn(true);
+        when(storeDomainRepository.findById("store-1")).thenReturn(Optional.of(store));
+        when(modelDomainRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.of(model));
 
         boolean result = modelApplicationService.deleteModel("store-1", "model-1");
 
         assertTrue(result);
-        verify(modelDomainRepository).deleteDraftModel("store-1", "model-1");
+        verify(modelDomainRepository).remove(model);
     }
 
     @Test
@@ -104,8 +107,8 @@ class AuthorizationModelApplicationServiceTest {
         StoreAggregate store = StoreAggregate.create("store-1", "store", "desc");
         AuthorizationModelAggregate model = createDraftModel("store-1", "model-1");
         model.publish("dsl");
-        when(storeDomainRepository.findByStoreId("store-1")).thenReturn(Optional.of(store));
-        when(modelDomainRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(model));
+        when(storeDomainRepository.findById("store-1")).thenReturn(Optional.of(store));
+        when(modelDomainRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.of(model));
 
         assertThrows(ApplicationException.class, () -> modelApplicationService.deleteModel("store-1", "model-1"));
     }

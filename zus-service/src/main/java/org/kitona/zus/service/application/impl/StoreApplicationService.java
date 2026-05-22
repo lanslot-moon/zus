@@ -6,10 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
+import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
-import org.kitona.zus.domain.repository.IStoreQueryRepository;
-import org.kitona.zus.domain.valueobject.CursorPageResult;
+import org.kitona.zus.domain.read.page.CursorPageResult;
 import org.kitona.zus.service.application.IStoreApplicationService;
 import org.kitona.zus.service.conv.assembler.StoreAssembler;
 import org.kitona.zus.service.dto.query.ListStoresQuery;
@@ -46,16 +46,19 @@ public class StoreApplicationService implements IStoreApplicationService {
     private IStoreDomainRepository storeRepository;
 
     @Resource
-    private IStoreQueryRepository storeQueryRepository;
+    private IStoreQueryPort storeQueryRepository;
 
+    /**
+     * 创建create store。
+     *
+     * @param name 名称
+     * @param description 描述
+     * @return 构建结果
+     */
     @Override
     public StoreResultDTO createStore(String name, String description) {
         StoreAggregate store = StoreAggregate.createWithGeneratedId(name, description);
-        boolean saved = storeRepository.saveOrUpdateStore(store);
-        if (!saved) {
-            log.warn("创建存储空间失败: storeId={}, name={}", store.getStoreId(), name);
-            throw new ApplicationException(IError.SYSTEM_ERROR, "create store failed");
-        }
+        storeRepository.save(store);
         log.info("创建存储空间: storeId={}, name={}", store.getStoreId(), name);
         return storeQueryRepository.findViewByStoreId(store.getStoreId())
                 .map(StoreAssembler::toDTO)
@@ -63,6 +66,12 @@ public class StoreApplicationService implements IStoreApplicationService {
                         "store view not found after create: " + store.getStoreId()));
     }
 
+    /**
+     * 查询 Store 详情。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public StoreResultDTO getStore(String storeId) {
         if (StringUtils.isBlank(storeId)) {
@@ -73,54 +82,78 @@ public class StoreApplicationService implements IStoreApplicationService {
                 .orElse(null);
     }
 
+    /**
+     * 禁用指定 Store。
+     *
+     * @param storeId Store 标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean disableStore(String storeId) {
         if (StringUtils.isBlank(storeId)) {
             return false;
         }
-        Optional<StoreAggregate> optional = storeRepository.findByStoreId(storeId);
+        Optional<StoreAggregate> optional = storeRepository.findById(storeId);
         if (optional.isEmpty()) {
             return false;
         }
         StoreAggregate store = optional.get();
         store.disable();
-        boolean saved = storeRepository.saveOrUpdateStore(store);
-        log.info("禁用存储空间: storeId={}, saved:{}", storeId, saved);
-        return saved;
+        storeRepository.save(store);
+        log.info("禁用存储空间: storeId={}", storeId);
+        return true;
     }
 
+    /**
+     * 启用指定 Store。
+     *
+     * @param storeId Store 标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean enableStore(String storeId) {
         if (StringUtils.isBlank(storeId)) {
             return false;
         }
-        Optional<StoreAggregate> optional = storeRepository.findByStoreId(storeId);
+        Optional<StoreAggregate> optional = storeRepository.findById(storeId);
         if (optional.isEmpty()) {
             return false;
         }
         StoreAggregate store = optional.get();
         store.enable();
-        boolean saved = storeRepository.saveOrUpdateStore(store);
-        log.info("启用存储空间: storeId={}, saved:{}", storeId, saved);
-        return saved;
+        storeRepository.save(store);
+        log.info("启用存储空间: storeId={}", storeId);
+        return true;
     }
 
+    /**
+     * 删除delete store。
+     *
+     * @param storeId Store 标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean deleteStore(String storeId) {
         if (StringUtils.isBlank(storeId)) {
             return false;
         }
-        Optional<StoreAggregate> optional = storeRepository.findByStoreId(storeId);
+        Optional<StoreAggregate> optional = storeRepository.findById(storeId);
         if (optional.isEmpty()) {
             return false;
         }
         StoreAggregate store = optional.get();
         store.checkDeletable();
-        boolean deleted = storeRepository.deleteByStoreId(storeId);
-        log.info("deleteStore 删除存储空间: deleted:{}, storeId={}", deleted, storeId);
-        return deleted;
+        storeRepository.remove(store);
+        log.info("deleteStore 删除存储空间: storeId={}", storeId);
+        return true;
     }
 
+    /**
+     * 分页查询 Store 列表。
+     *
+     * @param query 查询条件
+     * @return 查询结果
+     */
     @Override
     public PageResultDTO<StoreResultDTO> listStores(ListStoresQuery query) {
         query = Optional.ofNullable(query).orElse(ListStoresQuery.builder().build());

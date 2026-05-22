@@ -111,6 +111,10 @@ public class WriteTupleCommand implements Serializable {
         private String source;
     }
 
+    /**
+     * 判断is condition reference valid。
+     * @return 满足条件返回 true，否则返回 false
+     */
     @AssertTrue(message = "存在条件信息时必须提供 conditionDefinitionId")
     public boolean isConditionReferenceValid() {
         boolean hasConditionSnapshot = (conditionName != null && !conditionName.isBlank())

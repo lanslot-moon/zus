@@ -18,6 +18,9 @@ import java.util.List;
  */
 public final class StoreAssembler {
 
+    /**
+     * 创建 StoreAssembler 工具类私有构造方法，防止外部实例化。
+     */
     private StoreAssembler() {
     }
 

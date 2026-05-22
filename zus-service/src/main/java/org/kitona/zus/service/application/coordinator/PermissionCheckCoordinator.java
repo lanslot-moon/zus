@@ -4,18 +4,19 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
-import org.kitona.zus.domain.port.ICompiledModelCache;
 import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
-import org.kitona.zus.domain.repository.IStoreQueryRepository;
+import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
+import org.kitona.zus.service.port.ICompiledModelCache;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ public class PermissionCheckCoordinator {
      * Store 查询仓储，用于加载当前 store 视图和当前模型指针。
      */
     @Resource
-    private IStoreQueryRepository storeQueryRepository;
+    private IStoreQueryPort storeQueryRepository;
 
     /**
      * 授权模型仓储，用于加载当前激活模型聚合。
@@ -60,11 +61,32 @@ public class PermissionCheckCoordinator {
     @Resource
     private PermissionCheckEvaluator permissionCheckEvaluator;
 
+    /**
+     * 使用默认上下文执行权限检查。
+     *
+     * @param storeId  Store 标识
+     * @param object   授权对象
+     * @param relation 关系名
+     * @param subject  授权主体
+     * @param zookie   一致性版本
+     * @return 权限检查结果
+     */
     public PermissionCheckResult execute(String storeId, ObjectRef object, String relation,
                                          Subject subject, Zookie zookie) {
         return execute(storeId, object, relation, subject, zookie, null);
     }
 
+    /**
+     * 执行权限检查用例编排。
+     *
+     * @param storeId  Store 标识
+     * @param object   授权对象
+     * @param relation 关系名
+     * @param subject  授权主体
+     * @param zookie   一致性版本
+     * @param context  条件求值上下文
+     * @return 权限检查结果
+     */
     public PermissionCheckResult execute(String storeId, ObjectRef object, String relation,
                                          Subject subject, Zookie zookie, Map<String, Object> context) {
         log.debug("开始权限检查: storeId={}, object={}, relation={}, subject={}", storeId, object, relation, subject);
@@ -81,7 +103,7 @@ public class PermissionCheckCoordinator {
             return PermissionCheckResult.modelNotBound();
         }
 
-        Optional<AuthorizationModelAggregate> modelOpt = modelRepository.findByModelId(storeId, currentModelId);
+        Optional<AuthorizationModelAggregate> modelOpt = modelRepository.findById(AuthorizationModelId.of(storeId, currentModelId));
         if (modelOpt.isEmpty()) {
             log.warn("授权模型不存在: storeId={}, modelId={}", storeId, currentModelId);
             return PermissionCheckResult.modelNotFound();

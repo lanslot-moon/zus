@@ -27,6 +27,10 @@ public class ListSubjectsResultDTO implements Serializable {
 
     private List<SubjectDTO> subjects;
 
+    /**
+     * 创建空结果。
+     * @return 构建结果
+     */
     public static ListSubjectsResultDTO empty() {
         return ListSubjectsResultDTO.builder().subjects(List.of()).build();
     }

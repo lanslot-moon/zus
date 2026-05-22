@@ -9,16 +9,17 @@ import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTrace;
 import org.kitona.zus.domain.authorization.evaluation.explain.StaleSnapshotDiagnosis;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
-import org.kitona.zus.domain.port.ICompiledModelCache;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
-import org.kitona.zus.domain.repository.IStoreQueryRepository;
+import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
+import org.kitona.zus.service.port.ICompiledModelCache;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -38,7 +39,7 @@ public class PermissionExplainCoordinator {
      * Store 查询仓储，用于加载当前 store 视图、当前模型指针和当前 zookie。
      */
     @Resource
-    private IStoreQueryRepository storeQueryRepository;
+    private IStoreQueryPort storeQueryRepository;
 
     /**
      * 授权模型仓储，用于加载 explain 所需的当前激活模型聚合。
@@ -79,7 +80,7 @@ public class PermissionExplainCoordinator {
             return PermissionExplainOutcome.modelNotBound();
         }
 
-        Optional<AuthorizationModelAggregate> modelOpt = modelRepository.findByModelId(storeId, storeView.currentModelId());
+        Optional<AuthorizationModelAggregate> modelOpt = modelRepository.findById(AuthorizationModelId.of(storeId, storeView.currentModelId()));
         if (modelOpt.isEmpty()) {
             return PermissionExplainOutcome.modelNotFound();
         }

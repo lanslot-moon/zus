@@ -1,6 +1,7 @@
 package org.kitona.zus.service.conv.assembler;
 
 import org.kitona.zus.domain.authorization.tuple.RelationTuple;
+import org.kitona.zus.domain.read.view.TupleView;
 import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
 
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
  */
 public final class TupleAssembler {
 
+    /**
+     * 创建 TupleAssembler 工具类私有构造方法，防止外部实例化。
+     */
     private TupleAssembler() {
     }
 
@@ -50,16 +54,40 @@ public final class TupleAssembler {
     }
 
     /**
+     * 将读侧元组视图转换为 DTO。
+     *
+     * @param view 关系元组读侧视图
+     * @return 读取结果 DTO，view 为 null 时返回 null
+     */
+    public static TupleResultDTO toDTO(TupleView view) {
+        if (view == null) {
+            return null;
+        }
+        return TupleResultDTO.builder()
+                .objectType(view.objectType())
+                .objectId(view.objectId())
+                .relation(view.relation())
+                .subjectType(view.subjectType())
+                .subjectId(view.subjectId())
+                .subjectRelation(view.subjectRelation())
+                .zookie(view.zookie())
+                .conditionName(view.conditionName())
+                .conditionContext(view.conditionContext())
+                .expiresAt(view.expiresAt())
+                .build();
+    }
+
+    /**
      * 批量将领域实体转换为 DTO
      *
      * @param entities 关系元组实体列表
      * @return DTO 列表，entities 为 null 或空时返回空列表
      */
-    public static List<TupleResultDTO> toDTOList(List<RelationTuple> entities) {
-        if (entities == null || entities.isEmpty()) {
+    public static List<TupleResultDTO> toDTOList(List<TupleView> views) {
+        if (views == null || views.isEmpty()) {
             return Collections.emptyList();
         }
-        return entities.stream()
+        return views.stream()
                 .map(TupleAssembler::toDTO)
                 .collect(Collectors.toList());
     }
@@ -97,6 +125,12 @@ public final class TupleAssembler {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 转换主体 DTO。
+     *
+     * @param entity entity 参数
+     * @return 构建结果
+     */
     private static ListSubjectsResultDTO.SubjectDTO toSubjectDTO(RelationTuple entity) {
         return ListSubjectsResultDTO.SubjectDTO.builder()
                 .type(entity.getSubjectType())

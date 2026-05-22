@@ -8,7 +8,7 @@ import org.kitona.zus.common.gateway.IUserInfoGateway;
 import org.kitona.zus.service.exception.ApplicationException;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.domain.authorization.user.UserProfile;
-import org.kitona.zus.domain.repository.IUserProfileRepository;
+import org.kitona.zus.domain.authorization.user.repository.IUserProfileRepository;
 import org.kitona.zus.service.application.IUserProfileApplicationService;
 import org.kitona.zus.service.conv.assembler.UserProfileAssembler;
 import org.kitona.zus.service.dto.UserInfoDTO;
@@ -38,6 +38,12 @@ public class UserProfileApplicationService implements IUserProfileApplicationSer
     @Resource
     private IUserInfoGateway userInfoGateway;
 
+    /**
+     * 查询用户信息。
+     *
+     * @param userId 用户标识
+     * @return 查询结果
+     */
     @Override
     public UserInfoDTO getUserInfo(String userId) {
         UserProfile userInfo = userInfoDomainRepository.findByUserId(userId).orElse(null);

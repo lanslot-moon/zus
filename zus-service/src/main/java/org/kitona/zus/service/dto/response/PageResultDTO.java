@@ -10,13 +10,13 @@ import java.util.List;
 /**
  * 通用游标分页结果 DTO（不可变）
  *
- * <p>用于封装应用服务层的游标分页查询结果，与领域层的 {@code CursorPageResult} 对应。
+ * <p>用于封装应用服务层的游标分页查询结果，与领域读侧的 {@code CursorPageResult} 对应。
  *
  * <p>DDD 规范：
  * <ul>
  *   <li>不可变对象：无 setter，通过工厂方法创建</li>
  *   <li>应用服务层使用此 DTO 作为分页查询的统一返回结构</li>
- *   <li>与领域层的 {@code CursorPageResult} 结构一致，便于转换</li>
+ *   <li>与领域读侧的 {@code CursorPageResult} 结构一致，便于转换</li>
  *   <li>泛型设计支持不同业务 DTO 的分页返回</li>
  * </ul>
  *

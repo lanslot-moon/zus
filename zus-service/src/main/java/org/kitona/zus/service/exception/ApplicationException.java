@@ -23,21 +23,43 @@ public class ApplicationException extends RuntimeException {
 
     private final int code;
 
+    /**
+     * 创建 ApplicationException 实例。
+     *
+     * @param message message 参数
+     */
     public ApplicationException(String message) {
         super(message);
         this.code = 500;
     }
 
+    /**
+     * 创建 ApplicationException 实例。
+     *
+     * @param message message 参数
+     * @param code code 参数
+     */
     public ApplicationException(String message, int code) {
         super(message);
         this.code = code;
     }
 
+    /**
+     * 创建 ApplicationException 实例。
+     *
+     * @param error error 参数
+     */
     public ApplicationException(IError error) {
         super(error.getMessage());
         this.code = error.getCode();
     }
 
+    /**
+     * 创建 ApplicationException 实例。
+     *
+     * @param error error 参数
+     * @param detail detail 参数
+     */
     public ApplicationException(IError error, String detail) {
         super(error.getMessage() + ": " + detail);
         this.code = error.getCode();

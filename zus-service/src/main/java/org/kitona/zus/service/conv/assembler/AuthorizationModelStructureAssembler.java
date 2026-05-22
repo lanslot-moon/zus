@@ -13,6 +13,9 @@ import java.util.Map;
  */
 public final class AuthorizationModelStructureAssembler {
 
+    /**
+     * 创建 AuthorizationModelStructureAssembler 工具类私有构造方法，防止外部实例化。
+     */
     private AuthorizationModelStructureAssembler() {
     }
 
@@ -28,6 +31,12 @@ public final class AuthorizationModelStructureAssembler {
                 buildConditions(command.getConditions()));
     }
 
+    /**
+     * 构建授权模型类型定义列表。
+     *
+     * @param inputs inputs 参数
+     * @return 构建结果
+     */
     private static List<TypeDefinition> buildTypes(Map<String, CreateModelCommand.TypeDefinitionInput> inputs) {
         if (inputs == null || inputs.isEmpty()) {
             return List.of();
@@ -39,6 +48,12 @@ public final class AuthorizationModelStructureAssembler {
                 .toList();
     }
 
+    /**
+     * 构建授权模型条件定义列表。
+     *
+     * @param inputs inputs 参数
+     * @return 构建结果
+     */
     private static List<ConditionDefinition> buildConditions(Map<String, CreateModelCommand.ConditionDefinitionInput> inputs) {
         if (inputs == null || inputs.isEmpty()) {
             return List.of();

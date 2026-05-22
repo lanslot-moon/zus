@@ -22,6 +22,9 @@ public final class UserProfileAssembler {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * 创建 UserProfileAssembler 工具类私有构造方法，防止外部实例化。
+     */
     private UserProfileAssembler() {
     }
 

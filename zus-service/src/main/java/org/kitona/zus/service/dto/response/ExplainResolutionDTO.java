@@ -71,6 +71,12 @@ public class ExplainResolutionDTO implements Serializable {
         private ConditionDTO condition;
         private List<NodeDTO> children;
 
+        /**
+         * 转换from。
+         *
+         * @param node node 参数
+         * @return 构建结果
+         */
         private static NodeDTO from(EvaluationExplainNode node) {
             if (node == null) {
                 return null;
@@ -110,6 +116,12 @@ public class ExplainResolutionDTO implements Serializable {
         private Long conditionDefinitionId;
         private String conditionName;
 
+        /**
+         * 转换from。
+         *
+         * @param detail detail 参数
+         * @return 构建结果
+         */
         private static TupleDTO from(TupleExplainDetail detail) {
             if (detail == null) {
                 return null;
@@ -143,6 +155,12 @@ public class ExplainResolutionDTO implements Serializable {
         private String conditionName;
         private boolean passed;
 
+        /**
+         * 转换from。
+         *
+         * @param detail detail 参数
+         * @return 构建结果
+         */
         private static ConditionDTO from(ConditionExplainDetail detail) {
             if (detail == null) {
                 return null;

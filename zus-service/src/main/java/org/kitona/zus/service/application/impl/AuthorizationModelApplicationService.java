@@ -2,19 +2,19 @@ package org.kitona.zus.service.application.impl;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
 import org.kitona.zus.domain.read.view.StoreView;
+import org.kitona.zus.domain.read.port.IAuthorizationModelQueryPort;
+import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
-import org.kitona.zus.domain.repository.IAuthorizationModelQueryRepository;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
-import org.kitona.zus.domain.repository.IStoreQueryRepository;
-import org.kitona.zus.domain.valueobject.CursorPageResult;
+import org.kitona.zus.domain.read.page.CursorPageResult;
 import org.kitona.zus.domain.port.IModelSnapshotRenderer;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
 import org.kitona.zus.service.application.IAuthorizationModelApplicationService;
@@ -55,17 +55,23 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     private IAuthorizationModelDomainRepository modelDomainRepository;
 
     @Resource
-    private IAuthorizationModelQueryRepository modelQueryRepository;
+    private IAuthorizationModelQueryPort modelQueryRepository;
 
     @Resource
     private IStoreDomainRepository storeDomainRepository;
 
     @Resource
-    private IStoreQueryRepository storeQueryRepository;
+    private IStoreQueryPort storeQueryRepository;
 
     @Resource
     private IModelSnapshotRenderer modelSnapshotRenderer;
 
+    /**
+     * 创建create model。
+     *
+     * @param command 应用命令
+     * @return 构建结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public AuthorizationModelResultDTO createModel(CreateModelCommand command) {
@@ -81,7 +87,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         modelAggregate.replaceStructure(AuthorizationModelStructureAssembler.fromCreateModelCommand(command));
         log.info("AuthorizationModelApplicationService.createModel 创建授权模型: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
 
-        modelDomainRepository.createModel(modelAggregate);
+        modelDomainRepository.save(modelAggregate);
         log.info("AuthorizationModelApplicationService.createModel 创建授权模型成功: storeId={}, modelId={}", storeId, modelAggregate.getModelId());
 
         String currentModelId = getCurrentModelId(storeId);
@@ -89,13 +95,20 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
 
+    /**
+     * 查询授权模型详情。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     @Override
     public AuthorizationModelResultDTO getModel(String storeId, String modelId) {
         if (StringUtils.isBlank(storeId) || StringUtils.isBlank(modelId)) {
             return null;
         }
 
-        Optional<AuthorizationModelAggregate> optional = modelDomainRepository.findByModelId(storeId, modelId);
+        Optional<AuthorizationModelAggregate> optional = modelDomainRepository.findById(AuthorizationModelId.of(storeId, modelId));
         if (optional.isEmpty()) {
             log.warn("AuthorizationModelApplicationService.getModel 查询授权模型失败: storeId={}, modelId={}", storeId, modelId);
             throw new ApplicationException(IError.DATA_NOT_EXIST);
@@ -105,6 +118,12 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         return AuthorizationModelAssembler.toDTO(optional.get(), currentModelId);
     }
 
+    /**
+     * 查询当前生效授权模型。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public AuthorizationModelResultDTO getCurrentModel(String storeId) {
         if (StringUtils.isBlank(storeId)) {
@@ -117,7 +136,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
             return null;
         }
 
-        Optional<AuthorizationModelAggregate> optional = modelDomainRepository.findByModelId(storeId, currentModelId);
+        Optional<AuthorizationModelAggregate> optional = modelDomainRepository.findById(AuthorizationModelId.of(storeId, currentModelId));
         if (optional.isEmpty()) {
             log.warn("AuthorizationModelApplicationService.getCurrentModel 查询授权模型失败, modelId={}", currentModelId);
             return null;
@@ -125,6 +144,12 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         return AuthorizationModelAssembler.toDTO(optional.get(), currentModelId);
     }
 
+    /**
+     * 分页查询授权模型列表。
+     *
+     * @param query 查询条件
+     * @return 查询结果
+     */
     @Override
     public PageResultDTO<AuthorizationModelResultDTO> listModels(ListModelsQuery query) {
         ValidationUtil.validate(query);
@@ -146,6 +171,13 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         return PageResultDTO.of(resultList, pageResult.nextPageToken());
     }
 
+    /**
+     * 发布publish model。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean publishModel(String storeId, String modelId) {
@@ -156,16 +188,19 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
 
         model.publish(modelSnapshotRenderer.render(model));
-        boolean result = modelDomainRepository.updateModelMetadata(model);
-        if (!result) {
-            log.info("发布授权模型失败: storeId={}, modelId={}", storeId, modelId);
-            return false;
-        }
+        modelDomainRepository.save(model);
 
         log.info("发布授权模型成功: storeId={}, modelId={}（需调用 activate 接口激活）", storeId, modelId);
         return true;
     }
 
+    /**
+     * 激活activate model。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean activateModel(String storeId, String modelId) {
@@ -187,16 +222,19 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         }
 
         store.updateCurrentModel(modelId);
-        boolean updated = storeDomainRepository.saveOrUpdateStore(store);
-        if (!updated) {
-            log.warn("激活授权模型失败，Store 当前模型指针更新未生效: storeId={}, modelId={}", storeId, modelId);
-            return false;
-        }
+        storeDomainRepository.save(store);
 
         log.info("激活授权模型成功，事务内已完成 Store 当前模型切换: storeId={}, modelId={}", storeId, modelId);
         return true;
     }
 
+    /**
+     * 废弃deprecate model。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deprecateModel(String storeId, String modelId) {
@@ -207,16 +245,19 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
 
         model.deprecate();
-        boolean result = modelDomainRepository.updateModelMetadata(model);
-        if (!result) {
-            log.info("废弃授权模型失败: storeId={}, modelId={}", storeId, modelId);
-            return false;
-        }
+        modelDomainRepository.save(model);
 
         log.info("废弃授权模型成功: storeId={}, modelId={}", storeId, modelId);
         return true;
     }
 
+    /**
+     * 删除delete model。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean deleteModel(String storeId, String modelId) {
         if (StringUtils.isBlank(storeId) || StringUtils.isBlank(modelId)) {
@@ -230,7 +271,8 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
             throw new ApplicationException(IError.PARAMS_EXIST_ERROR);
         }
 
-        return modelDomainRepository.deleteDraftModel(storeId, modelId);
+        modelDomainRepository.remove(model);
+        return true;
     }
 
     /**
@@ -248,7 +290,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
      * @throws ApplicationException 当商店不存在或未激活时抛出
      */
     private StoreAggregate ensureStoreActive(String storeId) {
-        StoreAggregate storeAggregate = storeDomainRepository.findByStoreId(storeId).orElse(null);
+        StoreAggregate storeAggregate = storeDomainRepository.findById(storeId).orElse(null);
         if (storeAggregate == null) {
             log.warn("Store不存在: storeId={}", storeId);
             throw new ApplicationException(IError.DATA_NOT_EXIST);
@@ -269,7 +311,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
      * @throws ApplicationException 当查询不到对应的授权模型时抛出异常
      */
     private AuthorizationModelAggregate loadModelOrThrow(String storeId, String modelId) {
-        AuthorizationModelAggregate model = modelDomainRepository.findByModelId(storeId, modelId).orElse(null);
+        AuthorizationModelAggregate model = modelDomainRepository.findById(AuthorizationModelId.of(storeId, modelId)).orElse(null);
         if (model != null) {
             return model;
         }

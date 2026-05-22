@@ -51,6 +51,12 @@ public class TupleMutationApplicationService implements ITupleMutationApplicatio
     @Resource
     private ApplicationEventPublisher eventPublisher;
 
+    /**
+     * 写入write。
+     *
+     * @param storeId Store 标识
+     * @param writeTuple writeTuple 参数
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void write(String storeId, List<WriteTupleCommand> writeTuple) {
@@ -69,6 +75,12 @@ public class TupleMutationApplicationService implements ITupleMutationApplicatio
         eventPublisher.publishEvent(new TupleWrittenApplicationEvent(storeId, result.writtenKeys(), result.zookie(), result.auditMetadata()));
     }
 
+    /**
+     * 删除delete。
+     *
+     * @param storeId Store 标识
+     * @param deleteTuple deleteTuple 参数
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(String storeId, List<WriteTupleCommand> deleteTuple) {

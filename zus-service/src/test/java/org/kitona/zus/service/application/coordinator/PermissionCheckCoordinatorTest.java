@@ -4,18 +4,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
-import org.kitona.zus.domain.port.ICompiledModelCache;
 import org.kitona.zus.domain.port.ICompiledModelCompiler;
+import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
-import org.kitona.zus.domain.repository.IStoreQueryRepository;
 import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.PermissionCheckStatus;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
+import org.kitona.zus.service.port.ICompiledModelCache;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.when;
 class PermissionCheckCoordinatorTest {
 
     @Mock
-    private IStoreQueryRepository storeQueryRepository;
+    private IStoreQueryPort storeQueryRepository;
 
     @Mock
     private IAuthorizationModelDomainRepository modelRepository;
@@ -79,7 +80,7 @@ class PermissionCheckCoordinatorTest {
     void shouldReturnModelNotFoundWhenCurrentModelMissing() {
         when(storeQueryRepository.findViewByStoreId("store-1"))
                 .thenReturn(Optional.of(new StoreView("store-1", "name", "desc", "model-1", 0L, 1, 1L)));
-        when(modelRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.empty());
+        when(modelRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.empty());
 
         PermissionCheckResult result = execute();
 
@@ -91,7 +92,7 @@ class PermissionCheckCoordinatorTest {
         AuthorizationModelAggregate aggregate = AuthorizationModelAggregate.create("store-1", "model-1", "1.1", "desc");
         when(storeQueryRepository.findViewByStoreId("store-1"))
                 .thenReturn(Optional.of(new StoreView("store-1", "name", "desc", "model-1", 0L, 1, 1L)));
-        when(modelRepository.findByModelId("store-1", "model-1")).thenReturn(Optional.of(aggregate));
+        when(modelRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.of(aggregate));
 
         PermissionCheckResult result = execute();
 

@@ -19,6 +19,14 @@ public class TupleWrittenApplicationEvent extends ApplicationEvent {
     private final Zookie zookie;
     private final AuditMetadata auditMetadata;
 
+    /**
+     * 创建 tuple 写入应用事件。
+     *
+     * @param storeId       Store 标识
+     * @param tupleKeys     已写入的 tuple key 列表
+     * @param zookie        本次写入产生的一致性版本
+     * @param auditMetadata 审计元数据
+     */
     public TupleWrittenApplicationEvent(String storeId, List<TupleKey> tupleKeys, Zookie zookie,
                                         AuditMetadata auditMetadata) {
         super(storeId);

@@ -26,6 +26,9 @@ import java.util.Map;
  */
 public final class AuthorizationModelAssembler {
 
+    /**
+     * 创建 AuthorizationModelAssembler 工具类私有构造方法，防止外部实例化。
+     */
     private AuthorizationModelAssembler() {
     }
 

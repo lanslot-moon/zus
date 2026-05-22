@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.ValidationUtil;
-import org.kitona.zus.domain.repository.IChangelogQueryRepository;
 import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.PermissionCheckStatus;
 import org.kitona.zus.domain.valueobject.ObjectRef;
@@ -20,6 +19,7 @@ import org.kitona.zus.service.dto.command.ExplainCommand;
 import org.kitona.zus.service.dto.response.ExplainResolutionDTO;
 import org.kitona.zus.service.dto.response.PermissionCheckResultDTO;
 import org.kitona.zus.service.dto.response.PermissionExplainResultDTO;
+import org.kitona.zus.service.port.IConsistencyTokenReader;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -50,8 +50,14 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
     private PermissionExplainCoordinator permissionExplainCoordinator;
 
     @Resource
-    private IChangelogQueryRepository changelogQueryRepository;
+    private IConsistencyTokenReader consistencyTokenReader;
 
+    /**
+     * 检查check。
+     *
+     * @param request 请求对象
+     * @return 执行结果
+     */
     @Override
     public PermissionCheckResultDTO check(CheckCommand request) {
         ValidationUtil.validate(request);
@@ -77,6 +83,12 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
 
 
 
+    /**
+     * 执行授权解释用例。
+     *
+     * @param command 应用命令
+     * @return 返回结果
+     */
     @Override
     public PermissionExplainResultDTO explain(ExplainCommand command) {
         ValidationUtil.validate(command);
@@ -93,6 +105,12 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         return toResultDTO(outcome, durationMs);
     }
 
+    /**
+     * 构建授权主体值对象。
+     *
+     * @param command 应用命令
+     * @return 构建结果
+     */
     private Subject buildSubject(ExplainCommand command) {
         if (StringUtils.isBlank(command.getSubjectRelation())) {
             return Subject.user(command.getSubjectType(), command.getSubjectId());
@@ -100,6 +118,13 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         return Subject.userset(command.getSubjectType(), command.getSubjectId(), command.getSubjectRelation());
     }
 
+    /**
+     * 转换授权解释结果 DTO。
+     *
+     * @param outcome outcome 参数
+     * @param durationMs durationMs 参数
+     * @return 构建结果
+     */
     private PermissionExplainResultDTO toResultDTO(PermissionExplainOutcome outcome, long durationMs) {
         if (outcome.isAllowed() || outcome.isDenied()) {
             ExplainResolutionDTO resolution = ExplainResolutionDTO.from(outcome.trace());
@@ -110,11 +135,23 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         return PermissionExplainResultDTO.error(outcome.status().name(), outcome.status().getDesc(), durationMs);
     }
 
+    /**
+     * 检查check async。
+     *
+     * @param request 请求对象
+     * @return 执行结果
+     */
     @Override
     public CompletableFuture<PermissionCheckResultDTO> checkAsync(CheckCommand request) {
         return CompletableFuture.supplyAsync(() -> check(request));
     }
 
+    /**
+     * 构建授权主体值对象。
+     *
+     * @param request 请求对象
+     * @return 构建结果
+     */
     private Subject buildSubject(CheckCommand request) {
         if (StringUtils.isBlank(request.getSubjectRelation())) {
             return Subject.user(request.getSubjectType(), request.getSubjectId());
@@ -123,15 +160,30 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
     }
 
 
+    /**
+     * 解析响应使用的一致性 token。
+     *
+     * @param storeId Store 标识
+     * @param result 结果对象
+     * @return 构建结果
+     */
     private String resolveZookieToken(String storeId, PermissionCheckResult result) {
         if (PermissionCheckStatus.STORE_NOT_FOUND == result.status()) {
             return "";
         }
-        Long version = changelogQueryRepository.getMaxZookie(storeId);
+        Long version = consistencyTokenReader.currentMaxZookie(storeId);
         return Zookie.of(version).toToken();
     }
 
 
+    /**
+     * 转换权限检查结果 DTO。
+     *
+     * @param result      领域权限检查结果
+     * @param zookieToken 响应一致性 token
+     * @param duration    检查耗时
+     * @return 权限检查结果 DTO
+     */
     private PermissionCheckResultDTO toPermissionCheckResultDTO(PermissionCheckResult result, String zookieToken,
                                                                 long duration) {
         if (result.isAllowed()) {

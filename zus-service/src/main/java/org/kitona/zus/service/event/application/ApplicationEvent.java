@@ -17,6 +17,11 @@ public abstract class ApplicationEvent {
     private final Instant occurredAt;
     private final String storeId;
 
+    /**
+     * 创建 ApplicationEvent 实例。
+     *
+     * @param storeId Store 标识
+     */
     protected ApplicationEvent(String storeId) {
         this.eventId = UUID.randomUUID().toString();
         this.occurredAt = Instant.now();

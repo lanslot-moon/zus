@@ -26,6 +26,9 @@ import java.util.Map;
  */
 public final class AuthorizationTypeDefinitionAssembler {
 
+    /**
+     * 创建 AuthorizationTypeDefinitionAssembler 工具类私有构造方法，防止外部实例化。
+     */
     private AuthorizationTypeDefinitionAssembler() {
     }
 
@@ -97,6 +100,12 @@ public final class AuthorizationTypeDefinitionAssembler {
                 .toList();
     }
 
+    /**
+     * 将关系定义转换为授权类型定义结果中的关系 DTO。
+     *
+     * @param relation 关系定义
+     * @return 关系定义结果 DTO
+     */
     private static AuthorizationTypeDefinitionResultDTO.RelationDefinitionResultDTO toRelationResultDTO(
             RelationDefinition relation) {
         AuthorizationTypeDefinitionResultDTO.RelationDefinitionResultDTO dto =
