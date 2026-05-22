@@ -1,14 +1,13 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
+import jakarta.annotation.Resource;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
-import org.kitona.zus.domain.enums.StoreStatus;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.StoreConverter;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IStorePersistenceRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,37 +18,28 @@ import java.util.Optional;
 @Repository
 public class StoreDomainRepositoryAdapter implements IStoreDomainRepository {
 
-    private final IStorePersistenceRepository storeRepository;
-
-    public StoreDomainRepositoryAdapter(IStorePersistenceRepository storeRepository) {
-        this.storeRepository = storeRepository;
-    }
+    @Resource
+    private IStorePersistenceRepository storeRepository;
 
     @Override
-    public Optional<StoreAggregate> findByStoreId(String storeId) {
+    public Optional<StoreAggregate> findById(String storeId) {
         return storeRepository.findByStoreId(storeId).map(StoreConverter::toAggregate);
     }
 
     @Override
-    public List<StoreAggregate> findByStatus(StoreStatus status) {
-        Integer statusCode = status != null ? status.getCode() : null;
-        return storeRepository.findByStatus(statusCode).stream()
-                .map(StoreConverter::toAggregate)
-                .toList();
-    }
-
-    @Override
-    public boolean saveOrUpdateStore(StoreAggregate store) {
+    public void save(StoreAggregate store) {
         StorePO po = StoreConverter.toPO(store);
         if (store.getId() == null) {
-            return storeRepository.createStore(po);
+            storeRepository.createStore(po);
+            return;
         }
-        return storeRepository.updateStore(po);
+        storeRepository.updateStore(po);
     }
 
     @Override
-    public boolean deleteByStoreId(String storeId) {
-        return storeRepository.deleteByStoreId(storeId);
+    public void remove(StoreAggregate store) {
+        if (store != null) {
+            storeRepository.deleteByStoreId(store.getStoreId());
+        }
     }
-
 }

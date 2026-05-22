@@ -1,9 +1,10 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
+import jakarta.annotation.Resource;
 import org.apache.commons.collections4.CollectionUtils;
+import org.kitona.zus.domain.read.port.IAuthorizationModelQueryPort;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
-import org.kitona.zus.domain.repository.IAuthorizationModelQueryRepository;
-import org.kitona.zus.domain.valueobject.CursorPageResult;
+import org.kitona.zus.domain.read.page.CursorPageResult;
 import org.kitona.zus.infrastructure.persistence.mysql.converter.AuthorizationModelConverter;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IAuthorizationModelPersistenceRepository;
@@ -16,14 +17,10 @@ import java.util.Optional;
  * 授权模型查询仓储适配器。
  */
 @Repository
-public class AuthorizationModelQueryRepositoryAdapter implements IAuthorizationModelQueryRepository {
+public class AuthorizationModelQueryRepositoryAdapter implements IAuthorizationModelQueryPort {
 
-    private final IAuthorizationModelPersistenceRepository authorizationModelPersistenceRepository;
-
-    public AuthorizationModelQueryRepositoryAdapter(
-            IAuthorizationModelPersistenceRepository authorizationModelPersistenceRepository) {
-        this.authorizationModelPersistenceRepository = authorizationModelPersistenceRepository;
-    }
+    @Resource
+    private IAuthorizationModelPersistenceRepository authorizationModelPersistenceRepository;
 
     @Override
     public CursorPageResult<AuthorizationModelView> findPageViewByCursor(String storeId, Integer status, String pageToken, int pageSize) {
@@ -40,7 +37,6 @@ public class AuthorizationModelQueryRepositoryAdapter implements IAuthorizationM
 
     @Override
     public Optional<AuthorizationModelView> findLatestPublishedViewByStoreId(String storeId) {
-        return authorizationModelPersistenceRepository.findLatestByStoreId(storeId)
-                .map(AuthorizationModelConverter::toView);
+        return authorizationModelPersistenceRepository.findLatestByStoreId(storeId).map(AuthorizationModelConverter::toView);
     }
 }

@@ -267,9 +267,7 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
             wrapper.eq(RelationTuplePO::getSubjectRelation, subjectRelation);
             return;
         }
-        wrapper.and(condition -> condition.isNull(RelationTuplePO::getSubjectRelation)
-                .or()
-                .eq(RelationTuplePO::getSubjectRelation, ""));
+        wrapper.eq(RelationTuplePO::getSubjectRelation, "");
     }
 
     private void applyActiveTupleCondition(LambdaQueryWrapper<RelationTuplePO> wrapper, long currentTimestamp) {

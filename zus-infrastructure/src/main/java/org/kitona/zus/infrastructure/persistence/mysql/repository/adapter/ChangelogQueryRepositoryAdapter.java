@@ -1,8 +1,8 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
-import org.kitona.zus.domain.authorization.audit.Changelog;
-import org.kitona.zus.domain.repository.IChangelogQueryRepository;
-import org.kitona.zus.infrastructure.persistence.mysql.converter.ChangelogConverter;
+import jakarta.annotation.Resource;
+import org.kitona.zus.domain.read.port.IChangelogQueryPort;
+import org.kitona.zus.domain.read.view.ChangelogView;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.TupleChangelogPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IChangelogPersistenceRepository;
 import org.springframework.stereotype.Repository;
@@ -13,34 +13,49 @@ import java.util.List;
  * 变更日志查询仓储适配器。
  */
 @Repository
-public class ChangelogQueryRepositoryAdapter implements IChangelogQueryRepository {
+public class ChangelogQueryRepositoryAdapter implements IChangelogQueryPort {
 
-    private final IChangelogPersistenceRepository changelogPersistenceRepository;
-
-    public ChangelogQueryRepositoryAdapter(IChangelogPersistenceRepository changelogPersistenceRepository) {
-        this.changelogPersistenceRepository = changelogPersistenceRepository;
-    }
+    @Resource
+    private IChangelogPersistenceRepository changelogPersistenceRepository;
 
     @Override
-    public List<Changelog> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit) {
+    public List<ChangelogView> findByZookieRange(String storeId, Long startZookie, Long endZookie, Integer limit) {
         List<TupleChangelogPO> poList = changelogPersistenceRepository.findByZookieRange(storeId, startZookie, endZookie, limit);
-        return ChangelogConverter.toEntityList(poList);
+        return toViews(poList);
     }
 
     @Override
-    public List<Changelog> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
+    public List<ChangelogView> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
         List<TupleChangelogPO> poList = changelogPersistenceRepository.findAfterZookie(storeId, afterZookie, limit);
-        return ChangelogConverter.toEntityList(poList);
+        return toViews(poList);
     }
 
     @Override
-    public Long getMaxZookie(String storeId) {
-        return changelogPersistenceRepository.getMaxZookie(storeId);
-    }
-
-    @Override
-    public List<Changelog> findRecentChanges(String storeId, Integer limit) {
+    public List<ChangelogView> findRecentChanges(String storeId, Integer limit) {
         List<TupleChangelogPO> poList = changelogPersistenceRepository.findRecentChanges(storeId, limit);
-        return ChangelogConverter.toEntityList(poList);
+        return toViews(poList);
+    }
+
+    private List<ChangelogView> toViews(List<TupleChangelogPO> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        return rows.stream().map(this::toView).toList();
+    }
+
+    private ChangelogView toView(TupleChangelogPO row) {
+        return new ChangelogView(
+                row.getZookie(),
+                row.getOperation(),
+                row.getObjectType(),
+                row.getObjectId(),
+                row.getRelation(),
+                row.getSubjectType(),
+                row.getSubjectId(),
+                row.getSubjectRelation(),
+                row.getOperatorId(),
+                row.getRequestId(),
+                row.getSource(),
+                row.getOperationTime());
     }
 }

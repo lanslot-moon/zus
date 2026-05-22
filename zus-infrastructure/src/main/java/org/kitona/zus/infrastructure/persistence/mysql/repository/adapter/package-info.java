@@ -29,7 +29,8 @@
  * <ul>
  *   <li>AuthorizationModelDomainRepositoryAdapter 不再承接“最新已发布模型”之类的读语义</li>
  *   <li>TupleDomainRepositoryAdapter / ChangelogDomainRepositoryAdapter 仅负责写侧和规则相关查询</li>
- *   <li>TupleQueryRepositoryAdapter / ChangelogQueryRepositoryAdapter 负责列表、过滤、watch 与一致性 token 查询</li>
+ *   <li>TupleQueryRepositoryAdapter / ChangelogQueryRepositoryAdapter 负责列表、过滤与 watch 查询</li>
+ *   <li>ZookieWatermarkQueryRepositoryAdapter 负责一致性水位查询</li>
  *   <li>应用层提交后的异步通知已迁移为应用事件，RepositoryAdapter 不承担事件语义</li>
  * </ul>
  *

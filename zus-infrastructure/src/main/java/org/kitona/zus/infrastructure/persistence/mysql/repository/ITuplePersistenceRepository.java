@@ -15,7 +15,7 @@ import java.util.Optional;
  *
  * <p>定义基于 PO 的持久化契约，与领域层
  * {@link org.kitona.zus.domain.repository.ITupleDomainRepository} /
- * {@link org.kitona.zus.domain.repository.ITupleQueryRepository} 职责不同：
+ * {@link org.kitona.zus.domain.read.port.ITupleQueryPort} 职责不同：
  * <ul>
  *   <li>领域层接口：操作领域实体（RelationTuple），定义业务契约</li>
  *   <li>本接口：操作持久化对象（RelationTuplePO），定义技术契约</li>

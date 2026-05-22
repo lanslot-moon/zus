@@ -1,7 +1,6 @@
 package org.kitona.zus.infrastructure.persistence.mysql.repository;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
 
 import java.util.List;
@@ -10,7 +9,7 @@ import java.util.Optional;
 /**
  * 授权模型持久化仓储接口（基础设施层，仅 fga_auth_model 单表）
  *
- * <p>定义基于 PO 的持久化契约，与领域层 {@link IAuthorizationModelDomainRepository} 职责不同：
+ * <p>定义基于 PO 的持久化契约，与领域层授权模型聚合仓储职责不同：
  * <ul>
  *   <li>领域层接口：操作聚合根（AuthorizationModelAggregate），定义业务契约</li>
  *   <li>本接口：操作持久化对象（AuthModelPO），定义技术契约</li>

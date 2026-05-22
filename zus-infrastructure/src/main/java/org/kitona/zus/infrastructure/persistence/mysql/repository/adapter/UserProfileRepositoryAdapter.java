@@ -2,7 +2,7 @@ package org.kitona.zus.infrastructure.persistence.mysql.repository.adapter;
 
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.domain.authorization.user.UserProfile;
-import org.kitona.zus.domain.repository.IUserProfileRepository;
+import org.kitona.zus.domain.authorization.user.repository.IUserProfileRepository;
 import org.kitona.zus.infrastructure.persistence.mysql.entity.UserInfoPO;
 import org.kitona.zus.infrastructure.persistence.mysql.repository.IUserInfoPersistenceRepository;
 import org.springframework.stereotype.Repository;
@@ -31,16 +31,11 @@ public class UserProfileRepositoryAdapter implements IUserProfileRepository {
     }
 
     @Override
-    public boolean save(UserProfile userInfo) {
+    public void save(UserProfile userInfo) {
         if (userInfo == null || StringUtils.isBlank(userInfo.getUserId())) {
-            return false;
+            return;
         }
-        return userInfoPersistenceRepository.saveOrUpdate(toPO(userInfo));
-    }
-
-    @Override
-    public boolean existsByUserId(String userId) {
-        return userInfoPersistenceRepository.existsByUserId(userId);
+        userInfoPersistenceRepository.saveOrUpdate(toPO(userInfo));
     }
 
     private UserProfile toEntity(UserInfoPO po) {

@@ -11,7 +11,7 @@ import java.util.List;
  * <p>
  * 定义基于 PO 的持久化契约，供
  * {@link org.kitona.zus.domain.repository.IChangelogDomainRepository} /
- * {@link org.kitona.zus.domain.repository.IChangelogQueryRepository} 的适配器内部使用。
+ * {@link org.kitona.zus.domain.read.port.IChangelogQueryPort} 的适配器内部使用。
  *
  * @author kitona
  * @version 1.1.0
