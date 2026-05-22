@@ -5,13 +5,12 @@
  *
  * <h2>端口说明</h2>
  * <p>本包只包含被驱动端口（Driven Ports），即领域层需要的外部能力。
- * 读侧查询仓储不定义在本包，而是作为领域查询契约放在 {@code domain.repository}
- * 或 {@code domain.query} 相关模型旁边。
+ * 读侧查询仓储不定义在本包，而是作为领域查询契约放在 {@code domain.read.port}
+ * 相关模型旁边。
  *
  * <h2>包含的端口</h2>
  * <ul>
  *   <li>{@link ICompiledModelCompiler} - 结构化模型编译为已编译授权模型</li>
- *   <li>{@link ICompiledModelCache} - 已编译模型缓存</li>
  *   <li>{@link IConditionEvaluator} - 条件表达式求值</li>
  *   <li>{@link IModelSnapshotRenderer} - 授权模型 DSL 快照渲染</li>
  *   <li>{@link IAuditContextProvider} - 审计上下文提供能力</li>

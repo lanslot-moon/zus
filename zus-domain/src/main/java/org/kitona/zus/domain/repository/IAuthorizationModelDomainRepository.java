@@ -1,6 +1,7 @@
 package org.kitona.zus.domain.repository;
 
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
+import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 
 import java.util.Optional;
 
@@ -34,8 +35,6 @@ import java.util.Optional;
  */
 public interface IAuthorizationModelDomainRepository {
 
-    // ==================== 聚合根操作（核心方法） ====================
-
     /**
      * 根据模型ID加载完整聚合根
      *
@@ -47,10 +46,29 @@ public interface IAuthorizationModelDomainRepository {
      *   <li>所有类型限制（fga_type_restriction）</li>
      * </ul>
      *
-     * @param storeId 存储空间ID
-     * @param modelId 授权模型唯一标识
+     * @param id 授权模型聚合根标识
      * @return 完整的授权模型聚合根，不存在返回 empty
      */
-    Optional<AuthorizationModelAggregate> findByModelId(String storeId, String modelId);
+    Optional<AuthorizationModelAggregate> findById(AuthorizationModelId id);
+
+    /**
+     * 保存授权模型聚合根。
+     *
+     * <p>Repository 只表达“保存聚合当前状态”，不把创建、发布、废弃、结构表同步等
+     * 应用用例或持久化细节暴露为领域接口方法。
+     *
+     * @param aggregate 授权模型聚合根
+     */
+    void save(AuthorizationModelAggregate aggregate);
+
+    /**
+     * 移除授权模型聚合根。
+     *
+     * <p>是否允许移除由聚合规则或应用服务在调用前判断，Repository 不通过方法名承载
+     * “只能删除草稿”等生命周期业务规则。
+     *
+     * @param aggregate 授权模型聚合根
+     */
+    void remove(AuthorizationModelAggregate aggregate);
 
 }

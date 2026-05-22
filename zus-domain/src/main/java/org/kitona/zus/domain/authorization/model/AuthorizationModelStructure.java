@@ -23,10 +23,21 @@ public record AuthorizationModelStructure(Map<String, TypeDefinition> typesByNam
                                           Map<String, ConditionDefinition> conditionsByName) {
 
     /**
+     * 创建不可变结构快照。
+     *
+     * @param typesByName      按 type 名称索引的类型定义
+     * @param conditionsByName 按 condition 名称索引的条件定义
+     */
+    public AuthorizationModelStructure {
+        typesByName = immutableCopy(typesByName);
+        conditionsByName = immutableCopy(conditionsByName);
+    }
+
+    /**
      * 空结构。
      */
     public static AuthorizationModelStructure empty() {
-        return new AuthorizationModelStructure(new LinkedHashMap<>(), new LinkedHashMap<>());
+        return new AuthorizationModelStructure(Map.of(), Map.of());
     }
 
 
@@ -138,7 +149,7 @@ public record AuthorizationModelStructure(Map<String, TypeDefinition> typesByNam
     }
 
     public Set<String> typeNames() {
-        return Collections.unmodifiableSet(typesByName.keySet());
+        return Set.copyOf(typesByName.keySet());
     }
 
     public Optional<ConditionDefinition> getCondition(String conditionName) {
@@ -150,9 +161,12 @@ public record AuthorizationModelStructure(Map<String, TypeDefinition> typesByNam
     }
 
     /**
-     * 添加类型（就地修改）。
+     * 返回添加类型后的新结构。
+     *
+     * @param typeDefinition 类型定义
+     * @return 添加类型后的新结构
      */
-    public void putType(TypeDefinition typeDefinition) {
+    public AuthorizationModelStructure withType(TypeDefinition typeDefinition) {
         Objects.requireNonNull(typeDefinition, "类型定义不能为空");
         String name = typeDefinition.getSubjectType();
         if (typesByName.containsKey(name)) {
@@ -161,38 +175,57 @@ public record AuthorizationModelStructure(Map<String, TypeDefinition> typesByNam
         if (typeDefinition.getSortOrder() == null || typeDefinition.getSortOrder() == 0) {
             typeDefinition.assignSortOrder(typesByName.size());
         }
-        typesByName.put(name, typeDefinition);
+        Map<String, TypeDefinition> nextTypes = new LinkedHashMap<>(typesByName);
+        nextTypes.put(name, typeDefinition);
+        return new AuthorizationModelStructure(nextTypes, conditionsByName);
     }
 
     /**
-     * 移除类型（就地修改）。
+     * 返回移除类型后的新结构。
+     *
+     * @param typeName 类型名称
+     * @return 移除类型后的新结构
      */
-    public Optional<TypeDefinition> removeType(String typeName) {
-        return Optional.ofNullable(typesByName.remove(typeName));
+    public AuthorizationModelStructure withoutType(String typeName) {
+        if (!typesByName.containsKey(typeName)) {
+            return this;
+        }
+        Map<String, TypeDefinition> nextTypes = new LinkedHashMap<>(typesByName);
+        nextTypes.remove(typeName);
+        return new AuthorizationModelStructure(nextTypes, conditionsByName);
     }
 
     /**
-     * 添加条件（就地修改）。
+     * 返回添加条件后的新结构。
+     *
+     * @param conditionDefinition 条件定义
+     * @return 添加条件后的新结构
      */
-    public void putCondition(ConditionDefinition conditionDefinition) {
+    public AuthorizationModelStructure withCondition(ConditionDefinition conditionDefinition) {
         Objects.requireNonNull(conditionDefinition, "conditionDefinition 不能为空");
         String name = conditionDefinition.getConditionName();
         if (conditionsByName.containsKey(name)) {
             throw new SystemException("条件已存在: " + name, IError.DATA_EXIST_ERROR.getCode());
         }
-        conditionsByName.put(name, conditionDefinition);
+        Map<String, ConditionDefinition> nextConditions = new LinkedHashMap<>(conditionsByName);
+        nextConditions.put(name, conditionDefinition);
+        return new AuthorizationModelStructure(typesByName, nextConditions);
     }
 
     /**
-     * 全量替换条件（就地修改）。
+     * 返回替换全部条件后的新结构。
+     *
+     * @param definitions 条件定义列表
+     * @return 替换全部条件后的新结构
      */
-    public void replaceConditions(List<ConditionDefinition> definitions) {
-        conditionsByName.clear();
-        if (definitions == null) {
-            return;
+    public AuthorizationModelStructure withConditions(List<ConditionDefinition> definitions) {
+        return new AuthorizationModelStructure(typesByName, convertConditions(definitions));
+    }
+
+    private static <T> Map<String, T> immutableCopy(Map<String, T> source) {
+        if (source == null || source.isEmpty()) {
+            return Map.of();
         }
-        for (ConditionDefinition definition : definitions) {
-            putCondition(definition);
-        }
+        return Collections.unmodifiableMap(new LinkedHashMap<>(source));
     }
 }

@@ -188,7 +188,7 @@ public class AuthorizationModelAggregate {
      */
     public void addTypeDefinition(TypeDefinition typeDefinition) {
         assertEditable();
-        structure.putType(typeDefinition);
+        structure = structure.withType(typeDefinition);
     }
 
     public void addTypeDefinitions(List<TypeDefinition> definitions) {
@@ -226,7 +226,9 @@ public class AuthorizationModelAggregate {
      */
     public Optional<TypeDefinition> removeTypeDefinition(String type) {
         assertEditable();
-        return structure.removeType(type);
+        Optional<TypeDefinition> removed = structure.getType(type);
+        structure = structure.withoutType(type);
+        return removed;
     }
 
     /**
@@ -258,12 +260,12 @@ public class AuthorizationModelAggregate {
 
     public void addConditionDefinition(ConditionDefinition conditionDefinition) {
         assertEditable();
-        structure.putCondition(conditionDefinition);
+        structure = structure.withCondition(conditionDefinition);
     }
 
     public void replaceConditionDefinitions(List<ConditionDefinition> definitions) {
         assertEditable();
-        structure.replaceConditions(definitions);
+        structure = structure.withConditions(definitions);
     }
 
     public Optional<ConditionDefinition> getConditionDefinition(String conditionName) {

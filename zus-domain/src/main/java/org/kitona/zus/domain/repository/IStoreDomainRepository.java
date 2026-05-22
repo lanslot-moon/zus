@@ -1,8 +1,6 @@
 package org.kitona.zus.domain.repository;
 
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
-import org.kitona.zus.domain.enums.StoreStatus;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -29,30 +27,20 @@ public interface IStoreDomainRepository {
      * @param storeId 存储空间唯一标识
      * @return 存储空间聚合根，不存在返回 empty
      */
-    Optional<StoreAggregate> findByStoreId(String storeId);
+    Optional<StoreAggregate> findById(String storeId);
 
     /**
-     * 根据状态查询存储空间列表
-     *
-     * @param status 存储空间状态
-     * @return 存储空间聚合根列表
-     */
-    List<StoreAggregate> findByStatus(StoreStatus status);
-
-    /**
-     * 保存存储空间聚合根（新增或更新）
+     * 保存存储空间聚合根。
      *
      * @param store 存储空间聚合根
-     * @return 保存成功返回 true
      */
-    boolean saveOrUpdateStore(StoreAggregate store);
+    void save(StoreAggregate store);
 
     /**
-     * 删除存储空间（逻辑删除，标记为删除中状态）
+     * 移除存储空间聚合根。
      *
-     * @param storeId 存储空间ID
-     * @return 删除成功返回 true
+     * @param store 存储空间聚合根
      */
-    boolean deleteByStoreId(String storeId);
+    void remove(StoreAggregate store);
 
 }

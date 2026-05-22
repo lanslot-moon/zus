@@ -28,8 +28,6 @@ import org.kitona.zus.domain.port.IDirectTupleReader;
 import org.kitona.zus.domain.port.IObjectSubjectCandidateReader;
 import org.kitona.zus.domain.port.ISubjectObjectCandidateReader;
 import org.kitona.zus.domain.port.ITupleLinkReader;
-import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
-import org.kitona.zus.domain.repository.ITupleQueryRepository;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
@@ -460,31 +458,13 @@ class PermissionCheckEvaluatorTest {
         );
     }
 
-    private static final class InMemoryTupleQueryRepository implements ITupleQueryRepository, IDirectTupleReader,
+    private static final class InMemoryTupleQueryRepository implements IDirectTupleReader,
             ITupleLinkReader, ISubjectObjectCandidateReader, IObjectSubjectCandidateReader {
 
         private final List<RelationTuple> tuples;
 
         private InMemoryTupleQueryRepository(List<RelationTuple> tuples) {
             this.tuples = new ArrayList<>(tuples);
-        }
-
-        @Override
-        public List<RelationTuple> list(TupleQueryCriteria criteria) {
-            return filter(criteria.storeId(), criteria.objectType(), criteria.objectId(), criteria.relation(),
-                    criteria.subjectType(), criteria.subjectId(), criteria.subjectRelation(), criteria.maxZookie());
-        }
-
-        @Override
-        public List<RelationTuple> findBySubject(TupleQueryCriteria criteria) {
-            return filter(criteria.storeId(), criteria.objectType(), null, criteria.relation(),
-                    criteria.subjectType(), criteria.subjectId(), criteria.subjectRelation(), criteria.maxZookie());
-        }
-
-        @Override
-        public List<RelationTuple> findByObject(TupleQueryCriteria criteria) {
-            return filter(criteria.storeId(), criteria.objectType(), criteria.objectId(), criteria.relation(),
-                    null, null, null, criteria.maxZookie());
         }
 
         @Override

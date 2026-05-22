@@ -19,13 +19,6 @@ import java.util.List;
 public interface IChangelogDomainRepository {
 
     /**
-     * 批量持久化变更日志
-     *
-     * @param changelogs 变更日志实体列表
-     */
-    void saveBatch(List<Changelog> changelogs);
-
-    /**
      * 持久化单条变更日志
      *
      * @param changelog 变更日志实体
@@ -33,11 +26,9 @@ public interface IChangelogDomainRepository {
     void save(Changelog changelog);
 
     /**
-     * 清理历史变更日志
+     * 批量持久化变更日志。
      *
-     * @param storeId      存储空间ID
-     * @param beforeZookie 清理该 Zookie 之前的记录（不包含）
-     * @return 删除的记录行数
+     * @param changelogs 变更日志实体列表
      */
-    int deleteBeforeZookie(String storeId, Long beforeZookie);
+    void saveAll(List<Changelog> changelogs);
 }
