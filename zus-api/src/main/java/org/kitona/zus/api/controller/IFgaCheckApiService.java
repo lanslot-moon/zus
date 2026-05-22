@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * FGA Check API —— 权限判定（热路径）
+ * FGA Check API —— 权限判定
  *
  * <h3>定位</h3>
  * 本接口只包含“给定 TupleKey，是否允许”的判定语义，对应 Zanzibar 中的 Check / BatchCheck 原语。

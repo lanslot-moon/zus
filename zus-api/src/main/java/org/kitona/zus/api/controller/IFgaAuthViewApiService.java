@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * FGA Relation Query API —— 关系枚举 &amp; 展开（冷路径）
+ * FGA Relation Query API —— 关系展开
  *
  * <h3>定位</h3>
  * 本接口聚焦“反向 / 展开式”查询，用于管理台、授权页、审计与调试等低频场景：

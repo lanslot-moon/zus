@@ -1,6 +1,7 @@
 package org.kitona.zus.api.controller;
 
 import jakarta.validation.Valid;
+import org.kitona.zus.api.request.tuple.FgaDeleteRequest;
 import org.kitona.zus.api.request.tuple.FgaReadRequest;
 import org.kitona.zus.api.request.tuple.FgaWriteRequest;
 import org.kitona.zus.api.response.FgaTupleChangeVO;
@@ -21,7 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * <h3>URL 层级</h3>
  * <pre>
- *   POST /fga/stores/{storeId}/write         事务性 writes + deletes
+ *   POST /fga/stores/{storeId}/write         写入 / upsert tuple
+ *   POST /fga/stores/{storeId}/delete        删除 tuple
  *   POST /fga/stores/{storeId}/read          按任意字段过滤读取（游标分页）
  *   GET  /fga/stores/{storeId}/changes       按 zookie 拉取变更日志
  * </pre>
@@ -44,11 +46,18 @@ import org.springframework.web.bind.annotation.RestController;
 public interface IFgaTupleApiService {
 
     /**
-     * 事务性写入 —— 本次请求内的 writes + deletes 原子提交。
+     * 写入关系元组。
      * <p>成功返回新 {@code zookie}，供调用方串行后续 Check 使用。
      */
     @PostMapping("/write")
     RestResult<FgaWriteResultVO> write(@PathVariable String storeId, @Valid @RequestBody FgaWriteRequest request);
+
+    /**
+     * 删除关系元组。
+     * <p>成功返回新 {@code zookie}，供调用方串行后续 Check 使用。
+     */
+    @PostMapping("/delete")
+    RestResult<FgaWriteResultVO> delete(@PathVariable String storeId, @Valid @RequestBody FgaDeleteRequest request);
 
     /**
      * 按 TupleKey 任意字段过滤读元组（游标分页），不经模型解析，返回直接存储的元组。

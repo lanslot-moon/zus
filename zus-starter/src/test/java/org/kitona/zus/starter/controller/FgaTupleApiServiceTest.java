@@ -6,13 +6,16 @@ import org.kitona.zus.api.controller.IFgaAuthModelApiService;
 import org.kitona.zus.api.controller.IFgaStoreApiService;
 import org.kitona.zus.api.controller.IFgaTupleApiService;
 import org.kitona.zus.api.request.FgaCreateStoreRequest;
+import org.kitona.zus.api.request.common.FgaConditionRequest;
 import org.kitona.zus.api.request.common.FgaReferenceRequest;
 import org.kitona.zus.api.request.common.FgaTupleKeyFilterRequest;
 import org.kitona.zus.api.request.common.FgaTupleKeyRequest;
+import org.kitona.zus.api.request.model.FgaConditionSchemaInput;
 import org.kitona.zus.api.request.model.FgaRelationSchemaInput;
 import org.kitona.zus.api.request.model.FgaTypeSchemaInput;
 import org.kitona.zus.api.request.model.FgaTypeRestrictionInput;
 import org.kitona.zus.api.request.model.FgaWriteAuthorizationModelRequest;
+import org.kitona.zus.api.request.tuple.FgaDeleteRequest;
 import org.kitona.zus.api.request.tuple.FgaReadRequest;
 import org.kitona.zus.api.request.tuple.FgaTupleWriteItem;
 import org.kitona.zus.api.request.tuple.FgaWriteRequest;
@@ -80,8 +83,37 @@ class FgaTupleApiServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    @DisplayName("write + delete 在同一事务内完成：最终仅剩未被删除的元组")
-    void writeAndDelete_inSameRequest() {
+    @DisplayName("write 条件 tuple：Service 层根据当前模型解析 conditionDefinitionId")
+    void write_conditionTuple_resolvesConditionDefinitionInServiceLayer() {
+        String storeId = prepareStoreWithActiveConditionalModel();
+
+        FgaWriteRequest req = FgaWriteRequest.builder()
+                .writes(List.of(conditionedWriteItem("document", "doc-1", "viewer", "user", "alice")))
+                .build();
+
+        RestResult<FgaWriteResultVO> result = tupleApi.write(storeId, req);
+
+        assertThat(result.getCode()).isEqualTo(200);
+        assertThat(result.getData().getWrittenCount()).isEqualTo(1);
+
+        Long conditionDefinitionId = jdbcTemplate.queryForObject(
+                "SELECT condition_definition_id FROM fga_relation_tuple WHERE store_id = ? "
+                        + "AND object_type = 'document' AND object_id = 'doc-1' "
+                        + "AND relation = 'viewer' AND subject_id = 'alice' AND is_deleted = 0",
+                Long.class, storeId);
+        String conditionName = jdbcTemplate.queryForObject(
+                "SELECT condition_name FROM fga_relation_tuple WHERE store_id = ? "
+                        + "AND object_type = 'document' AND object_id = 'doc-1' "
+                        + "AND relation = 'viewer' AND subject_id = 'alice' AND is_deleted = 0",
+                String.class, storeId);
+
+        assertThat(conditionDefinitionId).isNotNull().isPositive();
+        assertThat(conditionName).isEqualTo("is_working_hours");
+    }
+
+    @Test
+    @DisplayName("write 后 delete：最终仅剩未被删除的元组")
+    void writeThenDelete_keepsOnlyRemainingTuples() {
         String storeId = prepareStoreWithActiveModel();
 
         tupleApi.write(storeId, FgaWriteRequest.builder()
@@ -90,10 +122,10 @@ class FgaTupleApiServiceTest extends AbstractControllerTest {
                         writeItem("document", "doc-1", "viewer", "user", "bob")
                 )).build());
 
-        FgaWriteRequest delReq = FgaWriteRequest.builder()
+        FgaDeleteRequest delReq = FgaDeleteRequest.builder()
                 .deletes(List.of(tupleKey("document", "doc-1", "viewer", "user", "alice")))
                 .build();
-        RestResult<FgaWriteResultVO> delResult = tupleApi.write(storeId, delReq);
+        RestResult<FgaWriteResultVO> delResult = tupleApi.delete(storeId, delReq);
         assertThat(delResult.getCode()).isEqualTo(200);
         assertThat(delResult.getData().getDeletedCount()).isEqualTo(1);
 
@@ -168,7 +200,7 @@ class FgaTupleApiServiceTest extends AbstractControllerTest {
         String storeId = prepareStoreWithActiveModel();
         tupleApi.write(storeId, FgaWriteRequest.builder()
                 .writes(List.of(writeItem("document", "doc-1", "viewer", "user", "alice"))).build());
-        tupleApi.write(storeId, FgaWriteRequest.builder()
+        tupleApi.delete(storeId, FgaDeleteRequest.builder()
                 .deletes(List.of(tupleKey("document", "doc-1", "viewer", "user", "alice"))).build());
 
         RestResult<PageResponseVO<FgaTupleChangeVO>> result = tupleApi.listChanges(storeId, null, null, 50);
@@ -195,6 +227,19 @@ class FgaTupleApiServiceTest extends AbstractControllerTest {
         return store.getStoreId();
     }
 
+    private String prepareStoreWithActiveConditionalModel() {
+        FgaCreateStoreRequest createReq = new FgaCreateStoreRequest();
+        createReq.setName("tuple-condition-test-" + System.nanoTime());
+        FgaStoreVO store = storeApi.createStore(createReq).getData();
+
+        FgaWriteAuthorizationModelRequest modelReq = simpleModelWithCondition();
+        FgaModelVO model = modelApi.writeModel(store.getStoreId(), modelReq).getData();
+        modelApi.publishModel(store.getStoreId(), model.getModelId());
+        modelApi.activateModel(store.getStoreId(), model.getModelId());
+
+        return store.getStoreId();
+    }
+
     private static FgaWriteAuthorizationModelRequest simpleModel() {
         return FgaWriteAuthorizationModelRequest.builder()
                 .schemaVersion("1.1")
@@ -212,10 +257,31 @@ class FgaTupleApiServiceTest extends AbstractControllerTest {
                 .build();
     }
 
+    private static FgaWriteAuthorizationModelRequest simpleModelWithCondition() {
+        FgaWriteAuthorizationModelRequest request = simpleModel();
+        request.setConditions(Map.of("is_working_hours", FgaConditionSchemaInput.builder()
+                .expression("request.hour >= params.start_hour && request.hour < params.end_hour")
+                .parameterSchema(Map.of("start_hour", "int", "end_hour", "int"))
+                .description("工作时间访问")
+                .build()));
+        return request;
+    }
+
     private static FgaTupleWriteItem writeItem(String objectType, String objectId, String relation,
                                                String subjectType, String subjectId) {
         return FgaTupleWriteItem.builder()
                 .tupleKey(tupleKey(objectType, objectId, relation, subjectType, subjectId))
+                .build();
+    }
+
+    private static FgaTupleWriteItem conditionedWriteItem(String objectType, String objectId, String relation,
+                                                         String subjectType, String subjectId) {
+        return FgaTupleWriteItem.builder()
+                .tupleKey(tupleKey(objectType, objectId, relation, subjectType, subjectId))
+                .condition(FgaConditionRequest.builder()
+                        .name("is_working_hours")
+                        .context(Map.of("start_hour", 9, "end_hour", 18))
+                        .build())
                 .build();
     }
 

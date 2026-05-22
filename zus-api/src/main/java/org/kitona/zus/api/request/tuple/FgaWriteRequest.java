@@ -7,21 +7,18 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.kitona.zus.api.request.common.FgaTupleKeyRequest;
 
 import java.util.List;
 
 /**
- * FGA 写入请求 —— 事务性 writes + deletes
+ * FGA 写入请求。
  *
- * <p>对应 OpenFGA {@code /write} 语义：本次调用内部全部成功或全部回滚，
- * 一次请求最多可混合写入与删除，原子写入 {@code fga_relation_tuple}
- * 并追加一行到 {@code fga_tuple_changelog}（每个操作一条日志）。
+ * <p>该请求只承载写入 / upsert 元组列表。删除能力已经拆分到独立的
+ * {@link FgaDeleteRequest}，避免一个 API 同时承担 writes 与 deletes 两种操作语义。
  *
  * <h3>关键字段</h3>
  * <ul>
  *   <li>{@link #writes}  — 插入 / upsert 元组（带 condition、expiresAt）</li>
- *   <li>{@link #deletes} — 按 tupleKey 精确删除（逻辑删除）</li>
  *   <li>{@link #authorizationModelId} — 可选，锁定本次写入基于的模型版本，
  *       服务端会校验元组的 type / relation 是否在该模型中存在</li>
  * </ul>
@@ -51,13 +48,6 @@ public class FgaWriteRequest {
     private List<FgaTupleWriteItem> writes;
 
     /**
-     * 删除列表（按 tupleKey 精确匹配）
-     */
-    @Valid
-    @Size(max = 100, message = "单次删除不能超过 100 条")
-    private List<FgaTupleKeyRequest> deletes;
-
-    /**
      * 可选：指定本次写入所基于的模型版本
      * <p>为空时默认使用 Store 当前激活模型。
      */
@@ -65,10 +55,12 @@ public class FgaWriteRequest {
     private String authorizationModelId;
 
     /**
-     * 至少一种操作
+     * 至少包含一条写入操作。
+     *
+     * @return 写入列表非空返回 true
      */
-    @AssertTrue(message = "writes 与 deletes 至少一个非空")
+    @AssertTrue(message = "writes 不能为空")
     public boolean isNonEmpty() {
-        return (writes != null && !writes.isEmpty()) || (deletes != null && !deletes.isEmpty());
+        return writes != null && !writes.isEmpty();
     }
 }

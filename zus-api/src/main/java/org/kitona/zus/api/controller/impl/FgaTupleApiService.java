@@ -2,10 +2,10 @@ package org.kitona.zus.api.controller.impl;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.api.controller.IFgaTupleApiService;
 import org.kitona.zus.api.converter.FgaChangelogConverter;
 import org.kitona.zus.api.converter.FgaTupleConverter;
+import org.kitona.zus.api.request.tuple.FgaDeleteRequest;
 import org.kitona.zus.api.request.tuple.FgaReadRequest;
 import org.kitona.zus.api.request.tuple.FgaWriteRequest;
 import org.kitona.zus.api.response.FgaTupleChangeVO;
@@ -13,32 +13,27 @@ import org.kitona.zus.api.response.FgaTupleVO;
 import org.kitona.zus.api.response.FgaWriteResultVO;
 import org.kitona.zus.api.response.PageResponseVO;
 import org.kitona.zus.api.response.RestResult;
-import org.kitona.zus.service.application.IAuthorizationModelApplicationService;
 import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
 import org.kitona.zus.service.application.ITupleMutationApplicationService;
 import org.kitona.zus.service.application.ITupleWatchApplicationService;
 import org.kitona.zus.service.dto.command.WriteTupleCommand;
 import org.kitona.zus.service.dto.query.TupleReadQuery;
-import org.kitona.zus.service.dto.response.AuthorizationModelResultDTO;
-import org.kitona.zus.service.dto.response.ConditionDefinitionResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.TupleChangeResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
-import org.kitona.zus.service.exception.ApplicationException;
-import org.kitona.zus.common.exception.IError;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
 /**
  * FGA Tuple API 实现。
  *
  * <p>职责分工：
  * <ul>
- *   <li>write：解析 condition 名称 → id（依赖模型应用服务），再分派到
- *       {@link ITupleMutationApplicationService#write(String, List)} 与
+ *   <li>write：将 API 请求转换为应用命令，再分派到
+ *       {@link ITupleMutationApplicationService#write(String, String, List)}；事务提交后通过
+ *       {@link ITupleWatchApplicationService#getCurrentZookie(String)} 读取最新 zookie。</li>
+ *   <li>delete：只处理 tuple 精确删除，分派到
  *       {@link ITupleMutationApplicationService#delete(String, List)}；事务提交后通过
  *       {@link ITupleWatchApplicationService#getCurrentZookie(String)} 读取最新 zookie。</li>
  *   <li>read：直接转发到 {@link IAuthorizationReadApplicationService#read(String, TupleReadQuery)}，
@@ -47,8 +42,8 @@ import java.util.function.Function;
  *       （支持按 objectType 过滤 + zookie 游标分页）。</li>
  * </ul>
  *
- * <p>说明：condition 解析依赖当前生效模型；若请求体指定 {@code authorizationModelId}
- * 由模型应用服务通过 {@link IAuthorizationModelApplicationService#getModel} 返回对应模型。
+ * <p>说明：conditionName 到 conditionDefinitionId 的解析属于模型约束和写入用例的一部分，
+ * 由 Service 层负责处理，API 层不加载授权模型结构。
  *
  * @author kitona
  * @since 2026-04-18
@@ -66,34 +61,40 @@ public class FgaTupleApiService implements IFgaTupleApiService {
     @Resource
     private ITupleWatchApplicationService tupleWatchApplicationService;
 
-    @Resource
-    private IAuthorizationModelApplicationService authorizationModelApplicationService;
-
-
     @Override
     public RestResult<FgaWriteResultVO> write(String storeId, FgaWriteRequest request) {
-        Function<String, Long> conditionResolver = loadConditionResolver(storeId,
-                request != null ? request.getAuthorizationModelId() : null);
-
-        List<WriteTupleCommand> writes = FgaTupleConverter.INSTANCE.toWriteCommands(request, conditionResolver);
-        List<WriteTupleCommand> deletes = FgaTupleConverter.INSTANCE.toDeleteCommands(request);
+        List<WriteTupleCommand> writes = FgaTupleConverter.INSTANCE.toWriteCommands(request);
 
         int writtenCount = writes != null ? writes.size() : 0;
-        int deletedCount = deletes != null ? deletes.size() : 0;
 
         if (writtenCount > 0) {
-            tupleMutationApplicationService.write(storeId, writes);
+            String authorizationModelId = request != null ? request.getAuthorizationModelId() : null;
+            tupleMutationApplicationService.write(storeId, authorizationModelId, writes);
         }
+
+        long zookie = tupleWatchApplicationService.getCurrentZookie(storeId);
+        log.info("FgaTupleApiService.write storeId={}, written={}, zookie={}", storeId, writtenCount, zookie);
+        return RestResult.success(FgaWriteResultVO.builder()
+                .zookie(zookie > 0 ? String.valueOf(zookie) : null)
+                .writtenCount(writtenCount)
+                .deletedCount(0)
+                .build());
+    }
+
+    @Override
+    public RestResult<FgaWriteResultVO> delete(String storeId, FgaDeleteRequest request) {
+        List<WriteTupleCommand> deletes = FgaTupleConverter.INSTANCE.toDeleteCommands(request);
+        int deletedCount = deletes != null ? deletes.size() : 0;
+
         if (deletedCount > 0) {
             tupleMutationApplicationService.delete(storeId, deletes);
         }
 
         long zookie = tupleWatchApplicationService.getCurrentZookie(storeId);
-        log.info("FgaTupleApiService.write storeId={}, written={}, deleted={}, zookie={}",
-                storeId, writtenCount, deletedCount, zookie);
+        log.info("FgaTupleApiService.delete storeId={}, deleted={}, zookie={}", storeId, deletedCount, zookie);
         return RestResult.success(FgaWriteResultVO.builder()
                 .zookie(zookie > 0 ? String.valueOf(zookie) : null)
-                .writtenCount(writtenCount)
+                .writtenCount(0)
                 .deletedCount(deletedCount)
                 .build());
     }
@@ -119,47 +120,6 @@ public class FgaTupleApiService implements IFgaTupleApiService {
         }
         List<FgaTupleChangeVO> voList = FgaChangelogConverter.INSTANCE.toVOList(result.getData());
         return RestResult.success(PageResponseVO.of(voList, result.getContinuationToken(), result.isHasMore()));
-    }
-
-    /**
-     * 构建「条件名 → 条件定义 ID」解析函数。
-     *
-     * <p>如果请求未指定模型，使用 Store 当前激活模型；指定则使用对应版本。
-     * 当目标模型不存在或没有条件定义时，返回始终回退为 null 的 resolver，
-     * 由下游 {@code WriteTupleCommand} 的 {@code @AssertTrue} 校验拦截非法调用。
-     */
-    private Function<String, Long> loadConditionResolver(String storeId, String modelId) {
-        AuthorizationModelResultDTO model;
-        if (StringUtils.isNotBlank(modelId)) {
-            model = authorizationModelApplicationService.getModel(storeId, modelId);
-        } else {
-            model = authorizationModelApplicationService.getCurrentModel(storeId);
-        }
-
-        if (model == null) {
-            log.warn("FgaTupleApiService.loadConditionResolver 未找到可用模型: storeId={}, modelId={}", storeId, modelId);
-            return name -> null;
-        }
-
-        Map<String, ConditionDefinitionResultDTO> conditions = model.getConditionDefinitions();
-        if (conditions == null || conditions.isEmpty()) {
-            return name -> null;
-        }
-
-        Map<String, Long> index = conditions.entrySet().stream()
-                .filter(entry -> StringUtils.isNotBlank(entry.getKey()) && entry.getValue() != null)
-                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().getId()));
-        return name -> {
-            if (StringUtils.isBlank(name)) {
-                return null;
-            }
-            Long id = index.get(name);
-            if (id == null) {
-                log.warn("FgaTupleApiService 条件在模型中不存在: storeId={}, conditionName={}", storeId, name);
-                throw new ApplicationException(IError.PARAMS_EXIST_ERROR);
-            }
-            return id;
-        };
     }
 
 }

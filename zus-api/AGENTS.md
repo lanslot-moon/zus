@@ -42,7 +42,7 @@
 
 - Store：`/fga/stores`
 - Model：`/fga/stores/{storeId}/authorization-models`
-- Tuple：`/write`、`/read`、`/changes`
+- Tuple：`/write`、`/delete`、`/read`、`/changes`
 - Check：`/check`、`/batch-check`
 - Explain：`/check/explain`
 - Relation Query：`/list-objects`、`/list-subjects`、`/expand`
