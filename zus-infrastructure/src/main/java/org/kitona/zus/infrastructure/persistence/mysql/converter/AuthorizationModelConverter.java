@@ -13,6 +13,9 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.AuthModelPO;
  */
 public final class AuthorizationModelConverter {
 
+    /**
+     * 创建 AuthorizationModelConverter 工具类私有构造方法，防止外部实例化。
+     */
     private AuthorizationModelConverter() {
     }
 

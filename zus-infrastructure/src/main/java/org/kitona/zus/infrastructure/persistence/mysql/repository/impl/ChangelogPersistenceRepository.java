@@ -35,6 +35,12 @@ public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelo
     @Resource
     private IChangelogMapper changelogMapper;
 
+    /**
+     * 批量创建持久化记录。
+     *
+     * @param changelogs 变更日志列表
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchCreate(List<TupleChangelogPO> changelogs) {
@@ -44,6 +50,15 @@ public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelo
         return changelogMapper.batchInsert(changelogs) > 0;
     }
 
+    /**
+     * 按 zookie 闭区间查询变更日志。
+     *
+     * @param storeId     Store 标识
+     * @param startZookie 起始 zookie
+     * @param endZookie   结束 zookie
+     * @param limit       查询条数上限
+     * @return 变更日志持久化记录列表
+     */
     @Override
     public List<TupleChangelogPO> findByZookieRange(String storeId, Long startZookie,
             Long endZookie, Integer limit) {
@@ -56,6 +71,14 @@ public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelo
         return queryPage(wrapper, effectiveLimit);
     }
 
+    /**
+     * 查询指定 zookie 之后的变更日志。
+     *
+     * @param storeId Store 标识
+     * @param afterZookie afterZookie 参数
+     * @param limit limit 参数
+     * @return 查询结果
+     */
     @Override
     public List<TupleChangelogPO> findAfterZookie(String storeId, Long afterZookie, Integer limit) {
         int effectiveLimit = resolveLimit(limit);
@@ -66,6 +89,12 @@ public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelo
         return queryPage(wrapper, effectiveLimit);
     }
 
+    /**
+     * 查询当前最大 zookie。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Long getMaxZookie(String storeId) {
         LambdaQueryWrapper<TupleChangelogPO> wrapper = getLambdaQueryWrapper()
@@ -79,6 +108,13 @@ public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelo
         return records.get(0).getZookie();
     }
 
+    /**
+     * 清理指定 zookie 之前的变更日志。
+     *
+     * @param storeId Store 标识
+     * @param beforeZookie beforeZookie 参数
+     * @return 返回结果
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public int cleanupBeforeZookie(String storeId, Long beforeZookie) {
@@ -90,6 +126,13 @@ public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelo
         return rows;
     }
 
+    /**
+     * 查询最近的变更日志。
+     *
+     * @param storeId Store 标识
+     * @param limit limit 参数
+     * @return 查询结果
+     */
     @Override
     public List<TupleChangelogPO> findRecentChanges(String storeId, Integer limit) {
         int effectiveLimit = resolveLimit(limit);
@@ -103,11 +146,24 @@ public class ChangelogPersistenceRepository extends BaseRepository<TupleChangelo
         return findByZookieRange(storeId, startZookie, maxZookie, effectiveLimit);
     }
 
+    /**
+     * 查询query page。
+     *
+     * @param wrapper wrapper 参数
+     * @param pageSize 分页大小
+     * @return 查询结果
+     */
     private List<TupleChangelogPO> queryPage(LambdaQueryWrapper<TupleChangelogPO> wrapper, int pageSize) {
         Page<TupleChangelogPO> page = new Page<>(1, pageSize, false);
         return this.page(page, wrapper).getRecords();
     }
 
+    /**
+     * 解析查询条数上限。
+     *
+     * @param limit limit 参数
+     * @return 构建结果
+     */
     private int resolveLimit(Integer limit) {
         if (limit == null || limit <= 0) {
             return DEFAULT_LIMIT;

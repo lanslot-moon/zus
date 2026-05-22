@@ -14,6 +14,12 @@ public class StoreZookieSequenceAdapter implements IZookieSequencePort {
     @Resource
     private IStorePersistenceRepository storePersistenceRepository;
 
+    /**
+     * 生成next zookie。
+     *
+     * @param storeId Store 标识
+     * @return 返回结果
+     */
     @Override
     public Long nextZookie(String storeId) {
         return storePersistenceRepository.nextZookie(storeId);

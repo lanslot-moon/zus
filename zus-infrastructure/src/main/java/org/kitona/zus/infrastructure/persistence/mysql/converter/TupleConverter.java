@@ -17,6 +17,9 @@ import java.util.List;
  */
 public final class TupleConverter {
 
+    /**
+     * 创建 TupleConverter 工具类私有构造方法，防止外部实例化。
+     */
     private TupleConverter() {
     }
 
@@ -74,10 +77,22 @@ public final class TupleConverter {
         return po;
     }
 
+    /**
+     * 规范化 subject relation 为空字符串语义。
+     *
+     * @param subjectRelation 主体关系
+     * @return 返回结果
+     */
     private static String normalizeSubjectRelation(String subjectRelation) {
         return subjectRelation == null ? "" : subjectRelation;
     }
 
+    /**
+     * 批量转换为领域实体列表。
+     *
+     * @param list list 参数
+     * @return 构建结果
+     */
     public static List<RelationTuple> toEntityList(List<RelationTuplePO> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();
@@ -85,6 +100,12 @@ public final class TupleConverter {
         return list.stream().map(TupleConverter::toEntity).toList();
     }
 
+    /**
+     * 批量转换为持久化对象列表。
+     *
+     * @param list list 参数
+     * @return 构建结果
+     */
     public static List<RelationTuplePO> toPOList(List<RelationTuple> list) {
         if (list == null || list.isEmpty()) {
             return Collections.emptyList();

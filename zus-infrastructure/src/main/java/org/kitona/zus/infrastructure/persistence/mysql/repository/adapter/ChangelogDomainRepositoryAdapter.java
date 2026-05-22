@@ -19,6 +19,11 @@ public class ChangelogDomainRepositoryAdapter implements IChangelogDomainReposit
     @Resource
     private IChangelogPersistenceRepository changelogPersistenceRepository;
 
+    /**
+     * 保存save all。
+     *
+     * @param changelogs 变更日志列表
+     */
     @Override
     public void saveAll(List<Changelog> changelogs) {
         if (changelogs == null || changelogs.isEmpty()) {
@@ -28,6 +33,11 @@ public class ChangelogDomainRepositoryAdapter implements IChangelogDomainReposit
         changelogPersistenceRepository.batchCreate(poList);
     }
 
+    /**
+     * 保存save。
+     *
+     * @param changelog 变更日志
+     */
     @Override
     public void save(Changelog changelog) {
         if (changelog == null) {

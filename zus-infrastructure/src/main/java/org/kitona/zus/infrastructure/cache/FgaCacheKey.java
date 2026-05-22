@@ -19,6 +19,9 @@ import org.kitona.zus.infrastructure.cache.query.TupleExistsCacheQuery;
  */
 public final class FgaCacheKey {
 
+    /**
+     * 创建 FgaCacheKey 工具类私有构造方法，防止外部实例化。
+     */
     private FgaCacheKey() {
         // 工具类禁止实例化
     }

@@ -22,6 +22,15 @@ public class AuthorizationModelQueryRepositoryAdapter implements IAuthorizationM
     @Resource
     private IAuthorizationModelPersistenceRepository authorizationModelPersistenceRepository;
 
+    /**
+     * 按游标分页查询读侧视图。
+     *
+     * @param storeId Store 标识
+     * @param status 状态
+     * @param pageToken 分页游标
+     * @param pageSize 分页大小
+     * @return 查询结果
+     */
     @Override
     public CursorPageResult<AuthorizationModelView> findPageViewByCursor(String storeId, Integer status, String pageToken, int pageSize) {
         List<AuthModelPO> modelPOs = authorizationModelPersistenceRepository.findPageByCursor(storeId, status, pageToken, pageSize);
@@ -35,6 +44,12 @@ public class AuthorizationModelQueryRepositoryAdapter implements IAuthorizationM
         return CursorPageResult.of(views, pageSize, lastModelId);
     }
 
+    /**
+     * 查询 Store 下最新发布模型读侧视图。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Optional<AuthorizationModelView> findLatestPublishedViewByStoreId(String storeId) {
         return authorizationModelPersistenceRepository.findLatestByStoreId(storeId).map(AuthorizationModelConverter::toView);

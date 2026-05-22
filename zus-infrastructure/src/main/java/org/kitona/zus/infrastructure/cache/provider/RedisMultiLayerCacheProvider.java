@@ -47,6 +47,12 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 读取权限检查缓存结果。
+     *
+     * @param query 查询条件
+     * @return 查询结果
+     */
     @Override
     public Boolean getCheckResult(TupleExistsCacheQuery query) {
         String key = FgaCacheKey.checkResult(query);
@@ -62,6 +68,12 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         return null;
     }
 
+    /**
+     * 设置set check result。
+     *
+     * @param query 查询条件
+     * @param result 结果对象
+     */
     @Override
     public void setCheckResult(TupleExistsCacheQuery query, boolean result) {
         String key = FgaCacheKey.checkResult(query);
@@ -69,6 +81,11 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         redisTemplate.opsForValue().set(key, result, CHECK_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * 失效指定 Store 的权限检查缓存。
+     *
+     * @param storeId Store 标识
+     */
     @Override
     public void invalidateCheckCache(String storeId) {
         checkResultCache.invalidateAll();
@@ -79,6 +96,13 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         }
     }
 
+    /**
+     * 查询授权模型详情。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     @Override
     public Object getModel(String storeId, String modelId) {
         String key = FgaCacheKey.model(storeId, modelId);
@@ -93,6 +117,13 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         return null;
     }
 
+    /**
+     * 设置set model。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param model 授权模型聚合
+     */
     @Override
     public void setModel(String storeId, String modelId, Object model) {
         String key = FgaCacheKey.model(storeId, modelId);
@@ -100,6 +131,12 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         redisTemplate.opsForValue().set(key, model, MODEL_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * 失效模型缓存。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     */
     @Override
     public void invalidateModel(String storeId, String modelId) {
         String key = FgaCacheKey.model(storeId, modelId);
@@ -110,12 +147,24 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         redisTemplate.delete(currentKey);
     }
 
+    /**
+     * 递增increment zookie。
+     *
+     * @param storeId Store 标识
+     * @return 返回结果
+     */
     @Override
     public Long incrementZookie(String storeId) {
         String key = FgaCacheKey.zookie(storeId);
         return stringRedisTemplate.opsForValue().increment(key);
     }
 
+    /**
+     * 读取 Store 当前 zookie。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Long getCurrentZookie(String storeId) {
         String key = FgaCacheKey.zookie(storeId);
@@ -123,12 +172,27 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         return value != null ? Long.parseLong(value) : 0L;
     }
 
+    /**
+     * 初始化init zookie if absent。
+     *
+     * @param storeId Store 标识
+     * @param initialValue initialValue 参数
+     */
     @Override
     public void initZookieIfAbsent(String storeId, long initialValue) {
         String key = FgaCacheKey.zookie(storeId);
         stringRedisTemplate.opsForValue().setIfAbsent(key, String.valueOf(initialValue));
     }
 
+    /**
+     * 读取 tuple 查询缓存。
+     *
+     * @param storeId Store 标识
+     * @param objectType 对象类型
+     * @param objectId 对象标识
+     * @param relation 关系名
+     * @return 查询结果
+     */
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getTupleQuery(String storeId, String objectType, String objectId, String relation) {
@@ -144,6 +208,15 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         return null;
     }
 
+    /**
+     * 设置set tuple query。
+     *
+     * @param storeId Store 标识
+     * @param objectType 对象类型
+     * @param objectId 对象标识
+     * @param relation 关系名
+     * @param tuples 关系元组列表
+     */
     @Override
     public void setTupleQuery(String storeId, String objectType, String objectId, String relation, Object tuples) {
         String key = FgaCacheKey.tupleQuery(storeId, objectType, objectId, relation);
@@ -151,6 +224,13 @@ public class RedisMultiLayerCacheProvider implements IFgaCacheProvider {
         redisTemplate.opsForValue().set(key, tuples, TUPLE_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
     }
 
+    /**
+     * 失效 tuple 查询缓存。
+     *
+     * @param storeId Store 标识
+     * @param objectType 对象类型
+     * @param objectId 对象标识
+     */
     @Override
     public void invalidateTupleCache(String storeId, String objectType, String objectId) {
         String pattern = FgaCacheKey.tuplePattern(storeId, objectType, objectId);

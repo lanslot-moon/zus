@@ -25,6 +25,13 @@ import java.util.Set;
 public class TypeDefinitionPersistenceRepository extends BaseRepository<TypeDefinitionPO>
         implements ISubjectDefinitionPersistenceRepository {
 
+    /**
+     * 查询select by model id。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     @Override
     public List<TypeDefinitionPO> selectByModelId(String storeId, String modelId) {
         LambdaQueryWrapper<TypeDefinitionPO> wrapper = new LambdaQueryWrapper<TypeDefinitionPO>()
@@ -36,6 +43,13 @@ public class TypeDefinitionPersistenceRepository extends BaseRepository<TypeDefi
         return list != null ? list : Collections.emptyList();
     }
 
+    /**
+     * 查询select by model id list。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     @Override
     public List<TypeDefinitionPO> selectByModelIdList(String storeId, Set<String> modelId) {
         if (Objects.isNull(modelId) || modelId.isEmpty()) {
@@ -51,6 +65,14 @@ public class TypeDefinitionPersistenceRepository extends BaseRepository<TypeDefi
         return list != null ? list : Collections.emptyList();
     }
 
+    /**
+     * 查询select by type。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param type type 参数
+     * @return 查询结果
+     */
     @Override
     public Optional<TypeDefinitionPO> selectByType(String storeId, String modelId, String type) {
         LambdaQueryWrapper<TypeDefinitionPO> wrapper = new LambdaQueryWrapper<TypeDefinitionPO>()
@@ -62,6 +84,13 @@ public class TypeDefinitionPersistenceRepository extends BaseRepository<TypeDefi
         return Optional.ofNullable(this.getOne(wrapper));
     }
 
+    /**
+     * 删除delete by model id。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 执行结果
+     */
     @Override
     public Boolean deleteByModelId(String storeId, String modelId) {
         LambdaUpdateWrapper<TypeDefinitionPO> wrapper = new LambdaUpdateWrapper<TypeDefinitionPO>()
@@ -72,6 +101,14 @@ public class TypeDefinitionPersistenceRepository extends BaseRepository<TypeDefi
         return this.update(wrapper);
     }
 
+    /**
+     * 删除delete by type。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param type type 参数
+     * @return 执行结果
+     */
     @Override
     public Boolean deleteByType(String storeId, String modelId, String type) {
         LambdaUpdateWrapper<TypeDefinitionPO> wrapper = new LambdaUpdateWrapper<TypeDefinitionPO>()

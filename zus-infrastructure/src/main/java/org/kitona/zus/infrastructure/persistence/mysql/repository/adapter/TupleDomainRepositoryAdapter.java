@@ -23,6 +23,13 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
     @Resource
     private ITuplePersistenceRepository tupleRepository;
 
+    /**
+     * 按 tuple key 查询关系元组。
+     *
+     * @param storeId Store 标识
+     * @param tupleKey tuple 键
+     * @return 查询结果
+     */
     @Override
     public Optional<RelationTuple> findByKey(String storeId, TupleKey tupleKey) {
         if (tupleKey == null) {
@@ -31,6 +38,11 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
         return tupleRepository.findByTupleKey(toKeyQuery(storeId, tupleKey)).map(TupleConverter::toEntity);
     }
 
+    /**
+     * 保存save。
+     *
+     * @param tuple 关系元组
+     */
     @Override
     public void save(RelationTuple tuple) {
         if (tuple == null) {
@@ -39,6 +51,11 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
         tupleRepository.batchCreate(TupleConverter.toPOList(List.of(tuple)));
     }
 
+    /**
+     * 移除remove。
+     *
+     * @param tuple 关系元组
+     */
     @Override
     public void remove(RelationTuple tuple) {
         if (tuple == null || tuple.getId() == null) {
@@ -47,6 +64,13 @@ public class TupleDomainRepositoryAdapter implements ITupleDomainRepository {
         tupleRepository.batchDelete(tuple.getStoreId(), List.of(tuple.getId()));
     }
 
+    /**
+     * 转换为 tuple key 查询对象。
+     *
+     * @param storeId Store 标识
+     * @param key key 参数
+     * @return 构建结果
+     */
     private TupleKeyQuery toKeyQuery(String storeId, TupleKey key) {
         TupleKeyQuery query = new TupleKeyQuery();
         query.setStoreId(storeId);

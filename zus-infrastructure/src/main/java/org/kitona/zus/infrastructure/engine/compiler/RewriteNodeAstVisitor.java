@@ -58,6 +58,12 @@ final class RewriteNodeAstVisitor extends OpenFGAModelBaseVisitor<RewriteNode> {
         return left;
     }
 
+    /**
+     * 访问 primary rewrite 节点。
+     *
+     * @param ctx ctx 参数
+     * @return 返回结果
+     */
     @Override
     public RewriteNode visitPrimary(OpenFGAModelParser.PrimaryContext ctx) {
         if (ctx.SELF() != null || ctx.THIS() != null) {
@@ -99,6 +105,12 @@ final class RewriteNodeAstVisitor extends OpenFGAModelBaseVisitor<RewriteNode> {
         return new TupleToUsersetNode(ctx.relationName(1).getText(), ctx.relationName(0).getText());
     }
 
+    /**
+     * 解析 computed userset 的资源类型。
+     *
+     * @param ctx ctx 参数
+     * @return 构建结果
+     */
     private String resolveComputedUsersetResourceType(OpenFGAModelParser.ComputedUsersetContext ctx) {
         if (ctx.COLON() != null) {
             return ctx.relationName(0).getText();
@@ -106,6 +118,12 @@ final class RewriteNodeAstVisitor extends OpenFGAModelBaseVisitor<RewriteNode> {
         return currentResourceType;
     }
 
+    /**
+     * 解析 computed userset 的关系名称。
+     *
+     * @param ctx ctx 参数
+     * @return 构建结果
+     */
     private String resolveComputedUsersetRelation(OpenFGAModelParser.ComputedUsersetContext ctx) {
         if (ctx.COLON() != null) {
             return ctx.relationName(2).getText();

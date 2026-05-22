@@ -20,16 +20,32 @@ public class UserProfileRepositoryAdapter implements IUserProfileRepository {
 
     private final IUserInfoPersistenceRepository userInfoPersistenceRepository;
 
+    /**
+     * 创建 UserProfileRepositoryAdapter 实例。
+     *
+     * @param userInfoPersistenceRepository userInfoPersistenceRepository 参数
+     */
     public UserProfileRepositoryAdapter(IUserInfoPersistenceRepository userInfoPersistenceRepository) {
         this.userInfoPersistenceRepository = userInfoPersistenceRepository;
     }
 
+    /**
+     * 按用户标识查询用户信息。
+     *
+     * @param userId 用户标识
+     * @return 查询结果
+     */
     @Override
     public Optional<UserProfile> findByUserId(String userId) {
         return userInfoPersistenceRepository.findByUserId(userId)
                 .map(this::toEntity);
     }
 
+    /**
+     * 保存save。
+     *
+     * @param userInfo 用户信息
+     */
     @Override
     public void save(UserProfile userInfo) {
         if (userInfo == null || StringUtils.isBlank(userInfo.getUserId())) {
@@ -38,6 +54,12 @@ public class UserProfileRepositoryAdapter implements IUserProfileRepository {
         userInfoPersistenceRepository.saveOrUpdate(toPO(userInfo));
     }
 
+    /**
+     * 转换为领域实体。
+     *
+     * @param po po 参数
+     * @return 构建结果
+     */
     private UserProfile toEntity(UserInfoPO po) {
         if (po == null) {
             return null;
@@ -56,6 +78,12 @@ public class UserProfileRepositoryAdapter implements IUserProfileRepository {
                 .build();
     }
 
+    /**
+     * 转换为持久化对象。
+     *
+     * @param entity entity 参数
+     * @return 构建结果
+     */
     private UserInfoPO toPO(UserProfile entity) {
         UserInfoPO po = new UserInfoPO();
         po.setUserId(entity.getUserId());
@@ -71,6 +99,12 @@ public class UserProfileRepositoryAdapter implements IUserProfileRepository {
         return po;
     }
 
+    /**
+     * 将毫秒时间戳转换为本地时间。
+     *
+     * @param epochMilli epochMilli 参数
+     * @return 构建结果
+     */
     private LocalDateTime toLocalDateTime(Long epochMilli) {
         if (epochMilli == null || epochMilli <= 0) {
             return null;
@@ -78,6 +112,12 @@ public class UserProfileRepositoryAdapter implements IUserProfileRepository {
         return Instant.ofEpochMilli(epochMilli).atZone(ZoneId.systemDefault()).toLocalDateTime();
     }
 
+    /**
+     * 将本地时间转换为毫秒时间戳。
+     *
+     * @param dateTime dateTime 参数
+     * @return 构建结果
+     */
     private Long toEpochMilli(LocalDateTime dateTime) {
         if (dateTime == null) {
             return null;

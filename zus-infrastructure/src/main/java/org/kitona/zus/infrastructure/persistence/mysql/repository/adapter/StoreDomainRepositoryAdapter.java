@@ -21,11 +21,22 @@ public class StoreDomainRepositoryAdapter implements IStoreDomainRepository {
     @Resource
     private IStorePersistenceRepository storeRepository;
 
+    /**
+     * 按聚合标识查询聚合根。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Optional<StoreAggregate> findById(String storeId) {
         return storeRepository.findByStoreId(storeId).map(StoreConverter::toAggregate);
     }
 
+    /**
+     * 保存save。
+     *
+     * @param store Store 聚合
+     */
     @Override
     public void save(StoreAggregate store) {
         StorePO po = StoreConverter.toPO(store);
@@ -36,6 +47,11 @@ public class StoreDomainRepositoryAdapter implements IStoreDomainRepository {
         storeRepository.updateStore(po);
     }
 
+    /**
+     * 移除remove。
+     *
+     * @param store Store 聚合
+     */
     @Override
     public void remove(StoreAggregate store) {
         if (store != null) {

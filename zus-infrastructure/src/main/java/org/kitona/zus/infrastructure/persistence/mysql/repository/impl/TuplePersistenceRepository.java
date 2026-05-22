@@ -43,6 +43,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
     @Resource
     private FgaCacheManager cacheManager;
 
+    /**
+     * 判断精确关系元组是否存在。
+     *
+     * @param query 查询条件
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean existsTuple(TupleExistsQuery query) {
         if (query == null) {
@@ -53,6 +59,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return count > 0;
     }
 
+    /**
+     * 构建 MyBatis Plus 查询条件。
+     *
+     * @param query 查询条件
+     * @return 构建结果
+     */
     private LambdaQueryWrapper<RelationTuplePO> buildLambdaQueryWrapper(TupleExistsQuery query) {
         LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper();
         wrapper.eq(RelationTuplePO::getStoreId, query.getStoreId())
@@ -67,6 +79,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return wrapper;
     }
 
+    /**
+     * 判断通配符关系元组是否存在。
+     *
+     * @param query 查询条件
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean existsWildcardTuple(WildcardTupleExistsQuery query) {
         TupleExistsQuery existsQuery = new TupleExistsQuery();
@@ -81,6 +99,16 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return existsTuple(existsQuery);
     }
 
+    /**
+     * 按对象和关系查询有效 tuple。
+     *
+     * @param storeId    Store 标识
+     * @param objectType 对象类型
+     * @param objectId   对象标识
+     * @param relation   关系名
+     * @param maxZookie  最大 zookie 版本
+     * @return tuple 持久化记录列表
+     */
     @Override
     public List<RelationTuplePO> findByObjectAndRelation(String storeId, String objectType,
             String objectId, String relation, Long maxZookie) {
@@ -95,6 +123,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return tuples != null ? tuples : Collections.emptyList();
     }
 
+    /**
+     * 按主体查询关系元组。
+     *
+     * @param query 查询条件
+     * @return 查询结果
+     */
     @Override
     public List<RelationTuplePO> findBySubject(TupleSubjectQuery query) {
         if (query == null) {
@@ -104,6 +138,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return CollectionUtils.isEmpty(tuples) ? Collections.emptyList() : tuples;
     }
 
+    /**
+     * 构建 MyBatis Plus 查询条件。
+     *
+     * @param query 查询条件
+     * @return 构建结果
+     */
     private LambdaQueryWrapper<RelationTuplePO> buildLambdaQueryWrapper(TupleSubjectQuery query) {
         LambdaQueryWrapper<RelationTuplePO> wrapper = getLambdaQueryWrapper()
                 .eq(RelationTuplePO::getStoreId, query.getStoreId())
@@ -117,6 +157,16 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return wrapper;
     }
 
+    /**
+     * 按对象条件查询有效 tuple。
+     *
+     * @param storeId    Store 标识
+     * @param objectType 对象类型
+     * @param objectId   对象标识
+     * @param relation   关系名
+     * @param maxZookie  最大 zookie 版本
+     * @return tuple 持久化记录列表
+     */
     @Override
     public List<RelationTuplePO> findByObject(String storeId, String objectType, String objectId,
             String relation, Long maxZookie) {
@@ -134,6 +184,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return CollectionUtils.isEmpty(tuples) ? Collections.emptyList() : tuples;
     }
 
+    /**
+     * 按 tuple key 查询关系元组。
+     *
+     * @param query 查询条件
+     * @return 查询结果
+     */
     @Override
     public Optional<RelationTuplePO> findByTupleKey(TupleKeyQuery query) {
         if (query == null) {
@@ -153,6 +209,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return Optional.ofNullable(this.getOne(wrapper));
     }
 
+    /**
+     * 批量创建持久化记录。
+     *
+     * @param tuples 关系元组列表
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchCreate(List<RelationTuplePO> tuples) {
@@ -171,6 +233,13 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return true;
     }
 
+    /**
+     * 批量逻辑删除持久化记录。
+     *
+     * @param storeId Store 标识
+     * @param ids ids 参数
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean batchDelete(String storeId, List<Long> ids) {
@@ -191,6 +260,16 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return true;
     }
 
+    /**
+     * 分页查询 tuple 持久化记录。
+     *
+     * @param storeId    Store 标识
+     * @param objectType 对象类型
+     * @param relation   关系名
+     * @param pageSize   分页大小
+     * @param pageToken  分页游标
+     * @return tuple 持久化记录列表
+     */
     @Override
     public List<RelationTuplePO> listTuples(String storeId, String objectType, String relation,
             int pageSize, Long pageToken) {
@@ -207,6 +286,13 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return this.list(wrapper);
     }
 
+    /**
+     * 批量按 tuple key 查询关系元组。
+     *
+     * @param storeId Store 标识
+     * @param tupleKeyQueries tupleKeyQueries 参数
+     * @return 查询结果
+     */
     @Override
     public List<RelationTuplePO> findByTupleKeys(String storeId, List<TupleKeyQuery> tupleKeyQueries) {
         if (tupleKeyQueries == null || tupleKeyQueries.isEmpty()) {
@@ -232,6 +318,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return this.list(wrapper);
     }
 
+    /**
+     * 构建 tuple key 查询条件。
+     *
+     * @param wrapper wrapper 参数
+     * @param query 查询条件
+     */
     private void buildTupleKeyCondition(LambdaQueryWrapper<RelationTuplePO> wrapper, TupleKeyQuery query) {
         wrapper.eq(RelationTuplePO::getObjectType, query.getObjectType())
                 .eq(RelationTuplePO::getObjectId, query.getObjectId())
@@ -241,6 +333,21 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         applyExactSubjectRelationCondition(wrapper, query.getSubjectRelation());
     }
 
+    /**
+     * 按完整过滤条件分页查询 tuple 持久化记录。
+     *
+     * @param storeId         Store 标识
+     * @param objectType      对象类型
+     * @param objectId        对象标识
+     * @param relation        关系名
+     * @param subjectType     主体类型
+     * @param subjectId       主体标识
+     * @param subjectRelation 主体关系
+     * @param pageSize        分页大小
+     * @param pageToken       分页游标
+     * @param maxZookie       最大 zookie 版本
+     * @return tuple 持久化记录列表
+     */
     @Override
     public List<RelationTuplePO> listTuplesWithFilter(String storeId, String objectType, String objectId,
             String relation, String subjectType, String subjectId,
@@ -262,6 +369,12 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         return this.list(wrapper);
     }
 
+    /**
+     * 应用精确 subject relation 查询条件。
+     *
+     * @param wrapper wrapper 参数
+     * @param subjectRelation 主体关系
+     */
     private void applyExactSubjectRelationCondition(LambdaQueryWrapper<RelationTuplePO> wrapper, String subjectRelation) {
         if (StringUtils.isNotBlank(subjectRelation)) {
             wrapper.eq(RelationTuplePO::getSubjectRelation, subjectRelation);
@@ -270,16 +383,32 @@ public class TuplePersistenceRepository extends BaseRepository<RelationTuplePO> 
         wrapper.eq(RelationTuplePO::getSubjectRelation, "");
     }
 
+    /**
+     * 应用未过期 tuple 查询条件。
+     *
+     * @param wrapper wrapper 参数
+     * @param currentTimestamp currentTimestamp 参数
+     */
     private void applyActiveTupleCondition(LambdaQueryWrapper<RelationTuplePO> wrapper, long currentTimestamp) {
         wrapper.and(condition -> condition.isNull(RelationTuplePO::getExpiresAt)
                 .or()
                 .gt(RelationTuplePO::getExpiresAt, currentTimestamp));
     }
 
+    /**
+     * 读取current timestamp。
+     * @return 返回结果
+     */
     private long currentTimestamp() {
         return System.currentTimeMillis();
     }
 
+    /**
+     * 解析安全分页大小。
+     *
+     * @param pageSize 分页大小
+     * @return 构建结果
+     */
     private int resolvePageSize(int pageSize) {
         if (pageSize <= 0) {
             return DEFAULT_PAGE_SIZE;

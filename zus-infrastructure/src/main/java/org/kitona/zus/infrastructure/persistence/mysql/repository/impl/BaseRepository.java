@@ -15,6 +15,10 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.BasePO;
  */
 public class BaseRepository<T extends BasePO> extends ServiceImpl<BaseMapper<T>, T> {
 
+     /**
+      * 创建默认未删除查询条件。
+      * @return 查询结果
+      */
      protected LambdaQueryWrapper<T> getLambdaQueryWrapper() {
          return new LambdaQueryWrapper<>(getEntityClass()).eq(BasePO::getIsDeleted, DeletedStatusEnum.NOT_DELETED.getCode());
      }

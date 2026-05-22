@@ -26,6 +26,12 @@ public class ModelSnapshotRenderer implements IModelSnapshotRenderer {
     private static final String CONDITION_MIDDLE = ": ";
     private static final String EMPTY_STRING = "";
 
+    /**
+     * 渲染授权模型 DSL 快照。
+     *
+     * @param aggregate 聚合根
+     * @return 执行结果
+     */
     @Override
     public String render(AuthorizationModelAggregate aggregate) {
         StringBuilder builder = new StringBuilder();
@@ -35,10 +41,22 @@ public class ModelSnapshotRenderer implements IModelSnapshotRenderer {
         return builder.toString().trim();
     }
 
+    /**
+     * 追加模型头部信息。
+     *
+     * @param builder 字符串构造器
+     * @param aggregate 聚合根
+     */
     private void appendModelHeader(StringBuilder builder, AuthorizationModelAggregate aggregate) {
         builder.append(MODEL_PREFIX).append(aggregate.getModelId()).append(NEW_LINE);
     }
 
+    /**
+     * 追加类型定义列表。
+     *
+     * @param builder 字符串构造器
+     * @param aggregate 聚合根
+     */
     private void appendTypeDefinitions(StringBuilder builder, AuthorizationModelAggregate aggregate) {
         List<TypeDefinition> orderedTypes = aggregate.getTypeDefinitions().stream()
                 .sorted(Comparator.comparingInt(TypeDefinition::getSortOrder))
@@ -48,6 +66,12 @@ public class ModelSnapshotRenderer implements IModelSnapshotRenderer {
         }
     }
 
+    /**
+     * 追加单个类型定义。
+     *
+     * @param builder 字符串构造器
+     * @param typeDefinition 类型定义
+     */
     private void appendTypeDefinition(StringBuilder builder, TypeDefinition typeDefinition) {
         builder.append(TYPE_PREFIX).append(typeDefinition.getSubjectType()).append(NEW_LINE);
         if (!typeDefinition.hasRelations()) {
@@ -59,6 +83,12 @@ public class ModelSnapshotRenderer implements IModelSnapshotRenderer {
         }
     }
 
+    /**
+     * 追加关系定义。
+     *
+     * @param builder 字符串构造器
+     * @param relationDefinition 关系定义
+     */
     private void appendRelationDefinition(StringBuilder builder, RelationDefinition relationDefinition) {
         builder.append(DEFINE_PREFIX)
                 .append(relationDefinition.relationName())
@@ -67,6 +97,12 @@ public class ModelSnapshotRenderer implements IModelSnapshotRenderer {
                 .append(NEW_LINE);
     }
 
+    /**
+     * 追加条件定义列表。
+     *
+     * @param builder 字符串构造器
+     * @param conditions 条件定义列表
+     */
     private void appendConditionDefinitions(StringBuilder builder, List<ConditionDefinition> conditions) {
         if (conditions.isEmpty()) {
             return;
@@ -77,6 +113,12 @@ public class ModelSnapshotRenderer implements IModelSnapshotRenderer {
         }
     }
 
+    /**
+     * 追加单个条件定义。
+     *
+     * @param builder 字符串构造器
+     * @param condition 条件定义
+     */
     private void appendConditionDefinition(StringBuilder builder, ConditionDefinition condition) {
         builder.append(CONDITION_PREFIX)
                 .append(condition.getConditionName())

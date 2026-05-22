@@ -28,6 +28,12 @@ import java.util.Set;
 public class RelationRestrictionPersistenceRepository extends BaseRepository<TypeRestrictionPO>
         implements IRelationRestrictionPersistenceRepository {
 
+    /**
+     * 查询select by relation definition id。
+     *
+     * @param relationDefinitionId relationDefinitionId 参数
+     * @return 查询结果
+     */
     @Override
     public List<TypeRestrictionPO> selectByRelationDefinitionId(Long relationDefinitionId) {
         LambdaQueryWrapper<TypeRestrictionPO> wrapper = getLambdaQueryWrapper()
@@ -37,6 +43,12 @@ public class RelationRestrictionPersistenceRepository extends BaseRepository<Typ
         return this.list(wrapper);
     }
 
+    /**
+     * 查询select by relation definition id。
+     *
+     * @param relationDefinitionIdSet relationDefinitionIdSet 参数
+     * @return 查询结果
+     */
     @Override
     public List<TypeRestrictionPO> selectByRelationDefinitionId(Set<Long> relationDefinitionIdSet) {
         if (Objects.isNull(relationDefinitionIdSet) || relationDefinitionIdSet.isEmpty()) {
@@ -49,6 +61,12 @@ public class RelationRestrictionPersistenceRepository extends BaseRepository<Typ
         return this.list(wrapper);
     }
 
+    /**
+     * 删除delete by relation definition id。
+     *
+     * @param relationDefinitionId relationDefinitionId 参数
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteByRelationDefinitionId(Long relationDefinitionId) {
@@ -61,6 +79,12 @@ public class RelationRestrictionPersistenceRepository extends BaseRepository<Typ
         return this.update(updatePO, wrapper);
     }
 
+    /**
+     * 删除delete by relation definition ids。
+     *
+     * @param relationDefinitionIds relationDefinitionIds 参数
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteByRelationDefinitionIds(Set<Long> relationDefinitionIds) {

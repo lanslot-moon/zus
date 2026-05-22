@@ -12,6 +12,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserInfoAdapterServiceImpl implements IUserInfoGateway {
 
+    /**
+     * 读取用户地址。
+     *
+     * @param userId 用户标识
+     * @return 查询结果
+     */
     @Override
     public String getUserAddress(String userId) {
         // 进行三方系统的调用（如 Feign 调用用户中心）

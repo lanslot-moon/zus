@@ -16,6 +16,13 @@ import java.util.List;
 public class ConditionDefinitionPersistenceRepository extends BaseRepository<ConditionDefinitionPO>
         implements IConditionDefinitionPersistenceRepository {
 
+    /**
+     * 查询select by model id。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     @Override
     public List<ConditionDefinitionPO> selectByModelId(String storeId, String modelId) {
         LambdaQueryWrapper<ConditionDefinitionPO> wrapper = getLambdaQueryWrapper()
@@ -25,6 +32,13 @@ public class ConditionDefinitionPersistenceRepository extends BaseRepository<Con
         return list(wrapper);
     }
 
+    /**
+     * 删除delete by model id。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean deleteByModelId(String storeId, String modelId) {
         LambdaUpdateWrapper<ConditionDefinitionPO> wrapper = new LambdaUpdateWrapper<ConditionDefinitionPO>()

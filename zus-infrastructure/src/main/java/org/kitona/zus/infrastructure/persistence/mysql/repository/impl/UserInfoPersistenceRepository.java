@@ -29,6 +29,12 @@ public class UserInfoPersistenceRepository extends BaseRepository<UserInfoPO>
     @Resource
     private IUserInfoMapper userInfoMapper;
 
+    /**
+     * 按用户标识查询用户信息。
+     *
+     * @param userId 用户标识
+     * @return 查询结果
+     */
     @Override
     public Optional<UserInfoPO> findByUserId(String userId) {
         if (StringUtils.isBlank(userId)) {
@@ -39,6 +45,12 @@ public class UserInfoPersistenceRepository extends BaseRepository<UserInfoPO>
         return Optional.ofNullable(userInfoMapper.selectOne(wrapper));
     }
 
+    /**
+     * 保存save or update。
+     *
+     * @param userInfo 用户信息
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean saveOrUpdate(UserInfoPO userInfo) {
         if (userInfo == null || StringUtils.isBlank(userInfo.getUserId())) {
@@ -53,6 +65,12 @@ public class UserInfoPersistenceRepository extends BaseRepository<UserInfoPO>
         return this.update(userInfo, wrapper);
     }
 
+    /**
+     * 判断用户信息是否存在。
+     *
+     * @param userId 用户标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean existsByUserId(String userId) {
         if (StringUtils.isBlank(userId)) {

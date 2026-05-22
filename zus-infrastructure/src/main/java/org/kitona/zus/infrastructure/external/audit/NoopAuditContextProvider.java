@@ -10,6 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class NoopAuditContextProvider implements IAuditContextProvider {
 
+    /**
+     * 读取current。
+     * @return 返回结果
+     */
     @Override
     public AuditMetadata current() {
         return AuditMetadata.EMPTY;

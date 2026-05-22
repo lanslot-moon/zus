@@ -54,8 +54,17 @@ public interface IAuthorizationModelDomainRepository {
     /**
      * 保存授权模型聚合根。
      *
-     * <p>Repository 只表达“保存聚合当前状态”，不把创建、发布、废弃、结构表同步等
-     * 应用用例或持久化细节暴露为领域接口方法。
+     * <p>Repository 只表达“保存聚合当前状态”，它不是“只新增”的语义。
+     * 对基础设施实现来说，底层可以根据聚合是否已经存在选择插入或更新；但这些 insert/update
+     * 判断属于持久化细节，不应该通过 {@code create}、{@code update}、{@code saveOrUpdate}
+     * 等方法名泄漏到领域仓储接口。
+     *
+     * <p>授权模型采用 OpenFGA 风格的版本化不可变结构：一个 {@code modelId} 对应一次完整模型写入。
+     * 首次保存时需要持久化主表以及 type/relation/restriction/condition 等结构化子表；
+     * 已存在的 {@code modelId} 再次保存时，只用于保存聚合生命周期状态、发布时间、DSL 快照等元数据变化，
+     * 不应该重写结构化子表。若要修改 type 或 relation，应创建新的 {@code modelId}。
+     *
+     * <p>创建、发布、废弃、激活等动作属于聚合行为或应用用例，Repository 不通过方法名承载这些业务动作。
      *
      * @param aggregate 授权模型聚合根
      */

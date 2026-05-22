@@ -23,12 +23,25 @@ public class StoreQueryRepositoryAdapter implements IStoreQueryPort {
     private IStorePersistenceRepository storePersistenceRepository;
 
 
+    /**
+     * 按 Store 标识查询读侧视图。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Optional<StoreView> findViewByStoreId(String storeId) {
         return storePersistenceRepository.findByStoreId(storeId)
                 .map(StoreConverter::toView);
     }
 
+    /**
+     * 按游标分页查询读侧视图。
+     *
+     * @param pageToken 分页游标
+     * @param pageSize 分页大小
+     * @return 查询结果
+     */
     @Override
     public CursorPageResult<StoreView> findPageViewByCursor(String pageToken, int pageSize) {
         List<StorePO> storePOS = storePersistenceRepository.findPageByCursor(pageToken, pageSize);

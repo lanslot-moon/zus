@@ -42,6 +42,12 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
     private static final ThreadLocal<SimpleDateFormat> dateFormatThreadLocal = ThreadLocal
             .withInitial(() -> new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS"));
 
+    /**
+     * 拦截intercept。
+     *
+     * @param invocation MyBatis 调用上下文
+     * @return 返回结果
+     */
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
 
@@ -80,11 +86,22 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
         return "";
     }
 
+    /**
+     * 创建plugin。
+     *
+     * @param target 代理目标对象
+     * @return 返回结果
+     */
     @Override
     public Object plugin(Object target) {
         return Plugin.wrap(target, this);
     }
 
+    /**
+     * 设置set properties。
+     *
+     * @param properties 插件配置
+     */
     @Override
     public void setProperties(Properties properties) {
         throw new UnsupportedOperationException("setProperties is not supported.");
@@ -118,10 +135,27 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
         return sql;
     }
 
+    /**
+     * 判断is invalid sql。
+     *
+     * @param sql SQL 文本
+     * @param configuration MyBatis 配置
+     * @return 满足条件返回 true，否则返回 false
+     */
     private boolean isInvalidSql(String sql, Configuration configuration) {
         return sql == null || sql.isEmpty() || configuration == null;
     }
 
+    /**
+     * 从 BoundSql 或参数对象中提取 SQL 参数值。
+     *
+     * @param boundSql            MyBatis BoundSql
+     * @param parameterMapping    参数映射
+     * @param parameterObject     原始参数对象
+     * @param typeHandlerRegistry 类型处理器注册表
+     * @param configuration       MyBatis 配置
+     * @return 参数值
+     */
     private Object getParameterValue(BoundSql boundSql, ParameterMapping parameterMapping, Object parameterObject,
             TypeHandlerRegistry typeHandlerRegistry, Configuration configuration) {
         String propertyName = parameterMapping.getProperty();
@@ -137,6 +171,13 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
         }
     }
 
+    /**
+     * 格式化 SQL 日志参数值。
+     *
+     * @param value 参数值
+     * @param propertyName propertyName 参数
+     * @return 返回结果
+     */
     private String formatParameterValue(Object value, String propertyName) {
         String paramValueStr;
         if (value instanceof String) {
@@ -160,6 +201,10 @@ public class MybatisSqlPrintInterceptor implements Interceptor, Ordered {
         return sql;
     }
 
+    /**
+     * 返回拦截器执行顺序。
+     * @return 查询结果
+     */
     @Override
     public int getOrder() {
         return Ordered.HIGHEST_PRECEDENCE;

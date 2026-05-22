@@ -13,6 +13,9 @@ import org.kitona.zus.infrastructure.persistence.mysql.entity.StorePO;
  */
 public final class StoreConverter {
 
+    /**
+     * 创建 StoreConverter 工具类私有构造方法，防止外部实例化。
+     */
     private StoreConverter() {
     }
 

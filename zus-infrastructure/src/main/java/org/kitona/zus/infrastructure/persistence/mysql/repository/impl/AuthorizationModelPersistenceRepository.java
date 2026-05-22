@@ -34,6 +34,13 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
     @Resource
     private FgaCacheManager cacheManager;
 
+    /**
+     * 按 Store 与模型标识查询授权模型记录。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     @Override
     public Optional<AuthModelPO> findByModelIdAndStoreId(String storeId, String modelId) {
         LambdaQueryWrapper<AuthModelPO> wrapper = getLambdaQueryWrapper()
@@ -44,6 +51,12 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return Optional.ofNullable(model);
     }
 
+    /**
+     * 按 Store 标识查询记录。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public List<AuthModelPO> findByStoreId(String storeId) {
         LambdaQueryWrapper<AuthModelPO> wrapper = getLambdaQueryWrapper()
@@ -52,6 +65,13 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return this.list(wrapper);
     }
 
+    /**
+     * 按 Store 与状态查询授权模型记录。
+     *
+     * @param storeId Store 标识
+     * @param status 状态
+     * @return 查询结果
+     */
     @Override
     public List<AuthModelPO> findByStoreIdAndStatus(String storeId, Integer status) {
         LambdaQueryWrapper<AuthModelPO> wrapper = getLambdaQueryWrapper()
@@ -61,6 +81,12 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return this.list(wrapper);
     }
 
+    /**
+     * 更新update model。
+     *
+     * @param model 授权模型聚合
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean updateModel(AuthModelPO model) {
         if (model == null || model.getId() == null) {
@@ -73,6 +99,15 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return result;
     }
 
+    /**
+     * 更新update model status。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param status 状态
+     * @param description 描述
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateModelStatus(String storeId, String modelId, Integer status, String description) {
@@ -93,6 +128,12 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return true;
     }
 
+    /**
+     * 查询 Store 下最新发布的授权模型记录。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Optional<AuthModelPO> findLatestByStoreId(String storeId) {
         LambdaQueryWrapper<AuthModelPO> wrapper = getLambdaQueryWrapper()
@@ -107,11 +148,23 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return Optional.of(records.get(0));
     }
 
+    /**
+     * 创建create model。
+     *
+     * @param model 授权模型聚合
+     */
     @Override
     public void createModel(AuthModelPO model) {
         this.save(model);
     }
 
+    /**
+     * 删除delete draft model。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteDraftModel(String storeId, String modelId) {
@@ -131,6 +184,15 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return true;
     }
 
+    /**
+     * 按游标分页查询记录。
+     *
+     * @param storeId Store 标识
+     * @param status 状态
+     * @param pageToken 分页游标
+     * @param pageSize 分页大小
+     * @return 查询结果
+     */
     @Override
     public List<AuthModelPO> findPageByCursor(String storeId, Integer status, String pageToken, int pageSize) {
         LambdaQueryWrapper<AuthModelPO> wrapper = getLambdaQueryWrapper()
@@ -142,6 +204,12 @@ public class AuthorizationModelPersistenceRepository extends BaseRepository<Auth
         return this.page(page, wrapper).getRecords();
     }
 
+    /**
+     * 解析安全分页大小。
+     *
+     * @param pageSize 分页大小
+     * @return 构建结果
+     */
     private int resolvePageSize(int pageSize) {
         if (pageSize <= 0) {
             return DEFAULT_PAGE_SIZE;

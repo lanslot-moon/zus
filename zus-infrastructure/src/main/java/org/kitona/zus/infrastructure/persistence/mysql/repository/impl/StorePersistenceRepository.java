@@ -42,6 +42,12 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
     @Resource
     private FgaCacheManager cacheManager;
 
+    /**
+     * 按 Store 标识查询记录。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Optional<StorePO> findByStoreId(String storeId) {
         LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
@@ -51,6 +57,12 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return Optional.ofNullable(store);
     }
 
+    /**
+     * 按状态查询 Store 记录。
+     *
+     * @param status 状态
+     * @return 查询结果
+     */
     @Override
     public List<StorePO> findByStatus(Integer status) {
         LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
@@ -60,6 +72,12 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return this.list(wrapper);
     }
 
+    /**
+     * 创建create store。
+     *
+     * @param store Store 聚合
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean createStore(StorePO store) {
@@ -72,6 +90,12 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return true;
     }
 
+    /**
+     * 生成next zookie。
+     *
+     * @param storeId Store 标识
+     * @return 返回结果
+     */
     @Override
     public Long nextZookie(String storeId) {
         // 先从缓存递增
@@ -81,6 +105,12 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return newZookie;
     }
 
+    /**
+     * 读取 Store 当前 zookie。
+     *
+     * @param storeId Store 标识
+     * @return 查询结果
+     */
     @Override
     public Long getCurrentZookie(String storeId) {
         // 先查缓存
@@ -102,6 +132,12 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return result.getCurrentZookie();
     }
 
+    /**
+     * 删除delete by store id。
+     *
+     * @param storeId Store 标识
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteByStoreId(String storeId) {
@@ -138,6 +174,13 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return true;
     }
 
+    /**
+     * 按游标分页查询记录。
+     *
+     * @param pageToken 分页游标
+     * @param pageSize 分页大小
+     * @return 查询结果
+     */
     @Override
     public List<StorePO> findPageByCursor(String pageToken, int pageSize) {
         LambdaQueryWrapper<StorePO> wrapper = getLambdaQueryWrapper()
@@ -147,6 +190,12 @@ public class StorePersistenceRepository extends BaseRepository<StorePO> implemen
         return this.page(page, wrapper).getRecords();
     }
 
+    /**
+     * 解析安全分页大小。
+     *
+     * @param pageSize 分页大小
+     * @return 构建结果
+     */
     private int resolvePageSize(int pageSize) {
         if (pageSize <= 0) {
             return DEFAULT_PAGE_SIZE;

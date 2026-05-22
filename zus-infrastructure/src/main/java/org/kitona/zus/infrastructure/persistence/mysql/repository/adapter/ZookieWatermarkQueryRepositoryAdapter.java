@@ -21,6 +21,12 @@ public class ZookieWatermarkQueryRepositoryAdapter implements IZookieWatermarkQu
     private IChangelogPersistenceRepository changelogPersistenceRepository;
 
 
+    /**
+     * 读取current max zookie。
+     *
+     * @param storeId Store 标识
+     * @return 返回结果
+     */
     @Override
     public Long currentMaxZookie(String storeId) {
         return changelogPersistenceRepository.getMaxZookie(storeId);

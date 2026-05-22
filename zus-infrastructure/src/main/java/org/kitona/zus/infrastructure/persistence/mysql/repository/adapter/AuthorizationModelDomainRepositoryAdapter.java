@@ -172,6 +172,13 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     }
 
 
+    /**
+     * 保存save conditions。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param conditions 条件定义列表
+     */
     private void saveConditions(String storeId, String modelId, List<ConditionDefinition> conditions) {
         if (CollectionUtils.isEmpty(conditions)) {
             return;
@@ -182,6 +189,13 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         conditionDefinitionPersistenceRepository.saveBatch(rows);
     }
 
+    /**
+     * 保存save types and relations。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param types types 参数
+     */
     private void saveTypesAndRelations(String storeId, String modelId, List<TypeDefinition> types) {
         if (CollectionUtils.isEmpty(types)) {
             return;
@@ -200,6 +214,14 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         saveRestrictions(relationRows, types);
     }
 
+    /**
+     * 转换类型定义持久化记录。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param types types 参数
+     * @return 构建结果
+     */
     private List<TypeDefinitionPO> toTypeRows(String storeId, String modelId, List<TypeDefinition> types) {
         List<TypeDefinitionPO> rows = new ArrayList<>(types.size());
         for (int sortOrder = 0; sortOrder < types.size(); sortOrder++) {
@@ -214,6 +236,13 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return rows;
     }
 
+    /**
+     * 转换关系定义持久化记录。
+     *
+     * @param typeRows typeRows 参数
+     * @param types types 参数
+     * @return 构建结果
+     */
     private List<RelationDefinitionPO> toRelationRows(List<TypeDefinitionPO> typeRows, List<TypeDefinition> types) {
         List<RelationDefinitionPO> rows = new ArrayList<>();
         for (int index = 0; index < types.size(); index++) {
@@ -227,6 +256,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return rows;
     }
 
+    /**
+     * 保存save restrictions。
+     *
+     * @param relationRows relationRows 参数
+     * @param types types 参数
+     */
     private void saveRestrictions(List<RelationDefinitionPO> relationRows, List<TypeDefinition> types) {
         List<TypeRestrictionPO> rows = new ArrayList<>();
         int relationIndex = 0;
@@ -242,6 +277,13 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         }
     }
 
+    /**
+     * 转换关系定义持久化对象。
+     *
+     * @param typeDefinitionId typeDefinitionId 参数
+     * @param relation 关系名
+     * @return 构建结果
+     */
     private RelationDefinitionPO toRelationPO(Long typeDefinitionId, RelationDefinition relation) {
         RelationDefinitionPO row = new RelationDefinitionPO();
         row.setTypeDefinitionId(typeDefinitionId);
@@ -250,6 +292,13 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return row;
     }
 
+    /**
+     * 转换类型限制持久化记录。
+     *
+     * @param relationId relationId 参数
+     * @param restrictions restrictions 参数
+     * @return 构建结果
+     */
     private List<TypeRestrictionPO> toRestrictionRows(Long relationId, Set<String> restrictions) {
         if (CollectionUtils.isEmpty(restrictions)) {
             return List.of();
@@ -262,6 +311,14 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return rows;
     }
 
+    /**
+     * 转换条件定义持久化对象。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @param condition 条件定义
+     * @return 构建结果
+     */
     private ConditionDefinitionPO toConditionPO(String storeId, String modelId, ConditionDefinition condition) {
         ConditionDefinitionPO row = new ConditionDefinitionPO();
         row.setStoreId(storeId);
@@ -274,6 +331,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     }
 
 
+    /**
+     * 提取类型限制中的主体类型。
+     *
+     * @param restrictionValue restrictionValue 参数
+     * @return 返回结果
+     */
     private String extractAllowedType(String restrictionValue) {
         if (StringUtils.isBlank(restrictionValue)) {
             return restrictionValue;
@@ -285,6 +348,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return restrictionValue.substring(0, relationIndex);
     }
 
+    /**
+     * 提取类型限制中的主体关系。
+     *
+     * @param restrictionValue restrictionValue 参数
+     * @return 返回结果
+     */
     private String extractAllowedSubjectRelation(String restrictionValue) {
         if (StringUtils.isBlank(restrictionValue)) {
             return null;
@@ -297,6 +366,13 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     }
 
 
+    /**
+     * 加载load type definitions。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     private List<TypeDefinition> loadTypeDefinitions(String storeId, String modelId) {
         Map<String, List<TypeDefinition>> typeDefinitionsByModelId = assembleTypeDefinitions(storeId, Set.of(modelId));
         return typeDefinitionsByModelId.getOrDefault(modelId, Collections.emptyList());
@@ -406,6 +482,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         );
     }
 
+    /**
+     * 转换类型限制值。
+     *
+     * @param po po 参数
+     * @return 构建结果
+     */
     private String toRestrictionValue(TypeRestrictionPO po) {
         if (po == null || StringUtils.isBlank(po.getAllowedType())) {
             return null;
@@ -416,6 +498,13 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         return po.getAllowedType() + "#" + po.getAllowedSubjectRelation();
     }
 
+    /**
+     * 加载load condition definitions。
+     *
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 查询结果
+     */
     private List<ConditionDefinition> loadConditionDefinitions(String storeId, String modelId) {
         List<ConditionDefinitionPO> list = conditionDefinitionPersistenceRepository.selectByModelId(storeId, modelId);
         if (CollectionUtils.isEmpty(list)) {

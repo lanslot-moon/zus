@@ -29,6 +29,12 @@ import java.util.Set;
 public class ModelRelationPersistenceRepository extends BaseRepository<RelationDefinitionPO>
         implements IModelRelationPersistenceRepository {
 
+    /**
+     * 查询select by type definition id。
+     *
+     * @param typeDefinitionId typeDefinitionId 参数
+     * @return 查询结果
+     */
     @Override
     public List<RelationDefinitionPO> selectByTypeDefinitionId(Long typeDefinitionId) {
         LambdaQueryWrapper<RelationDefinitionPO> wrapper = getLambdaQueryWrapper()
@@ -38,6 +44,12 @@ public class ModelRelationPersistenceRepository extends BaseRepository<RelationD
         return this.list(wrapper);
     }
 
+    /**
+     * 查询select by type definition id。
+     *
+     * @param typeDefinitionId typeDefinitionId 参数
+     * @return 查询结果
+     */
     @Override
     public List<RelationDefinitionPO> selectByTypeDefinitionId(Set<Long> typeDefinitionId) {
         if (Objects.isNull(typeDefinitionId) || typeDefinitionId.isEmpty()) {
@@ -50,6 +62,13 @@ public class ModelRelationPersistenceRepository extends BaseRepository<RelationD
         return this.list(wrapper);
     }
 
+    /**
+     * 查询select by relation name。
+     *
+     * @param typeDefinitionId typeDefinitionId 参数
+     * @param relationName relationName 参数
+     * @return 查询结果
+     */
     @Override
     public Optional<RelationDefinitionPO> selectByRelationName(Long typeDefinitionId, String relationName) {
         LambdaQueryWrapper<RelationDefinitionPO> wrapper = getLambdaQueryWrapper()
@@ -59,6 +78,12 @@ public class ModelRelationPersistenceRepository extends BaseRepository<RelationD
         return Optional.ofNullable(this.getOne(wrapper));
     }
 
+    /**
+     * 删除delete by type definition id。
+     *
+     * @param typeDefinitionId typeDefinitionId 参数
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deleteByTypeDefinitionId(Long typeDefinitionId) {
@@ -70,6 +95,12 @@ public class ModelRelationPersistenceRepository extends BaseRepository<RelationD
         return this.update(modelRelationPO, wrapper);
     }
 
+    /**
+     * 删除delete by type definition ids。
+     *
+     * @param typeDefinitionIds typeDefinitionIds 参数
+     * @return 满足条件返回 true，否则返回 false
+     */
     @Override
     public boolean deleteByTypeDefinitionIds(Set<Long> typeDefinitionIds) {
         if (Objects.isNull(typeDefinitionIds) || typeDefinitionIds.isEmpty()) {
