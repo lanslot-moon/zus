@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 /**
  * 授权模型仓储领域接口适配器
- *
+ * <p>
  * 该类实现了IAuthorizationModelDomainRepository接口，作为领域仓储和持久化层之间的适配器。
  * 它负责将领域对象与持久化对象进行转换，并实现领域模型的持久化操作。
  */
@@ -175,8 +175,8 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
     /**
      * 保存save conditions。
      *
-     * @param storeId Store 标识
-     * @param modelId 授权模型标识
+     * @param storeId    Store 标识
+     * @param modelId    授权模型标识
      * @param conditions 条件定义列表
      */
     private void saveConditions(String storeId, String modelId, List<ConditionDefinition> conditions) {
@@ -184,7 +184,16 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
             return;
         }
         List<ConditionDefinitionPO> rows = conditions.stream()
-                .map(condition -> toConditionPO(storeId, modelId, condition))
+                .map(condition -> {
+                    ConditionDefinitionPO row = new ConditionDefinitionPO();
+                    row.setStoreId(storeId);
+                    row.setModelId(modelId);
+                    row.setConditionName(condition.getConditionName());
+                    row.setExpression(condition.getExpression());
+                    row.setParameterSchema(condition.getParameterSchema());
+                    row.setDescription(condition.getDescription());
+                    return row;
+                })
                 .toList();
         conditionDefinitionPersistenceRepository.saveBatch(rows);
     }
@@ -194,7 +203,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
-     * @param types types 参数
+     * @param types   types 参数
      */
     private void saveTypesAndRelations(String storeId, String modelId, List<TypeDefinition> types) {
         if (CollectionUtils.isEmpty(types)) {
@@ -219,7 +228,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
-     * @param types types 参数
+     * @param types   types 参数
      * @return 构建结果
      */
     private List<TypeDefinitionPO> toTypeRows(String storeId, String modelId, List<TypeDefinition> types) {
@@ -240,7 +249,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * 转换关系定义持久化记录。
      *
      * @param typeRows typeRows 参数
-     * @param types types 参数
+     * @param types    types 参数
      * @return 构建结果
      */
     private List<RelationDefinitionPO> toRelationRows(List<TypeDefinitionPO> typeRows, List<TypeDefinition> types) {
@@ -250,7 +259,11 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
             TypeDefinitionPO typeRow = typeRows.get(index);
             Map<String, RelationDefinition> relations = type.getRelations() == null ? Map.of() : type.getRelations();
             for (RelationDefinition relation : relations.values()) {
-                rows.add(toRelationPO(typeRow.getId(), relation));
+                RelationDefinitionPO row = new RelationDefinitionPO();
+                row.setTypeDefinitionId(typeRow.getId());
+                row.setRelationName(relation.relationName());
+                row.setRewriteExpression(relation.rewriteExpression());
+                rows.add(row);
             }
         }
         return rows;
@@ -260,7 +273,7 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
      * 保存save restrictions。
      *
      * @param relationRows relationRows 参数
-     * @param types types 参数
+     * @param types        types 参数
      */
     private void saveRestrictions(List<RelationDefinitionPO> relationRows, List<TypeDefinition> types) {
         List<TypeRestrictionPO> rows = new ArrayList<>();
@@ -277,25 +290,12 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
         }
     }
 
-    /**
-     * 转换关系定义持久化对象。
-     *
-     * @param typeDefinitionId typeDefinitionId 参数
-     * @param relation 关系名
-     * @return 构建结果
-     */
-    private RelationDefinitionPO toRelationPO(Long typeDefinitionId, RelationDefinition relation) {
-        RelationDefinitionPO row = new RelationDefinitionPO();
-        row.setTypeDefinitionId(typeDefinitionId);
-        row.setRelationName(relation.relationName());
-        row.setRewriteExpression(relation.rewriteExpression());
-        return row;
-    }
+
 
     /**
      * 转换类型限制持久化记录。
      *
-     * @param relationId relationId 参数
+     * @param relationId   relationId 参数
      * @param restrictions restrictions 参数
      * @return 构建结果
      */
@@ -309,25 +309,6 @@ public class AuthorizationModelDomainRepositoryAdapter implements IAuthorization
                     StringUtils.defaultString(extractAllowedSubjectRelation(restriction))));
         }
         return rows;
-    }
-
-    /**
-     * 转换条件定义持久化对象。
-     *
-     * @param storeId Store 标识
-     * @param modelId 授权模型标识
-     * @param condition 条件定义
-     * @return 构建结果
-     */
-    private ConditionDefinitionPO toConditionPO(String storeId, String modelId, ConditionDefinition condition) {
-        ConditionDefinitionPO row = new ConditionDefinitionPO();
-        row.setStoreId(storeId);
-        row.setModelId(modelId);
-        row.setConditionName(condition.getConditionName());
-        row.setExpression(condition.getExpression());
-        row.setParameterSchema(condition.getParameterSchema());
-        row.setDescription(condition.getDescription());
-        return row;
     }
 
 
