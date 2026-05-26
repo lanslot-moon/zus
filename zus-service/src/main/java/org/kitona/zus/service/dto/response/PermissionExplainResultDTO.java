@@ -13,14 +13,40 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class PermissionExplainResultDTO implements Serializable {
 
+    /**
+     * 序列化版本号。
+     */
     @Serial
     private static final long serialVersionUID = 2862715460019756729L;
 
+    /**
+     * 本次 Explain 对应的最终授权结果。
+     */
     private boolean allowed;
+
+    /**
+     * 本次 Explain 调用耗时，单位毫秒。
+     */
     private long durationMs;
+
+    /**
+     * 本次 Explain 使用或返回的一致性 zookie。
+     */
     private String zookieToken;
+
+    /**
+     * 本次 Explain 的决策编码。
+     */
     private String decision;
+
+    /**
+     * Explain 失败时的错误信息。
+     */
     private String errorMessage;
+
+    /**
+     * 本次 Explain 的结构化解释结果。
+     */
     private ExplainResolutionDTO resolution;
 
     /**

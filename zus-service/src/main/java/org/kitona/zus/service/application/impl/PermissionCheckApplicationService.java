@@ -121,18 +121,18 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
     /**
      * 转换授权解释结果 DTO。
      *
-     * @param outcome outcome 参数
+     * @param outcome    outcome 参数
      * @param durationMs durationMs 参数
      * @return 构建结果
      */
     private PermissionExplainResultDTO toResultDTO(PermissionExplainOutcome outcome, long durationMs) {
-        if (outcome.isAllowed() || outcome.isDenied()) {
-            ExplainResolutionDTO resolution = ExplainResolutionDTO.from(outcome.trace());
-            String zookieToken = resolution != null ? resolution.getCurrentZookie() : "";
-            return PermissionExplainResultDTO.of(outcome.isAllowed(), outcome.status().name(), zookieToken,
-                    durationMs, resolution);
+        if (!outcome.isAllowed() && !outcome.isDenied()) {
+            return PermissionExplainResultDTO.error(outcome.status().name(), outcome.status().getDesc(), durationMs);
         }
-        return PermissionExplainResultDTO.error(outcome.status().name(), outcome.status().getDesc(), durationMs);
+
+        ExplainResolutionDTO resolution = ExplainResolutionDTO.from(outcome.trace());
+        String zookieToken = resolution != null ? resolution.getCurrentZookie() : "";
+        return PermissionExplainResultDTO.of(outcome.isAllowed(), outcome.status().name(), zookieToken, durationMs, resolution);
     }
 
     /**
@@ -164,7 +164,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
      * 解析响应使用的一致性 token。
      *
      * @param storeId Store 标识
-     * @param result 结果对象
+     * @param result  结果对象
      * @return 构建结果
      */
     private String resolveZookieToken(String storeId, PermissionCheckResult result) {

@@ -5,7 +5,12 @@ import org.kitona.zus.api.request.common.FgaConsistencyOptions;
 import org.kitona.zus.api.response.FgaExplainResolutionVO;
 import org.kitona.zus.api.response.FgaExplainResultVO;
 import org.kitona.zus.service.dto.command.ExplainCommand;
+import org.kitona.zus.service.dto.response.ExplainConditionDTO;
+import org.kitona.zus.service.dto.response.ExplainNarrativeDTO;
 import org.kitona.zus.service.dto.response.ExplainResolutionDTO;
+import org.kitona.zus.service.dto.response.ExplainResolutionNodeDTO;
+import org.kitona.zus.service.dto.response.ExplainTimelineStepDTO;
+import org.kitona.zus.service.dto.response.ExplainTupleDTO;
 import org.kitona.zus.service.dto.response.PermissionExplainResultDTO;
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
@@ -25,6 +30,9 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface FgaExplainConverter {
 
+    /**
+     * Explain 转换器静态实例。
+     */
     FgaExplainConverter INSTANCE = Mappers.getMapper(FgaExplainConverter.class);
 
     /**
@@ -72,8 +80,31 @@ public interface FgaExplainConverter {
     @Mapping(target = "currentZookie", source = "currentZookie")
     @Mapping(target = "staleSnapshotDiagnosis", source = "staleSnapshotDiagnosis")
     @Mapping(target = "truncated", source = "truncated")
+    @Mapping(target = "narrative", source = "narrative")
     @Mapping(target = "root", source = "root")
     FgaExplainResolutionVO toResolutionVO(ExplainResolutionDTO dto);
+
+    @Mapping(target = "summary", source = "summary")
+    @Mapping(target = "keySteps", source = "keySteps")
+    @Mapping(target = "timeline", source = "timeline")
+    FgaExplainResolutionVO.Narrative toNarrativeVO(ExplainNarrativeDTO dto);
+
+    @Mapping(target = "step", source = "step")
+    @Mapping(target = "depth", source = "depth")
+    @Mapping(target = "nodeType", source = "nodeType")
+    @Mapping(target = "target", source = "target")
+    @Mapping(target = "subject", source = "subject")
+    @Mapping(target = "relation", source = "relation")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "allowed", source = "allowed")
+    @Mapping(target = "reason", source = "reason")
+    @Mapping(target = "message", source = "message")
+    @Mapping(target = "tuple", source = "tuple")
+    @Mapping(target = "keyStep", source = "keyStep")
+    FgaExplainResolutionVO.TimelineStep toTimelineStepVO(ExplainTimelineStepDTO dto);
+
+    @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
+    List<FgaExplainResolutionVO.TimelineStep> toTimelineStepVOList(List<ExplainTimelineStepDTO> timeline);
 
     @Mapping(target = "nodeType", source = "nodeType")
     @Mapping(target = "target", source = "target")
@@ -84,10 +115,10 @@ public interface FgaExplainConverter {
     @Mapping(target = "tuple", source = "tuple")
     @Mapping(target = "condition", source = "condition")
     @Mapping(target = "children", source = "children")
-    FgaExplainResolutionVO.Node toNodeVO(ExplainResolutionDTO.NodeDTO node);
+    FgaExplainResolutionVO.Node toNodeVO(ExplainResolutionNodeDTO node);
 
     @IterableMapping(nullValueMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
-    List<FgaExplainResolutionVO.Node> toNodeVOList(List<ExplainResolutionDTO.NodeDTO> children);
+    List<FgaExplainResolutionVO.Node> toNodeVOList(List<ExplainResolutionNodeDTO> children);
 
     @Mapping(target = "object", source = "object")
     @Mapping(target = "relation", source = "relation")
@@ -97,10 +128,10 @@ public interface FgaExplainConverter {
     @Mapping(target = "expiresAt", source = "expiresAt")
     @Mapping(target = "conditionDefinitionId", source = "conditionDefinitionId")
     @Mapping(target = "conditionName", source = "conditionName")
-    FgaExplainResolutionVO.Tuple toTupleVO(ExplainResolutionDTO.TupleDTO tuple);
+    FgaExplainResolutionVO.Tuple toTupleVO(ExplainTupleDTO tuple);
 
     @Mapping(target = "conditionDefinitionId", source = "conditionDefinitionId")
     @Mapping(target = "conditionName", source = "conditionName")
     @Mapping(target = "passed", source = "passed")
-    FgaExplainResolutionVO.Condition toConditionVO(ExplainResolutionDTO.ConditionDTO condition);
+    FgaExplainResolutionVO.Condition toConditionVO(ExplainConditionDTO condition);
 }

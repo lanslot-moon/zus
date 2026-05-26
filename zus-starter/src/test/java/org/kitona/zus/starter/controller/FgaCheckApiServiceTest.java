@@ -9,6 +9,7 @@ import org.kitona.zus.api.controller.IFgaTupleApiService;
 import org.kitona.zus.api.request.FgaCreateStoreRequest;
 import org.kitona.zus.api.request.authorization.FgaBatchCheckRequest;
 import org.kitona.zus.api.request.authorization.FgaCheckRequest;
+import org.kitona.zus.api.request.authorization.FgaExplainRequest;
 import org.kitona.zus.api.request.common.FgaReferenceRequest;
 import org.kitona.zus.api.request.common.FgaTupleKeyRequest;
 import org.kitona.zus.api.request.model.FgaRelationSchemaInput;
@@ -19,6 +20,8 @@ import org.kitona.zus.api.request.tuple.FgaTupleWriteItem;
 import org.kitona.zus.api.request.tuple.FgaWriteRequest;
 import org.kitona.zus.api.response.FgaBatchCheckResultVO;
 import org.kitona.zus.api.response.FgaCheckResultVO;
+import org.kitona.zus.api.response.FgaExplainResolutionVO;
+import org.kitona.zus.api.response.FgaExplainResultVO;
 import org.kitona.zus.api.response.FgaModelVO;
 import org.kitona.zus.api.response.FgaStoreVO;
 import org.kitona.zus.api.response.RestResult;
@@ -94,6 +97,46 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    @DisplayName("explain 对 exclusion 拒绝返回摘要和调用时序")
+    void explain_exclusionDenied_returnsSummaryAndTimeline() {
+        FgaCreateStoreRequest createReq = new FgaCreateStoreRequest();
+        createReq.setName("explain-exclusion-" + System.nanoTime());
+        FgaStoreVO store = storeApi.createStore(createReq).getData();
+        String storeId = store.getStoreId();
+
+        FgaModelVO model = modelApi.writeModel(storeId, exclusionModel()).getData();
+        modelApi.publishModel(storeId, model.getModelId());
+        modelApi.activateModel(storeId, model.getModelId());
+
+        tupleApi.write(storeId, FgaWriteRequest.builder()
+                .writes(List.of(
+                        FgaTupleWriteItem.builder()
+                                .tupleKey(tupleKey("document", "roadmap", "viewer", "user", "mallory"))
+                                .build(),
+                        FgaTupleWriteItem.builder()
+                                .tupleKey(tupleKey("document", "roadmap", "blocked", "user", "mallory"))
+                                .build()
+                )).build());
+
+        FgaExplainResultVO result = checkApi.explain(storeId,
+                explainReq("document", "roadmap", "restricted_viewer", "user", "mallory")).getData();
+
+        assertThat(result.isAllowed()).isFalse();
+        assertThat(result.getResolution().getNarrative().getSummary()).contains("document:roadmap#restricted_viewer");
+        assertThat(result.getResolution().getNarrative().getKeySteps())
+                .extracting(FgaExplainResolutionVO.TimelineStep::getMessage)
+                .anyMatch(message -> message.contains("document:roadmap#viewer@user:mallory"))
+                .anyMatch(message -> message.contains("document:roadmap#blocked@user:mallory"));
+        assertThat(result.getResolution().getNarrative().getTimeline())
+                .extracting(FgaExplainResolutionVO.TimelineStep::getReason)
+                .contains("EXCLUSION_NOT_SATISFIED", "DIRECT_TUPLE_MATCHED");
+        assertThat(result.getResolution().getNarrative().getTimeline())
+                .extracting(FgaExplainResolutionVO.TimelineStep::getMessage)
+                .anyMatch(message -> message.contains("document:roadmap#viewer@user:mallory"))
+                .anyMatch(message -> message.contains("document:roadmap#blocked@user:mallory"));
+    }
+
+    @Test
     @DisplayName("batchCheck 一次请求返回多个 correlationId 对应的判定结果")
     void batchCheck_returnsResultsByCorrelationId() {
         String storeId = prepareStoreWithTuple();
@@ -154,6 +197,13 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
                 .build();
     }
 
+    private static FgaExplainRequest explainReq(String objectType, String objectId, String relation,
+                                                String subjectType, String subjectId) {
+        return FgaExplainRequest.builder()
+                .tupleKey(tupleKey(objectType, objectId, relation, subjectType, subjectId))
+                .build();
+    }
+
     private static FgaTupleKeyRequest tupleKey(String objectType, String objectId, String relation,
                                                String subjectType, String subjectId) {
         return tupleKey(objectType, objectId, relation, subjectType, subjectId, null);
@@ -203,6 +253,33 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
                                         .rewrite("self")
                                         .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
                                         .build()))
+                                .build(),
+                        "user", FgaTypeSchemaInput.builder()
+                                .relations(Map.of("self", FgaRelationSchemaInput.builder().rewrite("self").build()))
+                                .build()
+                ))
+                .build();
+    }
+
+    private static FgaWriteAuthorizationModelRequest exclusionModel() {
+        return FgaWriteAuthorizationModelRequest.builder()
+                .schemaVersion("1.1")
+                .types(Map.of(
+                        "document", FgaTypeSchemaInput.builder()
+                                .relations(Map.of(
+                                        "viewer", FgaRelationSchemaInput.builder()
+                                                .rewrite("self")
+                                                .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
+                                                .build(),
+                                        "blocked", FgaRelationSchemaInput.builder()
+                                                .rewrite("self")
+                                                .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
+                                                .build(),
+                                        "restricted_viewer", FgaRelationSchemaInput.builder()
+                                                .rewrite("viewer but not blocked")
+                                                .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
+                                                .build()
+                                ))
                                 .build(),
                         "user", FgaTypeSchemaInput.builder()
                                 .relations(Map.of("self", FgaRelationSchemaInput.builder().rewrite("self").build()))

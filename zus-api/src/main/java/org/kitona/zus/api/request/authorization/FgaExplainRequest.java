@@ -23,15 +23,27 @@ import java.util.Map;
 @AllArgsConstructor
 public class FgaExplainRequest {
 
+    /**
+     * 需要解释的授权三元组。
+     */
     @Valid
     @NotNull(message = "tupleKey 不能为空")
     private FgaTupleKeyRequest tupleKey;
 
+    /**
+     * 指定用于 explain 的授权模型 ID，为空时使用 Store 当前激活模型。
+     */
     @Size(max = 64, message = "authorizationModelId 长度不能超过 64")
     private String authorizationModelId;
 
+    /**
+     * 条件求值所需的动态上下文。
+     */
     private Map<String, Object> context;
 
+    /**
+     * Explain 请求的一致性选项。
+     */
     @Valid
     private FgaConsistencyOptions consistency;
 }
