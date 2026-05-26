@@ -20,14 +20,7 @@ public final class SelfNodeEvaluationStrategy implements RewriteNodeEvaluationSt
     /**
      * direct tuple 证据匹配器。
      */
-    private final DirectTupleEvidenceMatcher directTupleEvidenceMatcher;
-
-    /**
-     * 创建 self 节点策略。
-     */
-    public SelfNodeEvaluationStrategy() {
-        this.directTupleEvidenceMatcher = new DirectTupleEvidenceMatcher();
-    }
+    private final DirectTupleEvidenceMatcher directTupleEvidenceMatcher = new DirectTupleEvidenceMatcher();
 
     /**
      * 执行 self 判定。

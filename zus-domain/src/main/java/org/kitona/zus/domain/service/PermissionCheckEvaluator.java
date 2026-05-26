@@ -50,6 +50,21 @@ public final class PermissionCheckEvaluator {
     private static final int DEFAULT_MAX_DEPTH = 32;
 
     /**
+     * 递归求值模板
+     */
+    private final RecursiveEvaluationTemplate recursiveEvaluationTemplate = new RecursiveEvaluationTemplate();
+
+    /**
+     * 节点策略回调接口
+     */
+    private final RewriteNodeEvaluationSupport evaluationSupport = new EvaluatorSupport();
+
+    /**
+     * Explain 记录适配器，集中处理可选 trace collector 的写入细节。
+     */
+    private final EvaluationTraceRecorder traceRecorder = new EvaluationTraceRecorder();
+
+    /**
      * 直接 tuple 读取端口
      */
     private final IDirectTupleReader directTupleReader;
@@ -64,20 +79,6 @@ public final class PermissionCheckEvaluator {
      */
     private final int maxDepth;
 
-    /**
-     * 递归求值模板
-     */
-    private final RecursiveEvaluationTemplate recursiveEvaluationTemplate;
-
-    /**
-     * 节点策略回调接口
-     */
-    private final RewriteNodeEvaluationSupport evaluationSupport;
-
-    /**
-     * Explain 记录适配器，集中处理可选 trace collector 的写入细节。
-     */
-    private final EvaluationTraceRecorder traceRecorder;
 
     public PermissionCheckEvaluator(IDirectTupleReader directTupleReader,
                                     IConditionEvaluator conditionEvaluator) {
@@ -89,9 +90,6 @@ public final class PermissionCheckEvaluator {
                                     int maxDepth) {
         this.directTupleReader = directTupleReader;
         this.conditionEvaluator = conditionEvaluator;
-        this.recursiveEvaluationTemplate = new RecursiveEvaluationTemplate();
-        this.evaluationSupport = new EvaluatorSupport();
-        this.traceRecorder = new EvaluationTraceRecorder();
         this.maxDepth = maxDepth;
     }
 
