@@ -14,8 +14,7 @@
  *   <li>{@link IConditionEvaluator} - 条件表达式求值</li>
  *   <li>{@link IModelSnapshotRenderer} - 授权模型 DSL 快照渲染</li>
  *   <li>{@link IAuditContextProvider} - 审计上下文提供能力</li>
- *   <li>{@link IDirectTupleReader} - 直接 tuple 命中读取</li>
- *   <li>{@link ITupleLinkReader} - TTU 链接 tuple 读取</li>
+ *   <li>{@link IDirectTupleReader} - direct tuple 读取，SELF 证据与 TTU 传播边都来自同一事实读取能力</li>
  *   <li>{@link ISubjectObjectCandidateReader} - object 候选读取</li>
  *   <li>{@link IObjectSubjectCandidateReader} - subject 候选读取</li>
  *   <li>{@link IZookieSequencePort} - zookie 序列能力，供 tuple 写入领域服务生成一致性版本</li>

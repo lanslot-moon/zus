@@ -1,7 +1,6 @@
 package org.kitona.zus.domain.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledRelation;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationDecision;
@@ -14,17 +13,14 @@ import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationMemoKey;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRuntime;
 import org.kitona.zus.domain.authorization.evaluation.runtime.RecursionGuard;
-import org.kitona.zus.domain.authorization.evaluation.specification.RelationRestrictionSpecification;
 import org.kitona.zus.domain.authorization.evaluation.runtime.RecursiveEvaluationTemplate;
 import org.kitona.zus.domain.authorization.evaluation.nodes.RewriteNode;
-import org.kitona.zus.domain.authorization.evaluation.specification.SubjectMatchSpecification;
-import org.kitona.zus.domain.authorization.evaluation.specification.TupleVisibilityDecision;
 import org.kitona.zus.domain.authorization.evaluation.strategy.RewriteNodeEvaluationStrategy;
 import org.kitona.zus.domain.authorization.evaluation.strategy.RewriteNodeEvaluationSupport;
 import org.kitona.zus.domain.authorization.evaluation.strategy.RewriteNodeStrategyFactory;
+import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.port.IConditionEvaluator;
 import org.kitona.zus.domain.port.IDirectTupleReader;
-import org.kitona.zus.domain.port.ITupleLinkReader;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 
@@ -59,11 +55,6 @@ public final class PermissionCheckEvaluator {
     private final IDirectTupleReader directTupleReader;
 
     /**
-     * TTU 链接 tuple 读取端口
-     */
-    private final ITupleLinkReader tupleLinkReader;
-
-    /**
      * 条件求值端口
      */
     private final IConditionEvaluator conditionEvaluator;
@@ -89,17 +80,14 @@ public final class PermissionCheckEvaluator {
     private final EvaluationTraceRecorder traceRecorder;
 
     public PermissionCheckEvaluator(IDirectTupleReader directTupleReader,
-                                    ITupleLinkReader tupleLinkReader,
                                     IConditionEvaluator conditionEvaluator) {
-        this(directTupleReader, tupleLinkReader, conditionEvaluator, DEFAULT_MAX_DEPTH);
+        this(directTupleReader, conditionEvaluator, DEFAULT_MAX_DEPTH);
     }
 
     public PermissionCheckEvaluator(IDirectTupleReader directTupleReader,
-                                    ITupleLinkReader tupleLinkReader,
                                     IConditionEvaluator conditionEvaluator,
                                     int maxDepth) {
         this.directTupleReader = directTupleReader;
-        this.tupleLinkReader = tupleLinkReader;
         this.conditionEvaluator = conditionEvaluator;
         this.recursiveEvaluationTemplate = new RecursiveEvaluationTemplate();
         this.evaluationSupport = new EvaluatorSupport();
@@ -178,48 +166,6 @@ public final class PermissionCheckEvaluator {
     }
 
     /**
-     * direct/self 节点求值。
-     *
-     * <p>这一步只处理“当前 object 的当前 relation 是否直接命中 subject”。
-     * tuple 的类型限制、时间窗口、条件表达式和 subject 匹配都在这里完成。
-     */
-    private boolean evaluateSelf(CompiledRelation compiledRelation, Subject subject, ObjectRef object, String relation,
-                                 EvaluationRuntime runtime) {
-        List<RelationTuple> tuples = directTupleReader.findDirectTuples(
-                runtime.request().storeId(), object, relation, runtime.request().zookie().getVersion());
-
-        for (RelationTuple tuple : tuples) {
-            if (matchesSelfTuple(compiledRelation, tuple, subject, runtime)) {
-                traceRecorder.recordTuple(runtime, tuple, true, BusinessEvidenceReason.DIRECT_TUPLE_MATCHED);
-                return true;
-            }
-        }
-        traceRecorder.mark(runtime, false, BusinessEvidenceReason.NO_TUPLE_MATCHED);
-        return false;
-    }
-
-    /**
-     * 判定 direct/self tuple 是否满足当前 subject 命中条件。
-     */
-    private boolean matchesSelfTuple(CompiledRelation compiledRelation, RelationTuple tuple, Subject subject,
-                                     EvaluationRuntime runtime) {
-        if (!RelationRestrictionSpecification.isSatisfiedBy(compiledRelation, tuple)) {
-            traceRecorder.recordTuple(runtime, tuple, false, BusinessEvidenceReason.RELATION_RESTRICTION_FAILED);
-            return false;
-        }
-        TupleVisibilityDecision visibilityDecision = runtime.visibilitySpecification().evaluate(tuple);
-        traceRecorder.recordVisibility(runtime, tuple, visibilityDecision);
-        if (visibilityDecision.isNotSatisfied()) {
-            return false;
-        }
-        boolean matched = SubjectMatchSpecification.isSatisfiedBy(tuple, subject);
-        if (!matched) {
-            traceRecorder.recordTuple(runtime, tuple, false, BusinessEvidenceReason.SUBJECT_NOT_MATCHED);
-        }
-        return matched;
-    }
-
-    /**
      * 为单次授权请求创建运行时上下文。
      */
     private EvaluationRuntime createRuntime(CompiledAuthorizationModel model, EvaluationRequest request, RecursionGuard guard) {
@@ -251,15 +197,9 @@ public final class PermissionCheckEvaluator {
         }
 
         @Override
-        public boolean evaluateSelf(CompiledRelation compiledRelation, Subject subject, ObjectRef object, String relation,
-                                    EvaluationRuntime runtime) {
-            return PermissionCheckEvaluator.this.evaluateSelf(compiledRelation, subject, object, relation, runtime);
-        }
-
-        @Override
-        public List<RelationTuple> findTupleLinks(EvaluationRuntime runtime, ObjectRef object, String tupleRelation) {
-            return tupleLinkReader.findTupleLinks(
-                    runtime.request().storeId(), object, tupleRelation, runtime.request().zookie().getVersion());
+        public List<RelationTuple> findDirectTuples(EvaluationRuntime runtime, ObjectRef object, String relation) {
+            return directTupleReader.findDirectTuples(
+                    runtime.request().storeId(), object, relation, runtime.request().zookie().getVersion());
         }
     }
 }

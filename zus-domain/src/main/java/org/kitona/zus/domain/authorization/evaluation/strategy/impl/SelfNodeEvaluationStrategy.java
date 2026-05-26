@@ -1,6 +1,7 @@
 package org.kitona.zus.domain.authorization.evaluation.strategy.impl;
 
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledRelation;
+import org.kitona.zus.domain.authorization.evaluation.matcher.DirectTupleEvidenceMatcher;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRuntime;
 import org.kitona.zus.domain.authorization.evaluation.nodes.SelfNode;
 import org.kitona.zus.domain.authorization.evaluation.strategy.RewriteNodeEvaluationStrategy;
@@ -11,9 +12,22 @@ import org.kitona.zus.domain.valueobject.Subject;
 /**
  * self 节点策略。
  *
- * <p>把当前节点交还给 evaluator 的 direct tuple 判定逻辑处理。
+ * <p>self 节点表示当前 object#relation 上的 direct tuple 证据。
+ * 策略自身保留节点语义，具体 tuple 匹配细节委托给 direct tuple 证据匹配器。
  */
 public final class SelfNodeEvaluationStrategy implements RewriteNodeEvaluationStrategy<SelfNode> {
+
+    /**
+     * direct tuple 证据匹配器。
+     */
+    private final DirectTupleEvidenceMatcher directTupleEvidenceMatcher;
+
+    /**
+     * 创建 self 节点策略。
+     */
+    public SelfNodeEvaluationStrategy() {
+        this.directTupleEvidenceMatcher = new DirectTupleEvidenceMatcher();
+    }
 
     /**
      * 执行 self 判定。
@@ -38,7 +52,7 @@ public final class SelfNodeEvaluationStrategy implements RewriteNodeEvaluationSt
                             String relation,
                             int depth,
                             RewriteNodeEvaluationSupport support) {
-        // 调用支持类的方法执行实际的 self 评估
-        return support.evaluateSelf(compiledRelation, subject, object, relation, runtime);
+        // self 节点语义由策略承载，tuple 证据匹配细节委托给 matcher。
+        return directTupleEvidenceMatcher.matches(compiledRelation, runtime, subject, object, relation, depth, support);
     }
 }

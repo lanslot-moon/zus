@@ -214,6 +214,11 @@ public sealed interface EvaluationExplainReason
         TUPLE_TO_USERSET_LINK_MATCHED(EvaluationNodeType.TUPLE, true),
 
         /**
+         * self tuple 的主体是 userset，且请求主体被证明属于该 userset。
+         */
+        USERSET_SUBJECT_MATCHED(EvaluationNodeType.TUPLE, true),
+
+        /**
          * 当前 object#relation 下没有任何 tuple 能够匹配请求 subject。
          */
         NO_TUPLE_MATCHED(EvaluationNodeType.TUPLE, false),

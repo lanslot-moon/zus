@@ -29,13 +29,11 @@ public interface RewriteNodeEvaluationSupport {
                          Subject subject, ObjectRef object, String relation, int depth);
 
     /**
-     * 执行 direct/self 节点判定。
+     * 查询 self 节点所需的 direct tuples。
+     *
+     * <p>这是 tuple 读取能力，不是 self 节点专属求值能力。self 节点策略会基于这些
+     * direct tuples 自行完成证据匹配，从而保持所有 rewrite node 都通过策略求值。
      */
-    boolean evaluateSelf(CompiledRelation compiledRelation, Subject subject, ObjectRef object, String relation,
-                         EvaluationRuntime runtime);
+    List<RelationTuple> findDirectTuples(EvaluationRuntime runtime, ObjectRef object, String relation);
 
-    /**
-     * 查询 tuple-to-userset 所需的中间链接 tuple。
-     */
-    List<RelationTuple> findTupleLinks(EvaluationRuntime runtime, ObjectRef object, String tupleRelation);
 }

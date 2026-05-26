@@ -45,7 +45,7 @@ public final class TupleToUsersetEvaluationStrategy implements RewriteNodeEvalua
                             int depth,
                             RewriteNodeEvaluationSupport support) {
         // TTU 先顺着 tuple relation 找到中间对象，再用 computed relation 递归验证目标权限。
-        for (RelationTuple link : support.findTupleLinks(runtime, object, node.tupleRelation())) {
+        for (RelationTuple link : support.findDirectTuples(runtime, object, node.tupleRelation())) {
             // userset / wildcard 不能作为 TTU 中间对象，且不可见 tuple 必须提前过滤。
             if (runtime.visibilitySpecification().isNotSatisfiedBy(link) || link.hasUsersetSubject() || link.hasWildcardSubject()) {
                 continue;

@@ -66,6 +66,34 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    @DisplayName("check 支持 userset subject 递归展开")
+    void check_usersetSubject_recursivelyMatchesMember() {
+        FgaCreateStoreRequest createReq = new FgaCreateStoreRequest();
+        createReq.setName("check-userset-subject-" + System.nanoTime());
+        FgaStoreVO store = storeApi.createStore(createReq).getData();
+        String storeId = store.getStoreId();
+
+        FgaModelVO model = modelApi.writeModel(storeId, usersetSubjectModel()).getData();
+        modelApi.publishModel(storeId, model.getModelId());
+        modelApi.activateModel(storeId, model.getModelId());
+
+        tupleApi.write(storeId, FgaWriteRequest.builder()
+                .writes(List.of(
+                        FgaTupleWriteItem.builder()
+                                .tupleKey(tupleKey("group", "platform", "member", "user", "erin"))
+                                .build(),
+                        FgaTupleWriteItem.builder()
+                                .tupleKey(tupleKey("document", "roadmap", "viewer", "group", "platform", "member"))
+                                .build()
+                )).build());
+
+        FgaCheckResultVO allowed = checkApi.check(storeId, checkReq("document", "roadmap", "viewer", "user", "erin"))
+                .getData();
+
+        assertThat(allowed.isAllowed()).isTrue();
+    }
+
+    @Test
     @DisplayName("batchCheck 一次请求返回多个 correlationId 对应的判定结果")
     void batchCheck_returnsResultsByCorrelationId() {
         String storeId = prepareStoreWithTuple();
@@ -128,10 +156,15 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
 
     private static FgaTupleKeyRequest tupleKey(String objectType, String objectId, String relation,
                                                String subjectType, String subjectId) {
+        return tupleKey(objectType, objectId, relation, subjectType, subjectId, null);
+    }
+
+    private static FgaTupleKeyRequest tupleKey(String objectType, String objectId, String relation,
+                                               String subjectType, String subjectId, String subjectRelation) {
         return FgaTupleKeyRequest.builder()
                 .object(FgaReferenceRequest.builder().type(objectType).id(objectId).build())
                 .relation(relation)
-                .subject(FgaReferenceRequest.builder().type(subjectType).id(subjectId).build())
+                .subject(FgaReferenceRequest.builder().type(subjectType).id(subjectId).relation(subjectRelation).build())
                 .build();
     }
 
@@ -141,6 +174,32 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
                 .types(Map.of(
                         "document", FgaTypeSchemaInput.builder()
                                 .relations(Map.of("viewer", FgaRelationSchemaInput.builder()
+                                        .rewrite("self")
+                                        .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
+                                        .build()))
+                                .build(),
+                        "user", FgaTypeSchemaInput.builder()
+                                .relations(Map.of("self", FgaRelationSchemaInput.builder().rewrite("self").build()))
+                                .build()
+                ))
+                .build();
+    }
+
+    private static FgaWriteAuthorizationModelRequest usersetSubjectModel() {
+        return FgaWriteAuthorizationModelRequest.builder()
+                .schemaVersion("1.1")
+                .types(Map.of(
+                        "document", FgaTypeSchemaInput.builder()
+                                .relations(Map.of("viewer", FgaRelationSchemaInput.builder()
+                                        .rewrite("self")
+                                        .allowedSubjectTypes(List.of(
+                                                FgaTypeRestrictionInput.builder().type("user").build(),
+                                                FgaTypeRestrictionInput.builder().type("group").relation("member").build()
+                                        ))
+                                        .build()))
+                                .build(),
+                        "group", FgaTypeSchemaInput.builder()
+                                .relations(Map.of("member", FgaRelationSchemaInput.builder()
                                         .rewrite("self")
                                         .allowedSubjectTypes(List.of(FgaTypeRestrictionInput.builder().type("user").build()))
                                         .build()))

@@ -48,8 +48,7 @@
  * │   ├── IAuditContextProvider              审计上下文提供能力
  * │   ├── ICompiledModelCompiler             结构化模型编译能力
  * │   ├── IConditionEvaluator                条件表达式求值能力
- * │   ├── IDirectTupleReader                 direct tuple 读取能力
- * │   ├── ITupleLinkReader                   tuple-to-userset 链接读取能力
+ * │   ├── IDirectTupleReader                 direct tuple 读取能力，SELF 与 TTU 共享同一事实读取端口
  * │   ├── ISubjectObjectCandidateReader      ListObjects 候选对象读取能力
  * │   ├── IObjectSubjectCandidateReader      ListSubjects 候选主体读取能力
  * │   ├── IModelSnapshotRenderer             模型发布快照渲染能力

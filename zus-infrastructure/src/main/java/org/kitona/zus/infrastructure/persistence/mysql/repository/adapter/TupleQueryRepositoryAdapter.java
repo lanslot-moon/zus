@@ -5,7 +5,6 @@ import org.kitona.zus.domain.authorization.tuple.RelationTuple;
 import org.kitona.zus.domain.port.IDirectTupleReader;
 import org.kitona.zus.domain.port.IObjectSubjectCandidateReader;
 import org.kitona.zus.domain.port.ISubjectObjectCandidateReader;
-import org.kitona.zus.domain.port.ITupleLinkReader;
 import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
 import org.kitona.zus.domain.read.port.ITupleQueryPort;
 import org.kitona.zus.domain.read.view.TupleView;
@@ -23,7 +22,7 @@ import java.util.List;
  */
 @Repository
 public class TupleQueryRepositoryAdapter implements ITupleQueryPort, IDirectTupleReader,
-        ITupleLinkReader, ISubjectObjectCandidateReader, IObjectSubjectCandidateReader {
+        ISubjectObjectCandidateReader, IObjectSubjectCandidateReader {
 
     private static final int UNBOUNDED_PAGE_SIZE = Integer.MAX_VALUE;
 
@@ -84,20 +83,6 @@ public class TupleQueryRepositoryAdapter implements ITupleQueryPort, IDirectTupl
      */
     @Override
     public List<RelationTuple> findDirectTuples(String storeId, ObjectRef object, String relation, Long maxZookie) {
-        return findObjectEntities(TupleQueryCriteria.forObject(storeId, object.getType(), object.getId(), relation, maxZookie));
-    }
-
-    /**
-     * 查询 tuple-to-userset 传播链接。
-     *
-     * @param storeId Store 标识
-     * @param object object 参数
-     * @param relation 关系名
-     * @param maxZookie 最大 zookie 版本
-     * @return 查询结果
-     */
-    @Override
-    public List<RelationTuple> findTupleLinks(String storeId, ObjectRef object, String relation, Long maxZookie) {
         return findObjectEntities(TupleQueryCriteria.forObject(storeId, object.getType(), object.getId(), relation, maxZookie));
     }
 

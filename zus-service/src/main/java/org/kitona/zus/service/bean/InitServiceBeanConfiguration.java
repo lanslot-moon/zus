@@ -21,15 +21,13 @@ public class InitServiceBeanConfiguration {
      * 创建单点权限检查器 Bean。
      *
      * @param directTupleReader  直接元组读取器
-     * @param tupleLinkReader    元组链接读取器
      * @param conditionEvaluator 条件评估器
      * @return 单点权限检查器
      */
     @Bean
     public PermissionCheckEvaluator buildPermissionCheckEvaluator(IDirectTupleReader directTupleReader,
-                                                                  ITupleLinkReader tupleLinkReader,
                                                                   IConditionEvaluator conditionEvaluator) {
-        return new PermissionCheckEvaluator(directTupleReader, tupleLinkReader, conditionEvaluator);
+        return new PermissionCheckEvaluator(directTupleReader, conditionEvaluator);
     }
 
     /**
