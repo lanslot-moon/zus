@@ -87,6 +87,21 @@ public class TupleQueryRepositoryAdapter implements ITupleQueryPort, IDirectTupl
     }
 
     /**
+     * 判断对象在授权事实层是否存在任意有效 tuple。
+     *
+     * @param storeId   Store 标识
+     * @param object    授权对象引用
+     * @param maxZookie 最大 zookie 版本
+     * @return 存在任意有效授权事实返回 {@code true}
+     */
+    @Override
+    public boolean existsObjectFact(String storeId, ObjectRef object, Long maxZookie) {
+        TupleQueryCriteria criteria = TupleQueryCriteria.forPage(storeId, object.getType(), object.getId(),
+                null, null, null, null, 1, null, maxZookie);
+        return !listTupleRows(criteria).isEmpty();
+    }
+
+    /**
      * 查询主体相关的候选对象 tuple。
      *
      * @param storeId Store 标识

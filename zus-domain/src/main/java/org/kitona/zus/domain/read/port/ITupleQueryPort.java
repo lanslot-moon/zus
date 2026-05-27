@@ -2,6 +2,7 @@ package org.kitona.zus.domain.read.port;
 
 import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
 import org.kitona.zus.domain.read.view.TupleView;
+import org.kitona.zus.domain.valueobject.ObjectRef;
 
 import java.util.List;
 
@@ -35,4 +36,14 @@ public interface ITupleQueryPort {
      * @return 关系元组列表
      */
     List<TupleView> findByObject(TupleQueryCriteria criteria);
+
+    /**
+     * 判断对象在当前一致性版本下是否存在任意有效授权事实。
+     *
+     * @param storeId   Store 标识
+     * @param object    授权对象引用
+     * @param maxZookie 最大可见 zookie 版本，为空表示不限制版本
+     * @return 存在有效授权事实返回 {@code true}
+     */
+    boolean existsObjectFact(String storeId, ObjectRef object, Long maxZookie);
 }

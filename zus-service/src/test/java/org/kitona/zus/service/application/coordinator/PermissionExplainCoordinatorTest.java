@@ -9,19 +9,12 @@ import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainN
 import org.kitona.zus.domain.enums.EvaluationNodeType;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTrace;
 import org.kitona.zus.domain.authorization.evaluation.explain.StaleSnapshotDiagnosis;
-import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
-import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
-import org.kitona.zus.domain.authorization.model.TypeDefinition;
-import org.kitona.zus.domain.port.ICompiledModelCompiler;
-import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.read.view.StoreView;
-import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.PermissionCheckStatus;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
-import org.kitona.zus.service.port.ICompiledModelCache;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -29,7 +22,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -41,22 +33,10 @@ import static org.mockito.Mockito.when;
 class PermissionExplainCoordinatorTest {
 
     @Mock
-    private IStoreQueryPort storeQueryRepository;
-
-    @Mock
-    private IAuthorizationModelDomainRepository modelRepository;
-
-    @Mock
-    private ICompiledModelCompiler compiledModelCompiler;
-
-    @Mock
-    private ICompiledModelCache compiledModelCache;
+    private PermissionEvaluationContextLoader evaluationContextLoader;
 
     @Mock
     private PermissionCheckEvaluator permissionCheckEvaluator;
-
-    @Mock
-    private AuthorizationModelAggregate aggregate;
 
     @Mock
     private CompiledAuthorizationModel compiledModel;
@@ -66,20 +46,18 @@ class PermissionExplainCoordinatorTest {
     @BeforeEach
     void setUp() {
         coordinator = new PermissionExplainCoordinator();
-        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "storeQueryRepository", storeQueryRepository);
-        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "modelRepository", modelRepository);
-        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "compiledModelCompiler", compiledModelCompiler);
-        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "compiledModelCache", compiledModelCache);
+        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "evaluationContextLoader", evaluationContextLoader);
         ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "permissionCheckEvaluator", permissionCheckEvaluator);
     }
 
     @Test
     void shouldDiagnoseStaleSnapshotWhenLatestSnapshotAllows() {
-        when(storeQueryRepository.findViewByStoreId("store-1"))
-                .thenReturn(Optional.of(new StoreView("store-1", "name", "desc", "model-1", 9L, 1, 1L)));
-        when(modelRepository.findById(AuthorizationModelId.of("store-1", "model-1"))).thenReturn(Optional.of(aggregate));
-        when(aggregate.getTypeDefinitions()).thenReturn(List.of(TypeDefinition.create("document")));
-        when(compiledModelCache.get("store-1", "model-1")).thenReturn(Optional.of(compiledModel));
+        when(evaluationContextLoader.load(any(), any(), any()))
+                .thenReturn(PermissionEvaluationContext.ready(
+                        new StoreView("store-1", "name", "desc", "model-1", 9L, 1, 1L),
+                        compiledModel,
+                        null
+                ));
         when(permissionCheckEvaluator.checkWithExplain(any(), any())).thenReturn(deniedDecision());
         when(permissionCheckEvaluator.check(any(), any())).thenReturn(true);
 

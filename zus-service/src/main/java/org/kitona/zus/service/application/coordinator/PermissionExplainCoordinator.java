@@ -2,28 +2,22 @@ package org.kitona.zus.service.application.coordinator;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationDecision;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainNode;
+import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationExplainReason;
 import org.kitona.zus.domain.authorization.evaluation.explain.EvaluationTrace;
 import org.kitona.zus.domain.authorization.evaluation.explain.StaleSnapshotDiagnosis;
 import org.kitona.zus.domain.authorization.evaluation.runtime.EvaluationRequest;
-import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
-import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
-import org.kitona.zus.domain.port.ICompiledModelCompiler;
-import org.kitona.zus.domain.read.view.StoreView;
-import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
-import org.kitona.zus.domain.read.port.IStoreQueryPort;
+import org.kitona.zus.domain.enums.EvaluationNodeType;
 import org.kitona.zus.domain.service.PermissionCheckEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
-import org.kitona.zus.domain.valueobject.PermissionCheckResult;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
-import org.kitona.zus.service.port.ICompiledModelCache;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Explain 用例编排器。
@@ -36,28 +30,10 @@ import java.util.Optional;
 public class PermissionExplainCoordinator {
 
     /**
-     * Store 查询仓储，用于加载当前 store 视图、当前模型指针和当前 zookie。
+     * 权限评估上下文加载器，用于复用 Store/Model/CompiledModel/Preflight 准备流程。
      */
     @Resource
-    private IStoreQueryPort storeQueryRepository;
-
-    /**
-     * 授权模型仓储，用于加载 explain 所需的当前激活模型聚合。
-     */
-    @Resource
-    private IAuthorizationModelDomainRepository modelRepository;
-
-    /**
-     * 编译模型端口，用于把结构化模型聚合编译为 evaluator 可执行模型。
-     */
-    @Resource
-    private ICompiledModelCompiler compiledModelCompiler;
-
-    /**
-     * 编译模型缓存，用于复用同一 store/model 下的编译产物。
-     */
-    @Resource
-    private ICompiledModelCache compiledModelCache;
+    private PermissionEvaluationContextLoader evaluationContextLoader;
 
     /**
      * 单点权限检查器，Explain 入口通过它复用真实 Check 执行内核。
@@ -67,51 +43,65 @@ public class PermissionExplainCoordinator {
 
     /**
      * 执行一次可解释的权限检查。
+     *
+     * @param storeId  Store 标识
+     * @param object   授权对象
+     * @param relation 目标关系
+     * @param subject  授权主体
+     * @param zookie   一致性 token
+     * @param context  条件求值上下文
+     * @return Explain 执行结果
      */
     public PermissionExplainOutcome explain(String storeId, ObjectRef object, String relation,
                                             Subject subject, Zookie zookie, Map<String, Object> context) {
-        Optional<StoreView> storeOpt = storeQueryRepository.findViewByStoreId(storeId);
-        if (storeOpt.isEmpty()) {
-            return PermissionExplainOutcome.storeNotFound();
+        PermissionEvaluationContext evaluationContext = evaluationContextLoader.load(storeId, object, zookie);
+        if (evaluationContext.isAbnormal()) {
+            return PermissionExplainOutcome.abnormal(evaluationContext.abnormalStatus());
         }
 
-        StoreView storeView = storeOpt.get();
-        if (StringUtils.isBlank(storeView.currentModelId())) {
-            return PermissionExplainOutcome.modelNotBound();
+        Long currentedZookie = evaluationContext.storeView().currentZookie();
+        if (evaluationContext.isPreflightDenied()) {
+            EvaluationTrace trace = buildPreflightDeniedTrace(evaluationContext.preflightFailureReason(), subject, object, relation, zookie, currentedZookie);
+            return PermissionExplainOutcome.denied(trace);
         }
 
-        Optional<AuthorizationModelAggregate> modelOpt = modelRepository.findById(AuthorizationModelId.of(storeId, storeView.currentModelId()));
-        if (modelOpt.isEmpty()) {
-            return PermissionExplainOutcome.modelNotFound();
-        }
-
-        AuthorizationModelAggregate aggregate = modelOpt.get();
-        if (aggregate.getTypeDefinitions().isEmpty()) {
-            return PermissionExplainOutcome.modelInvalid();
-        }
-
-        CompiledAuthorizationModel compiledModel;
-        String currentModelId = storeView.currentModelId();
-        try {
-            compiledModel = compiledModelCache.get(storeId, currentModelId)
-                    .orElseGet(() -> {
-                        CompiledAuthorizationModel model = compiledModelCompiler.compile(aggregate);
-                        compiledModelCache.put(storeId, currentModelId, model);
-                        return model;
-                    });
-        } catch (RuntimeException ex) {
-            log.warn("授权模型结构无效，无法构建鉴权图: storeId={}, modelId={}", storeId, currentModelId, ex);
-            return PermissionExplainOutcome.modelInvalid();
-        }
         EvaluationRequest request = EvaluationRequest.of(storeId, subject, object, relation, zookie, context);
-        EvaluationDecision decision = permissionCheckEvaluator.checkWithExplain(compiledModel, request);
-        EvaluationTrace trace = enrichTrace(decision, compiledModel, request, storeView.currentZookie());
+        EvaluationDecision decision = permissionCheckEvaluator.checkWithExplain(evaluationContext.compiledModel(), request);
+        EvaluationTrace trace = enrichTrace(decision, evaluationContext.compiledModel(), request, currentedZookie);
 
         log.debug("Explain 权限检查完成: storeId={}, object={}, relation={}, subject={}, allowed={}",
                 storeId, object, relation, subject, decision.allowed());
         return decision.allowed() ? PermissionExplainOutcome.allowed(trace) : PermissionExplainOutcome.denied(trace);
     }
 
+    /**
+     * 构建前置检查失败时的 Explain Trace。
+     *
+     * @param reason        前置检查失败原因
+     * @param subject       授权主体
+     * @param object        授权对象
+     * @param relation      目标关系
+     * @param requestZookie 请求侧 zookie
+     * @param currentZookie Store 当前 zookie
+     * @return Explain Trace
+     */
+    private EvaluationTrace buildPreflightDeniedTrace(EvaluationExplainReason reason, Subject subject,
+                                                      ObjectRef object, String relation,
+                                                      Zookie requestZookie, Long currentZookie) {
+        EvaluationExplainNode root = new EvaluationExplainNode(
+                EvaluationNodeType.RELATION,
+                object + "#" + relation,
+                subject.toString(),
+                relation,
+                false,
+                reason,
+                null,
+                null,
+                List.of()
+        );
+        return new EvaluationTrace(false, requestZookie.toToken(), Zookie.of(currentZookie).toToken(),
+                StaleSnapshotDiagnosis.NOT_APPLICABLE, root, false);
+    }
 
     /**
      * 补充当前 zookie 与旧快照诊断信息。

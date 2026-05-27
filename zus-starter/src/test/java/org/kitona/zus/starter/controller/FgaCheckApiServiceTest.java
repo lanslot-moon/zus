@@ -137,6 +137,30 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    @DisplayName("explain 对没有授权事实的对象直接返回对象事实不存在")
+    void explain_objectWithoutAnyTupleFact_returnsObjectFactNotFound() {
+        FgaCreateStoreRequest createReq = new FgaCreateStoreRequest();
+        createReq.setName("explain-missing-object-" + System.nanoTime());
+        FgaStoreVO store = storeApi.createStore(createReq).getData();
+        String storeId = store.getStoreId();
+
+        FgaModelVO model = modelApi.writeModel(storeId, simpleModel()).getData();
+        modelApi.publishModel(storeId, model.getModelId());
+        modelApi.activateModel(storeId, model.getModelId());
+
+        FgaCheckResultVO checkResult = checkApi.check(storeId,
+                checkReq("document", "ghost", "viewer", "user", "liam")).getData();
+        FgaExplainResultVO explainResult = checkApi.explain(storeId,
+                explainReq("document", "ghost", "viewer", "user", "liam")).getData();
+
+        assertThat(checkResult.isAllowed()).isFalse();
+        assertThat(explainResult.isAllowed()).isFalse();
+        assertThat(explainResult.getResolution().getRoot().getReason()).isEqualTo("OBJECT_FACT_NOT_FOUND");
+        assertThat(explainResult.getResolution().getNarrative().getSummary()).contains("document:ghost#viewer");
+        assertThat(explainResult.getResolution().getNarrative().getTimeline()).hasSize(1);
+    }
+
+    @Test
     @DisplayName("batchCheck 一次请求返回多个 correlationId 对应的判定结果")
     void batchCheck_returnsResultsByCorrelationId() {
         String storeId = prepareStoreWithTuple();

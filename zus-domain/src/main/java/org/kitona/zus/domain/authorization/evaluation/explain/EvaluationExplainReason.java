@@ -272,6 +272,11 @@ public sealed interface EvaluationExplainReason
         NO_RELATION_DEFINITION(EvaluationNodeType.RELATION, false, "模型中没有定义 {target} 对应的 relation，当前分支无法继续证明。"),
 
         /**
+         * 目标对象在授权事实层没有任何有效 tuple。
+         */
+        OBJECT_FACT_NOT_FOUND(EvaluationNodeType.RELATION, false, "目标对象 {target} 在当前一致性版本下没有任何有效授权事实，无法进入关系证明。"),
+
+        /**
          * tuple 存在且可见，但 tuple subject 与请求 subject 不匹配。
          */
         SUBJECT_NOT_MATCHED(EvaluationNodeType.TUPLE, false, "关系事实 {tuple} 可见，但 tuple subject 与本次请求主体不匹配。"),

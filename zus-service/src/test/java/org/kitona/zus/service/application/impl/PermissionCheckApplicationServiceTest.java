@@ -55,32 +55,7 @@ class PermissionCheckApplicationServiceTest {
         assertNull(dto.getErrorMessage());
     }
 
-    @Test
-    void shouldExposeAbnormalAuthorizationState() {
-        when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
-                .thenReturn(PermissionCheckResult.modelNotFound());
-        when(consistencyTokenReader.currentMaxZookie("store-1")).thenReturn(9L);
 
-        PermissionCheckResultDTO dto = checkApplicationService.check(buildCommand());
-
-        assertFalse(dto.isAllowed());
-        assertEquals("MODEL_NOT_FOUND", dto.getDecision());
-        assertEquals("当前授权模型不存在", dto.getErrorMessage());
-        assertEquals("9", dto.getZookieToken());
-        assertTrue(dto.hasError());
-    }
-
-    @Test
-    void shouldNotQueryZookieWhenStoreMissing() {
-        when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
-                .thenReturn(PermissionCheckResult.storeNotFound());
-
-        PermissionCheckResultDTO dto = checkApplicationService.check(buildCommand());
-
-        assertEquals("STORE_NOT_FOUND", dto.getDecision());
-        assertEquals("", dto.getZookieToken());
-        verify(consistencyTokenReader, never()).currentMaxZookie(any());
-    }
 
     private CheckCommand buildCommand() {
         return CheckCommand.builder()

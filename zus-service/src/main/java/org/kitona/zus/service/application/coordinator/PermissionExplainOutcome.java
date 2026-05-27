@@ -32,35 +32,20 @@ public record PermissionExplainOutcome(PermissionCheckStatus status, EvaluationT
     }
 
     /**
-     * 创建 Store 不存在的授权解释结果。
-     * @return 返回结果
+     * 创建上下文准备失败的授权解释结果。
+     *
+     * <p>Store 不存在、模型未绑定、模型不存在、模型无效这类状态已经由
+     * {@link PermissionCheckStatus} 明确表达，Explain 结果对象不需要为每个状态
+     * 再暴露一组重复工厂方法，避免调用方出现状态转换分支。
+     *
+     * @param status 上下文准备失败状态
+     * @return 授权解释结果
      */
-    public static PermissionExplainOutcome storeNotFound() {
-        return new PermissionExplainOutcome(PermissionCheckStatus.STORE_NOT_FOUND, null);
-    }
-
-    /**
-     * 创建模型未绑定的授权解释结果。
-     * @return 返回结果
-     */
-    public static PermissionExplainOutcome modelNotBound() {
-        return new PermissionExplainOutcome(PermissionCheckStatus.MODEL_NOT_BOUND, null);
-    }
-
-    /**
-     * 创建模型不存在的授权解释结果。
-     * @return 返回结果
-     */
-    public static PermissionExplainOutcome modelNotFound() {
-        return new PermissionExplainOutcome(PermissionCheckStatus.MODEL_NOT_FOUND, null);
-    }
-
-    /**
-     * 创建模型无效的授权解释结果。
-     * @return 返回结果
-     */
-    public static PermissionExplainOutcome modelInvalid() {
-        return new PermissionExplainOutcome(PermissionCheckStatus.MODEL_INVALID, null);
+    public static PermissionExplainOutcome abnormal(PermissionCheckStatus status) {
+        if (PermissionCheckStatus.ALLOWED == status || PermissionCheckStatus.DENIED == status) {
+            throw new IllegalArgumentException("Explain abnormal status must not be authorization decision: " + status);
+        }
+        return new PermissionExplainOutcome(status, null);
     }
 
     /**
