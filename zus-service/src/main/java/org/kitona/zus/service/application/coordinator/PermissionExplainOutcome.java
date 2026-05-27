@@ -14,8 +14,8 @@ public record PermissionExplainOutcome(PermissionCheckStatus status, EvaluationT
     /**
      * 创建允许状态的授权解释结果。
      *
-     * @param trace trace 参数
-     * @return 返回结果
+     * @param trace explain 解释树
+     * @return 允许状态的授权解释结果
      */
     public static PermissionExplainOutcome allowed(EvaluationTrace trace) {
         return new PermissionExplainOutcome(PermissionCheckStatus.ALLOWED, trace);
@@ -24,8 +24,8 @@ public record PermissionExplainOutcome(PermissionCheckStatus status, EvaluationT
     /**
      * 创建拒绝状态的授权解释结果。
      *
-     * @param trace trace 参数
-     * @return 返回结果
+     * @param trace explain 解释树
+     * @return 拒绝状态的授权解释结果
      */
     public static PermissionExplainOutcome denied(EvaluationTrace trace) {
         return new PermissionExplainOutcome(PermissionCheckStatus.DENIED, trace);
@@ -49,16 +49,18 @@ public record PermissionExplainOutcome(PermissionCheckStatus status, EvaluationT
     }
 
     /**
-     * 判断is allowed。
-     * @return 满足条件返回 true，否则返回 false
+     * 判断是否为允许状态。
+     *
+     * @return 允许状态返回 {@code true}
      */
     public boolean isAllowed() {
         return PermissionCheckStatus.ALLOWED == status;
     }
 
     /**
-     * 判断is denied。
-     * @return 满足条件返回 true，否则返回 false
+     * 判断是否为拒绝状态。
+     *
+     * @return 拒绝状态返回 {@code true}
      */
     public boolean isDenied() {
         return PermissionCheckStatus.DENIED == status;

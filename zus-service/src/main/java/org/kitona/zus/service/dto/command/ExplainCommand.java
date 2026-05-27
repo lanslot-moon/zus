@@ -36,6 +36,11 @@ public class ExplainCommand implements Serializable {
     private String storeId;
 
     /**
+     * 可选授权模型标识；为空时使用 Store 当前激活模型。
+     */
+    private String authorizationModelId;
+
+    /**
      * 被检查对象的类型。
      */
     @NotBlank(message = "objectType 不能为空")

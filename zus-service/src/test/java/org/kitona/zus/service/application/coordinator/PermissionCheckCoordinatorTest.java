@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class PermissionCheckCoordinatorTest {
 
     @Mock
-    private PermissionEvaluationContextLoader evaluationContextLoader;
+    private PermissionEvaluationContextFactory evaluationContextFactory;
 
     @Mock
     private PermissionCheckEvaluator permissionCheckEvaluator;
@@ -33,13 +33,13 @@ class PermissionCheckCoordinatorTest {
     @BeforeEach
     void setUp() {
         orchestrator = new PermissionCheckCoordinator();
-        ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "evaluationContextLoader", evaluationContextLoader);
+        ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "evaluationContextFactory", evaluationContextFactory);
         ReflectionTestUtils.setField(Objects.requireNonNull(orchestrator), "permissionCheckEvaluator", permissionCheckEvaluator);
     }
 
     @Test
     void shouldReturnStoreNotFoundWhenStoreMissing() {
-        when(evaluationContextLoader.load(any(), any(), any()))
+        when(evaluationContextFactory.create(any(), any(), any(), any()))
                 .thenReturn(PermissionEvaluationContext.abnormal(PermissionCheckStatus.STORE_NOT_FOUND));
 
         PermissionCheckResult result = execute();
@@ -49,7 +49,7 @@ class PermissionCheckCoordinatorTest {
 
     @Test
     void shouldReturnModelNotBoundWhenStoreHasNoCurrentModel() {
-        when(evaluationContextLoader.load(any(), any(), any()))
+        when(evaluationContextFactory.create(any(), any(), any(), any()))
                 .thenReturn(PermissionEvaluationContext.abnormal(PermissionCheckStatus.MODEL_NOT_BOUND));
 
         PermissionCheckResult result = execute();
@@ -59,7 +59,7 @@ class PermissionCheckCoordinatorTest {
 
     @Test
     void shouldReturnModelNotFoundWhenCurrentModelMissing() {
-        when(evaluationContextLoader.load(any(), any(), any()))
+        when(evaluationContextFactory.create(any(), any(), any(), any()))
                 .thenReturn(PermissionEvaluationContext.abnormal(PermissionCheckStatus.MODEL_NOT_FOUND));
 
         PermissionCheckResult result = execute();
@@ -69,7 +69,7 @@ class PermissionCheckCoordinatorTest {
 
     @Test
     void shouldReturnModelInvalidWhenTypeDefinitionsMissing() {
-        when(evaluationContextLoader.load(any(), any(), any()))
+        when(evaluationContextFactory.create(any(), any(), any(), any()))
                 .thenReturn(PermissionEvaluationContext.abnormal(PermissionCheckStatus.MODEL_INVALID));
 
         PermissionCheckResult result = execute();

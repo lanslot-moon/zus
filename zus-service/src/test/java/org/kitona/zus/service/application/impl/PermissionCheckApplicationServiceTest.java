@@ -43,7 +43,7 @@ class PermissionCheckApplicationServiceTest {
 
     @Test
     void shouldMapDeniedResultToDeniedDto() {
-        when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any()))
+        when(permissionCheckCoordinator.execute(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(PermissionCheckResult.denied());
         when(consistencyTokenReader.currentMaxZookie("store-1")).thenReturn(7L);
 

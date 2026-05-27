@@ -36,6 +36,7 @@ public interface FgaCheckConverter {
      * @return 应用层命令
      */
     @Mapping(target = "storeId", source = "storeId")
+    @Mapping(target = "authorizationModelId", source = "request.authorizationModelId")
     @Mapping(target = "objectType", source = "request.tupleKey.object.type")
     @Mapping(target = "objectId", source = "request.tupleKey.object.id")
     @Mapping(target = "relation", source = "request.tupleKey.relation")
@@ -55,6 +56,7 @@ public interface FgaCheckConverter {
      * @return 应用层命令
      */
     @Mapping(target = "storeId", source = "storeId")
+    @Mapping(target = "authorizationModelId", source = "batch.authorizationModelId")
     @Mapping(target = "objectType", source = "item.tupleKey.object.type")
     @Mapping(target = "objectId", source = "item.tupleKey.object.id")
     @Mapping(target = "relation", source = "item.tupleKey.relation")

@@ -108,7 +108,7 @@ public class TupleWatchApplicationService implements ITupleWatchApplicationServi
      * 解析 zookie 游标 token。
      *
      * @param token token 参数
-     * @return 构建结果
+     * @return 解析后的 zookie；无法解析时返回 0
      */
     private Long parseZookieToken(String token) {
         if (StringUtils.isBlank(token)) {

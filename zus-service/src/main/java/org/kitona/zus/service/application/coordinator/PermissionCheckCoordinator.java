@@ -22,10 +22,10 @@ import java.util.Map;
 public class PermissionCheckCoordinator {
 
     /**
-     * 权限评估上下文加载器，用于复用 Store/Model/CompiledModel/Preflight 准备流程。
+     * 权限评估上下文工厂，用于复用 Store/Model/CompiledModel/Preflight 准备流程。
      */
     @Resource
-    private PermissionEvaluationContextLoader evaluationContextLoader;
+    private PermissionEvaluationContextFactory evaluationContextFactory;
 
     /**
      * 单点权限证明领域服务，只负责执行明确的 subject-object-relation Check 命题。
@@ -45,7 +45,7 @@ public class PermissionCheckCoordinator {
      */
     public PermissionCheckResult execute(String storeId, ObjectRef object, String relation,
                                          Subject subject, Zookie zookie) {
-        return execute(storeId, object, relation, subject, zookie, null);
+        return execute(storeId, null, object, relation, subject, zookie, null);
     }
 
     /**
@@ -61,16 +61,32 @@ public class PermissionCheckCoordinator {
      */
     public PermissionCheckResult execute(String storeId, ObjectRef object, String relation,
                                          Subject subject, Zookie zookie, Map<String, Object> context) {
+        return execute(storeId, null, object, relation, subject, zookie, context);
+    }
+
+    /**
+     * 执行权限检查用例编排。
+     *
+     * @param storeId              Store 标识
+     * @param authorizationModelId 可选授权模型标识
+     * @param object               授权对象
+     * @param relation             关系名
+     * @param subject              授权主体
+     * @param zookie               一致性版本
+     * @param context              条件求值上下文
+     * @return 权限检查结果
+     */
+    public PermissionCheckResult execute(String storeId, String authorizationModelId, ObjectRef object, String relation,
+                                         Subject subject, Zookie zookie, Map<String, Object> context) {
         log.debug("开始权限检查: storeId={}, object={}, relation={}, subject={}", storeId, object, relation, subject);
 
-        PermissionEvaluationContext evaluationContext = evaluationContextLoader.load(storeId, object, zookie);
+        PermissionEvaluationContext evaluationContext = evaluationContextFactory.create(storeId, authorizationModelId, object, zookie);
         if (evaluationContext.isAbnormal()) {
             return PermissionCheckResult.abnormal(evaluationContext.abnormalStatus());
         }
 
         if (evaluationContext.isPreflightDenied()) {
-            log.debug("权限检查前置检查拒绝: storeId={}, object={}, relation={}, subject={}, reason={}",
-                    storeId, object, relation, subject, evaluationContext.preflightFailureReason().name());
+            log.debug("权限检查前置检查拒绝: storeId={}, object={}, relation={}, subject={}, reason={}", storeId, object, relation, subject, evaluationContext.preflightFailureReason().name());
             return PermissionCheckResult.denied();
         }
 

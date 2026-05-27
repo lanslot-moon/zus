@@ -43,6 +43,7 @@ public interface FgaExplainConverter {
      * @return 应用层 Explain 命令
      */
     @Mapping(target = "storeId", source = "storeId")
+    @Mapping(target = "authorizationModelId", source = "request.authorizationModelId")
     @Mapping(target = "objectType", source = "request.tupleKey.object.type")
     @Mapping(target = "objectId", source = "request.tupleKey.object.id")
     @Mapping(target = "relation", source = "request.tupleKey.relation")

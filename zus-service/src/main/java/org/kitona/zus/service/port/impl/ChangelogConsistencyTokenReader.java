@@ -29,10 +29,10 @@ public class ChangelogConsistencyTokenReader implements IConsistencyTokenReader 
     }
 
     /**
-     * 读取current max zookie。
+     * 读取当前 Store 的最大 zookie 水位。
      *
      * @param storeId Store 标识
-     * @return 返回结果
+     * @return 当前最大 zookie；无数据时返回 0
      */
     @Override
     public Long currentMaxZookie(String storeId) {

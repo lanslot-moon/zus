@@ -6,20 +6,15 @@ import org.kitona.zus.common.utils.ValidationUtil;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.runtime.ListObjectsEvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.runtime.ListSubjectsEvaluationRequest;
-import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
-import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
-import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.read.criteria.TupleQueryCriteria;
-import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.read.port.ITupleQueryPort;
-import org.kitona.zus.domain.read.view.StoreView;
 import org.kitona.zus.domain.read.view.TupleView;
-import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.service.PermissionSearchEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
 import org.kitona.zus.domain.valueobject.Zookie;
 import org.kitona.zus.service.application.IAuthorizationReadApplicationService;
+import org.kitona.zus.service.application.coordinator.CompiledAuthorizationModelLoader;
 import org.kitona.zus.service.conv.assembler.TupleAssembler;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
 import org.kitona.zus.service.dto.query.ListSubjectsQuery;
@@ -28,11 +23,9 @@ import org.kitona.zus.service.dto.response.ListObjectsResultDTO;
 import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
 import org.kitona.zus.service.dto.response.PageResultDTO;
 import org.kitona.zus.service.dto.response.TupleResultDTO;
-import org.kitona.zus.service.port.ICompiledModelCache;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -64,16 +57,7 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     private ITupleQueryPort tupleQueryRepository;
 
     @Resource
-    private IStoreQueryPort storeQueryRepository;
-
-    @Resource
-    private IAuthorizationModelDomainRepository modelRepository;
-
-    @Resource
-    private ICompiledModelCompiler compiledModelCompiler;
-
-    @Resource
-    private ICompiledModelCache compiledModelCache;
+    private CompiledAuthorizationModelLoader compiledAuthorizationModelLoader;
 
     @Resource
     private PermissionSearchEvaluator permissionSearchEvaluator;
@@ -121,7 +105,8 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     @Override
     public ListObjectsResultDTO listObjects(ListObjectsQuery query) {
         ValidationUtil.validate(query);
-        CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId(), query.getAuthorizationModelId());
+        CompiledAuthorizationModel compiledModel = compiledAuthorizationModelLoader.load(query.getStoreId(),
+                query.getAuthorizationModelId());
 
         ListObjectsEvaluationRequest evaluationRequest = ListObjectsEvaluationRequest.of(
                 query.getStoreId(),
@@ -145,7 +130,8 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     @Override
     public ListSubjectsResultDTO listSubjects(ListSubjectsQuery query) {
         ValidationUtil.validate(query);
-        CompiledAuthorizationModel compiledModel = loadCompiledModel(query.getStoreId(), query.getAuthorizationModelId());
+        CompiledAuthorizationModel compiledModel = compiledAuthorizationModelLoader.load(query.getStoreId(),
+                query.getAuthorizationModelId());
         ListSubjectsEvaluationRequest evaluationRequest = ListSubjectsEvaluationRequest.of(
                 query.getStoreId(),
                 ObjectRef.of(query.getObjectType(), query.getObjectId()),
@@ -165,58 +151,11 @@ public class AuthorizationReadApplicationService implements IAuthorizationReadAp
     }
 
     /**
-     * 加载load compiled model。
-     *
-     * @param storeId Store 标识
-     * @param authorizationModelId authorizationModelId 参数
-     * @return 查询结果
-     */
-    private CompiledAuthorizationModel loadCompiledModel(String storeId, String authorizationModelId) {
-        StoreView storeView = storeQueryRepository.findViewByStoreId(storeId).orElse(null);
-        String modelId = resolveModelId(storeId, authorizationModelId, storeView);
-
-        Optional<CompiledAuthorizationModel> modelOptional = compiledModelCache.get(storeId, modelId);
-        if (modelOptional.isPresent()) {
-            return modelOptional.get();
-        }
-
-        Optional<AuthorizationModelAggregate> optional = modelRepository.findById(AuthorizationModelId.of(storeId, modelId));
-        if (optional.isEmpty()) {
-            throw new IllegalStateException("模型不存在: " + modelId);
-        }
-
-        CompiledAuthorizationModel model = compiledModelCompiler.compile(optional.get());
-        compiledModelCache.put(storeId, modelId, model);
-        return model;
-    }
-
-    /**
-     * 解析本次读取使用的授权模型 ID。
-     *
-     * @param storeId Store 标识
-     * @param authorizationModelId authorizationModelId 参数
-     * @param storeView storeView 参数
-     * @return 构建结果
-     */
-    private String resolveModelId(String storeId, String authorizationModelId, StoreView storeView) {
-        if (storeView == null) {
-            throw new IllegalStateException("store 不存在: " + storeId);
-        }
-        if (StringUtils.isNotBlank(authorizationModelId)) {
-            return authorizationModelId;
-        }
-        if (StringUtils.isBlank(storeView.currentModelId())) {
-            throw new IllegalStateException("未指定授权模型且 store 未绑定当前模型: " + storeId);
-        }
-        return storeView.currentModelId();
-    }
-
-    /**
      * 根据当前页结果构建下一页游标。
      *
      * @param tuples 关系元组列表
      * @param pageSize 分页大小
-     * @return 构建结果
+     * @return 下一页游标；没有下一页时返回 {@code null}
      */
     private String buildNextPageToken(List<TupleView> tuples, int pageSize) {
         if (tuples.isEmpty() || tuples.size() < pageSize) {

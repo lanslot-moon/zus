@@ -37,6 +37,11 @@ public class CheckCommand implements Serializable {
     private String storeId;
 
     /**
+     * 可选授权模型标识；为空时使用 Store 当前激活模型。
+     */
+    private String authorizationModelId;
+
+    /**
      * 资源类型，如 document、folder
      */
     @NotBlank(message = "objectType 不能为空")

@@ -37,11 +37,11 @@ public class InMemoryCompiledModelCache implements ICompiledModelCache {
     }
 
     /**
-     * 写入put。
+     * 写入编译模型缓存。
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
-     * @param model 授权模型聚合
+     * @param model 已编译授权模型
      */
     @Override
     public void put(String storeId, String modelId, CompiledAuthorizationModel model) {
@@ -67,7 +67,7 @@ public class InMemoryCompiledModelCache implements ICompiledModelCache {
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
-     * @return 返回结果
+     * @return 编译模型缓存键
      */
     private String cacheKey(String storeId, String modelId) {
         return Objects.toString(storeId, "") + ":" + Objects.toString(modelId, "");

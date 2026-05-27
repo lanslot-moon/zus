@@ -33,7 +33,7 @@ import static org.mockito.Mockito.when;
 class PermissionExplainCoordinatorTest {
 
     @Mock
-    private PermissionEvaluationContextLoader evaluationContextLoader;
+    private PermissionEvaluationContextFactory evaluationContextFactory;
 
     @Mock
     private PermissionCheckEvaluator permissionCheckEvaluator;
@@ -46,13 +46,13 @@ class PermissionExplainCoordinatorTest {
     @BeforeEach
     void setUp() {
         coordinator = new PermissionExplainCoordinator();
-        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "evaluationContextLoader", evaluationContextLoader);
+        ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "evaluationContextFactory", evaluationContextFactory);
         ReflectionTestUtils.setField(Objects.requireNonNull(coordinator), "permissionCheckEvaluator", permissionCheckEvaluator);
     }
 
     @Test
     void shouldDiagnoseStaleSnapshotWhenLatestSnapshotAllows() {
-        when(evaluationContextLoader.load(any(), any(), any()))
+        when(evaluationContextFactory.create(any(), any(), any(), any()))
                 .thenReturn(PermissionEvaluationContext.ready(
                         new StoreView("store-1", "name", "desc", "model-1", 9L, 1, 1L),
                         compiledModel,

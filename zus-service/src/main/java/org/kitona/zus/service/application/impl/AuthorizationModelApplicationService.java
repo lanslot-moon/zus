@@ -67,10 +67,10 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     private IModelSnapshotRenderer modelSnapshotRenderer;
 
     /**
-     * 创建create model。
+     * 创建授权模型草稿。
      *
      * @param command 应用命令
-     * @return 构建结果
+     * @return 创建后的授权模型结果
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -172,7 +172,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     /**
-     * 发布publish model。
+     * 发布授权模型。
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
@@ -195,7 +195,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     /**
-     * 激活activate model。
+     * 激活授权模型。
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
@@ -229,7 +229,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     /**
-     * 废弃deprecate model。
+     * 废弃授权模型。
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
@@ -252,7 +252,7 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     /**
-     * 删除delete model。
+     * 删除授权模型草稿。
      *
      * @param storeId Store 标识
      * @param modelId 授权模型标识
@@ -276,7 +276,10 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     /**
-     * 获取 Store 当前生效的模型ID
+     * 获取 Store 当前生效的模型 ID。
+     *
+     * @param storeId Store 标识
+     * @return 当前模型 ID；未绑定时返回 {@code null}
      */
     private String getCurrentModelId(String storeId) {
         Optional<StoreView> optional = storeQueryRepository.findViewByStoreId(storeId);
@@ -284,10 +287,11 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     /**
-     * 确保商店处于激活状态
-     * @param storeId 商店ID
-     * @return 激活状态的StoreAggregate对象
-     * @throws ApplicationException 当商店不存在或未激活时抛出
+     * 确保 Store 处于激活状态。
+     *
+     * @param storeId Store 标识
+     * @return 激活状态的 Store 聚合
+     * @throws ApplicationException 当 Store 不存在或未激活时抛出
      */
     private StoreAggregate ensureStoreActive(String storeId) {
         StoreAggregate storeAggregate = storeDomainRepository.findById(storeId).orElse(null);
@@ -303,11 +307,11 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
     }
 
     /**
-     * 根据店铺ID和模型ID加载授权模型聚合，如果不存在则抛出异常
+     * 根据 Store ID 和模型 ID 加载授权模型聚合，不存在时抛出应用异常。
      *
-     * @param storeId 店铺ID，标识特定的店铺
-     * @param modelId 模型ID，标识特定的授权模型
-     * @return AuthorizationModelAggregate 返回找到的授权模型聚合
+     * @param storeId Store 标识
+     * @param modelId 授权模型标识
+     * @return 授权模型聚合
      * @throws ApplicationException 当查询不到对应的授权模型时抛出异常
      */
     private AuthorizationModelAggregate loadModelOrThrow(String storeId, String modelId) {

@@ -49,11 +49,11 @@ public class StoreApplicationService implements IStoreApplicationService {
     private IStoreQueryPort storeQueryRepository;
 
     /**
-     * 创建create store。
+     * 创建 Store。
      *
      * @param name 名称
      * @param description 描述
-     * @return 构建结果
+     * @return Store 查询结果 DTO
      */
     @Override
     public StoreResultDTO createStore(String name, String description) {
@@ -127,7 +127,7 @@ public class StoreApplicationService implements IStoreApplicationService {
     }
 
     /**
-     * 删除delete store。
+     * 删除 Store。
      *
      * @param storeId Store 标识
      * @return 满足条件返回 true，否则返回 false

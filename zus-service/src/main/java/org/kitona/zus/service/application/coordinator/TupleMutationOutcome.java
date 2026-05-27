@@ -25,23 +25,26 @@ public record TupleMutationOutcome(Zookie zookie, List<TupleKey> writtenKeys, Li
 
     /**
      * 创建空结果。
-     * @return 构建结果
+     *
+     * @return 空 tuple 变更结果
      */
     public static TupleMutationOutcome empty() {
         return new TupleMutationOutcome(Zookie.EMPTY, Collections.emptyList(), Collections.emptyList(), AuditMetadata.EMPTY);
     }
 
     /**
-     * 判断has writes。
-     * @return 满足条件返回 true，否则返回 false
+     * 判断本次变更是否存在写入 tuple。
+     *
+     * @return 存在写入 tuple 返回 {@code true}
      */
     public boolean hasWrites() {
         return !writtenKeys.isEmpty();
     }
 
     /**
-     * 判断has deletes。
-     * @return 满足条件返回 true，否则返回 false
+     * 判断本次变更是否存在删除 tuple。
+     *
+     * @return 存在删除 tuple 返回 {@code true}
      */
     public boolean hasDeletes() {
         return !deletedKeys.isEmpty();

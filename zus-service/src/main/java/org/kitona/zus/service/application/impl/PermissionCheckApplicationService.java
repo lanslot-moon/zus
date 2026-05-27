@@ -53,7 +53,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
     private IConsistencyTokenReader consistencyTokenReader;
 
     /**
-     * 检查check。
+     * 执行单次权限检查。
      *
      * @param request 请求对象
      * @return 执行结果
@@ -66,7 +66,8 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         ObjectRef object = ObjectRef.of(request.getObjectType(), request.getObjectId());
         Subject subject = buildSubject(request);
 
-        PermissionCheckResult result = permissionCheckCoordinator.execute(request.getStoreId(), object, request.getRelation(), subject, zookie, request.getContext());
+        PermissionCheckResult result = permissionCheckCoordinator.execute(request.getStoreId(),
+                request.getAuthorizationModelId(), object, request.getRelation(), subject, zookie, request.getContext());
 
         String zookieToken = resolveZookieToken(request.getStoreId(), result);
         long duration = System.currentTimeMillis() - startTime;
@@ -87,7 +88,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
      * 执行授权解释用例。
      *
      * @param command 应用命令
-     * @return 返回结果
+     * @return 授权解释结果
      */
     @Override
     public PermissionExplainResultDTO explain(ExplainCommand command) {
@@ -95,6 +96,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
         long startTime = System.currentTimeMillis();
         PermissionExplainOutcome outcome = permissionExplainCoordinator.explain(
                 command.getStoreId(),
+                command.getAuthorizationModelId(),
                 ObjectRef.of(command.getObjectType(), command.getObjectId()),
                 command.getRelation(),
                 buildSubject(command),
@@ -109,7 +111,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
      * 构建授权主体值对象。
      *
      * @param command 应用命令
-     * @return 构建结果
+     * @return 授权主体值对象
      */
     private Subject buildSubject(ExplainCommand command) {
         if (StringUtils.isBlank(command.getSubjectRelation())) {
@@ -121,9 +123,9 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
     /**
      * 转换授权解释结果 DTO。
      *
-     * @param outcome    outcome 参数
-     * @param durationMs durationMs 参数
-     * @return 构建结果
+     * @param outcome    Explain 编排结果
+     * @param durationMs 执行耗时
+     * @return 授权解释结果 DTO
      */
     private PermissionExplainResultDTO toResultDTO(PermissionExplainOutcome outcome, long durationMs) {
         if (!outcome.isAllowed() && !outcome.isDenied()) {
@@ -136,7 +138,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
     }
 
     /**
-     * 检查check async。
+     * 异步执行单次权限检查。
      *
      * @param request 请求对象
      * @return 执行结果
@@ -150,7 +152,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
      * 构建授权主体值对象。
      *
      * @param request 请求对象
-     * @return 构建结果
+     * @return 授权主体值对象
      */
     private Subject buildSubject(CheckCommand request) {
         if (StringUtils.isBlank(request.getSubjectRelation())) {
@@ -165,7 +167,7 @@ public class PermissionCheckApplicationService implements IPermissionCheckApplic
      *
      * @param storeId Store 标识
      * @param result  结果对象
-     * @return 构建结果
+     * @return 响应使用的一致性 token
      */
     private String resolveZookieToken(String storeId, PermissionCheckResult result) {
         if (PermissionCheckStatus.STORE_NOT_FOUND == result.status()) {

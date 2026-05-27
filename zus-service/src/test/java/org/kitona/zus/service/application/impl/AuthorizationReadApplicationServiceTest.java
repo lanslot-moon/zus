@@ -5,19 +5,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.runtime.ListObjectsEvaluationRequest;
 import org.kitona.zus.domain.authorization.evaluation.runtime.ListSubjectsEvaluationRequest;
-import org.kitona.zus.domain.port.ICompiledModelCompiler;
-import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.read.port.ITupleQueryPort;
-import org.kitona.zus.domain.read.view.StoreView;
-import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.service.PermissionSearchEvaluator;
 import org.kitona.zus.domain.valueobject.ObjectRef;
 import org.kitona.zus.domain.valueobject.Subject;
+import org.kitona.zus.service.application.coordinator.CompiledAuthorizationModelLoader;
 import org.kitona.zus.service.dto.query.ListObjectsQuery;
 import org.kitona.zus.service.dto.query.ListSubjectsQuery;
 import org.kitona.zus.service.dto.response.ListObjectsResultDTO;
 import org.kitona.zus.service.dto.response.ListSubjectsResultDTO;
-import org.kitona.zus.service.port.ICompiledModelCache;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -25,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,16 +35,7 @@ class AuthorizationReadApplicationServiceTest {
     private ITupleQueryPort tupleQueryRepository;
 
     @Mock
-    private IStoreQueryPort storeQueryRepository;
-
-    @Mock
-    private IAuthorizationModelDomainRepository modelRepository;
-
-    @Mock
-    private ICompiledModelCompiler compiledModelCompiler;
-
-    @Mock
-    private ICompiledModelCache compiledModelCache;
+    private CompiledAuthorizationModelLoader compiledAuthorizationModelLoader;
 
     @Mock
     private PermissionSearchEvaluator permissionSearchEvaluator;
@@ -70,10 +56,8 @@ class AuthorizationReadApplicationServiceTest {
                 .authorizationModelId("model-explicit")
                 .build();
 
-        when(storeQueryRepository.findViewByStoreId("store-1"))
-                .thenReturn(Optional.of(new StoreView("store-1", "demo", "desc", "model-current", null, null, null)));
-        when(compiledModelCache.get("store-1", "model-explicit"))
-                .thenReturn(Optional.of(compiledModel));
+        when(compiledAuthorizationModelLoader.load("store-1", "model-explicit"))
+                .thenReturn(compiledModel);
         when(permissionSearchEvaluator.listObjects(eq(compiledModel), any(ListObjectsEvaluationRequest.class)))
                 .thenReturn(List.of(ObjectRef.of("document", "doc-1")));
 
@@ -87,7 +71,7 @@ class AuthorizationReadApplicationServiceTest {
         assertEquals("member", requestCaptor.getValue().subjectRelation());
         assertEquals("document", requestCaptor.getValue().objectType());
         assertEquals(List.of("document:doc-1"), result.getObjects());
-        verify(compiledModelCache).get("store-1", "model-explicit");
+        verify(compiledAuthorizationModelLoader).load("store-1", "model-explicit");
     }
 
     @Test
@@ -104,10 +88,8 @@ class AuthorizationReadApplicationServiceTest {
                 .context(Map.of("tenant", "zus"))
                 .build();
 
-        when(storeQueryRepository.findViewByStoreId("store-1"))
-                .thenReturn(Optional.of(new StoreView("store-1", "demo", "desc", "model-current", null, null, null)));
-        when(compiledModelCache.get("store-1", "model-explicit"))
-                .thenReturn(Optional.of(compiledModel));
+        when(compiledAuthorizationModelLoader.load("store-1", "model-explicit"))
+                .thenReturn(compiledModel);
         when(permissionSearchEvaluator.listSubjects(eq(compiledModel), any(ListSubjectsEvaluationRequest.class)))
                 .thenReturn(List.of(
                         Subject.user("user", "alice")
@@ -126,6 +108,6 @@ class AuthorizationReadApplicationServiceTest {
         assertEquals(1, result.getSubjects().size());
         assertEquals("user", result.getSubjects().get(0).getType());
         assertEquals("alice", result.getSubjects().get(0).getId());
-        verify(compiledModelCache).get("store-1", "model-explicit");
+        verify(compiledAuthorizationModelLoader).load("store-1", "model-explicit");
     }
 }

@@ -43,7 +43,7 @@ class PermissionExplainApplicationServiceTest {
 
     @Test
     void shouldMapExplainOutcomeToResultDto() {
-        when(permissionExplainCoordinator.explain(any(), any(), any(), any(), any(), any()))
+        when(permissionExplainCoordinator.explain(any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(new PermissionExplainOutcome(PermissionCheckStatus.DENIED, deniedTrace()));
 
         PermissionExplainResultDTO result = applicationService.explain(command());

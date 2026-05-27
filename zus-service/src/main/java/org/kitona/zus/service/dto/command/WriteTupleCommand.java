@@ -74,7 +74,11 @@ public class WriteTupleCommand implements Serializable {
     private String conditionName;
 
     /**
-     * 条件定义ID（可选，但存在条件时必须提供）
+     * 条件定义ID（可选）。
+     *
+     * <p>外部请求通常只需要提供 conditionName，应用层会在转换为领域请求时
+     * 根据授权模型解析 conditionDefinitionId。该字段保留给内部调用或后续扩展，
+     * 但不会再作为请求必须携带的条件引用。
      */
     @Positive(message = "conditionDefinitionId 必须大于 0")
     private Long conditionDefinitionId;
@@ -104,21 +108,32 @@ public class WriteTupleCommand implements Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
 
+        /**
+         * 操作人标识。
+         */
         private String operatorId;
 
+        /**
+         * 请求幂等或链路追踪标识。
+         */
         private String requestId;
 
+        /**
+         * 操作来源，如控制台、开放 API 或内部任务。
+         */
         private String source;
     }
 
     /**
-     * 判断is condition reference valid。
+     * 判断条件上下文是否具备可解析的条件引用。
+     *
      * @return 满足条件返回 true，否则返回 false
      */
-    @AssertTrue(message = "存在条件信息时必须提供 conditionDefinitionId")
+    @AssertTrue(message = "存在条件上下文时必须提供 conditionName 或 conditionDefinitionId")
     public boolean isConditionReferenceValid() {
-        boolean hasConditionSnapshot = (conditionName != null && !conditionName.isBlank())
-                || (conditionContext != null && !conditionContext.isBlank());
-        return !hasConditionSnapshot || conditionDefinitionId != null;
+        boolean hasConditionContext = conditionContext != null && !conditionContext.isBlank();
+        boolean hasConditionReference = (conditionName != null && !conditionName.isBlank())
+                || conditionDefinitionId != null;
+        return !hasConditionContext || hasConditionReference;
     }
 }
