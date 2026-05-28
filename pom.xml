@@ -37,6 +37,8 @@
         <maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <pmd.minimum-tokens>100</pmd.minimum-tokens>
+        <cel.version>0.11.1</cel.version>
+        <el.version>4.0.2</el.version>
         <quality.failOnViolation>true</quality.failOnViolation>
 
         <spring-boot.version>3.3.0</spring-boot.version>
@@ -212,6 +214,19 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
                 <version>${commons-lang3.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>dev.cel</groupId>
+                <artifactId>cel</artifactId>
+                <version>${cel.version}</version>
+            </dependency>
+
+
+            <dependency>
+                <groupId>org.glassfish</groupId>
+                <artifactId>jakarta.el</artifactId>
+                <version>${el.version}</version>
             </dependency>
 
             <dependency>
