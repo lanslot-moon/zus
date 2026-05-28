@@ -13,7 +13,7 @@ import java.io.Serializable;
  * Explain 结果总览 DTO。
  *
  * <p>该对象只表达一次 Explain 响应的顶层结构。完整领域证明树放在 root，
- * 面向调试者的摘要、关键步骤和调用时序放在 narrative，避免把多种展示结构
+ * 面向调试者的摘要和调用时序放在 narrative，避免把多种展示结构
  * 全部堆进同一个 DTO 类。
  */
 @Data

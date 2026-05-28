@@ -54,8 +54,7 @@ public class FgaExplainResolutionVO {
     /**
      * Explain 面向调试者的叙事投影。
      *
-     * <p>root 仍然保留完整机器可读证明树；narrative 只承载调试页面友好的摘要、
-     * 关键步骤和调用时序。
+     * <p>root 仍然保留完整机器可读证明树；narrative 只承载调试页面友好的摘要和调用时序。
      */
     @Data
     @Builder
@@ -66,11 +65,6 @@ public class FgaExplainResolutionVO {
          * 面向调试者的一句话解释摘要。
          */
         private String summary;
-
-        /**
-         * 从完整调用时序中提取出的关键证明步骤。
-         */
-        private List<TimelineStep> keySteps;
 
         /**
          * evaluator 执行过程的前序时序展开。

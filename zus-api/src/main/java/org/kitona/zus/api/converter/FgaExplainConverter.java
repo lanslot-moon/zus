@@ -86,7 +86,6 @@ public interface FgaExplainConverter {
     FgaExplainResolutionVO toResolutionVO(ExplainResolutionDTO dto);
 
     @Mapping(target = "summary", source = "summary")
-    @Mapping(target = "keySteps", source = "keySteps")
     @Mapping(target = "timeline", source = "timeline")
     FgaExplainResolutionVO.Narrative toNarrativeVO(ExplainNarrativeDTO dto);
 

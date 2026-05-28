@@ -123,10 +123,6 @@ class FgaCheckApiServiceTest extends AbstractControllerTest {
 
         assertThat(result.isAllowed()).isFalse();
         assertThat(result.getResolution().getNarrative().getSummary()).contains("document:roadmap#restricted_viewer");
-        assertThat(result.getResolution().getNarrative().getKeySteps())
-                .extracting(FgaExplainResolutionVO.TimelineStep::getMessage)
-                .anyMatch(message -> message.contains("document:roadmap#viewer@user:mallory"))
-                .anyMatch(message -> message.contains("document:roadmap#blocked@user:mallory"));
         assertThat(result.getResolution().getNarrative().getTimeline())
                 .extracting(FgaExplainResolutionVO.TimelineStep::getReason)
                 .contains("EXCLUSION_NOT_SATISFIED", "DIRECT_TUPLE_MATCHED");

@@ -13,7 +13,7 @@ import java.util.List;
  * Explain 展示叙事装配器。
  * <p>
  * 领域层只负责产生结构化证明树，应用 DTO 层负责把树转换为更适合调试页面展示的
- * 摘要、关键步骤和调用时序，避免把中文文案泄漏进领域模型。
+ * 摘要和调用时序，避免把中文文案泄漏进领域模型。
  */
 final class ExplainNarrativeAssembler {
 
@@ -52,18 +52,6 @@ final class ExplainNarrativeAssembler {
             return messageOf(root);
         }
         return allowed ? PermissionCheckStatus.ALLOWED.name() : PermissionCheckStatus.DENIED.name();
-    }
-
-    /**
-     * 生成 Explain 关键步骤。
-     *
-     * @param root explain 根节点
-     * @return 只保留关键业务证据和关键节点结论的步骤列表
-     */
-    static List<ExplainTimelineStepDTO> keySteps(EvaluationExplainNode root) {
-        return timeline(root).stream()
-                .filter(ExplainTimelineStepDTO::isKeyStep)
-                .toList();
     }
 
     /**

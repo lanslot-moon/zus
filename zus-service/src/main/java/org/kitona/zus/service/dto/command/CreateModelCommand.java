@@ -78,8 +78,13 @@ public class CreateModelCommand implements Serializable {
         @Serial
         private static final long serialVersionUID = 1L;
 
+        /**
+         * 当前类型声明的关系定义映射。
+         *
+         * <p>relations 允许为空，用于表达 {@code user}、{@code device}、{@code service_account}
+         * 这类只作为 subject 参与授权、但自身不承载 object relation 的叶子类型。
+         */
         @Valid
-        @NotEmpty(message = "relations 不能为空")
         private Map<String, RelationInput> relations;
     }
 
