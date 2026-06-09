@@ -1,220 +1,330 @@
-# ZUS - 细粒度权限控制服务
+# ZUS
 
-> 启动当前项目前请先查看当前文档
+ZUS 是一个面向复杂业务系统的关系型授权服务。它关注的问题不是“某个用户有没有某个角色”，而是：
 
-## DDD 分层架构图
+> 一个主体能否通过一组业务关系，被证明拥有某个对象上的某种权限？
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    zus-starter (启动层/组合根)                    │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ Spring Boot 启动入口 | 配置文件 | 模块组装 | Bean 注入        |   │
-│  └───────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                    zus-api (用户接口层)                           │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ REST API    │  │ RPC 实现     │  │ Request/Response VO     │  │
-│  │ Controller  │  │ FacadeImpl  │  │ 参数校验                 │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                    zus-service (应用层)                          │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ ApplicationService | DTO/Command/Query | Assembler        │  │
-│  │ 事务管理 | 用例编排 | 事件监听                                │  │
-│  └───────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                    zus-domain (领域层) ★核心                      │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ Aggregate | Entity | ValueObject | DomainService          │  │
-│  │ Repository接口 | Port接口 | DomainEvent | Factory          │  │
-│  │ ★ 不依赖任何技术框架，纯业务逻辑                               │  │
-│  └───────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                    zus-infrastructure (基础设施层)               │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ Repository实现 | PO/Mapper | 缓存 | 外部服务适配器            │  │
-│  │ ★ 实现领域层定义的接口（依赖倒置）                              │  │
-│  └───────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────┤
-│                    zus-common (通用层)                           │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ 工具类 | 异常定义 | 枚举常量 (被所有模块依赖)                   │  │
-│  └───────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
+在简单系统里，权限通常可以用角色、菜单、按钮或资源 ACL 解决。但当系统开始出现组织、项目、文件夹、文档、团队、群组、协作者、继承关系和临时授权时，权限判断就不再是简单的字段匹配，而会变成一条关系路径的证明。
 
-独立发布的二方包（供其他微服务依赖）：
-┌─────────────────────────────────────────────────────────────────┐
-│  zus-client (独立模块，不属于四层中的任何一层)                       │
-│  ├── IXxxFacade.java        ← RPC 接口定义                       │
-│  ├── XxxDTO.java            ← 数据传输对象                        │
-│  └── Result.java            ← 通用返回包装                        │
-│  ★ 只包含接口定义，不包含实现，独立版本管理                            │
-└─────────────────────────────────────────────────────────────────┘
+ZUS 的核心目标就是把这种证明过程标准化，让业务系统可以用一致的方式表达和判断细粒度权限。
+
+## 为什么需要 ReBAC
+
+传统 RBAC 的思路是：
+
+```text
+用户 -> 角色 -> 权限
 ```
 
-## 依赖关系图
+这种方式适合后台管理系统，也适合权限边界比较稳定的业务。但在协作型系统里，权限往往不是只由角色决定的。
 
-```
-                      ┌─────────────┐
-                      │ zus-starter │
-                      └──────┬──────┘
-                             │
-             ┌───────────────┴───────────────┐
-             ▼                               ▼
-      ┌─────────────┐               ┌──────────────────┐
-      │   zus-api   │               │zus-infrastructure│
-      └──────┬──────┘               └────────┬─────────┘
-             │                               │
-             ▼                               │
-      ┌─────────────┐                        │
-      │ zus-service │                        │
-      └──────┬──────┘                        │
-             │                               │
-             ▼                               ▼
-      ┌─────────────────────────────────────────┐
-      │              zus-domain                 │ ◀── 核心
-      └─────────────────┬───────────────────────┘
-                        │
-                        ▼
-      ┌─────────────────────────────────────────┐
-      │              zus-common                 │ ◀── 被所有模块依赖
-      └─────────────────────────────────────────┘
+例如：
 
-      ┌─────────────┐
-      │ zus-client  │ ───▶ zus-common (独立发布)
-      └─────────────┘
+- 一个文档在某个文件夹下面，用户拥有上级文件夹的查看权限，因此可以查看文档。
+- 用户属于某个用户组，这个用户组被授予项目编辑权限，因此用户可以编辑项目。
+- 一个成员是组织管理员，所以自动拥有组织下工作区的管理权限。
+- 一个文档 owner 可以编辑文档，editor 又可以查看文档。
+- 一个用户被加入 blocked 关系后，即使本来是 viewer，也不能访问某个资源。
+
+这些规则的共同点是：权限来自关系传播，而不是来自某个孤立的角色名称。
+
+ReBAC，也就是 Relationship-Based Access Control，正是为了解决这类问题。它把授权判断建模为：
+
+```text
+subject 是否能通过关系路径证明 object#relation 成立
 ```
 
-> **说明**: `zus-starter` 直接依赖 `zus-api` 和 `zus-infrastructure`，
-> `zus-service` 是通过 `zus-api` 传递依赖进来的。
+其中：
 
-## 模块功能说明
+- `subject` 表示访问发起方，可以是用户、用户组、服务账号或某个对象上的一组主体。
+- `object` 表示被访问对象，可以是文档、文件夹、项目、组织或任意业务资源。
+- `relation` 表示主体和对象之间的关系，例如 owner、editor、viewer、member。
+- `path` 表示权限从一个关系传播到另一个关系的证明链路。
 
-- `zus-starter`
-  启动层(组合根)：Spring Boot 启动入口，配置组装，显式依赖 infrastructure 确保 Bean 注入。
-- `zus-api`
-  用户接口层：REST Controller、RPC Facade 实现、Request/Response VO、参数校验。
-- `zus-service`
-  应用层：应用服务、用例编排、事务管理、DTO/Command/Query、事件监听、输入契约校验。
-- `zus-domain`
-  领域层：聚合根、实体、值对象、领域服务、领域事件、Repository/Port 接口定义。
-- `zus-infrastructure`
-  基础设施层：Repository/Port 实现、PO/Mapper、缓存、外部服务适配器。
-- `zus-client`
-  二方包(SDK)：对外发布的 RPC 接口定义和 DTO，供其他微服务依赖。
-- `zus-common`
-  通用层：工具类、异常定义、枚举常量，被所有模块依赖。
+## ZUS 用来做什么
 
-## 依赖方向说明
+ZUS 可以作为业务系统的授权判断底座。业务系统不需要在每个服务里重复实现一套复杂权限逻辑，而是把权限问题转换成统一的关系判断：
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              依赖规则                                        │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  • 实线箭头 ──▶ : 编译期依赖（A ──▶ B 表示 A 依赖 B）                            │
-│  • 虚线箭头 ··▶ : 运行时依赖或实现关系                                           │
-│  • 核心原则: 依赖指向稳定，外层依赖内层，infrastructure 实现 domain 接口           │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-依赖链路:
-
-zus-api → zus-service → zus-domain → zus-common
-    ↓                       ↑
-zus-client            zus-infrastructure
+```text
+user:alice 是否拥有 document:roadmap 的 viewer 权限？
+user:bob 是否拥有 folder:finance 的 editor 权限？
+group:platform#member 是否拥有 project:infra 的 maintainer 权限？
 ```
 
-## 各层职责详解
+ZUS 负责根据已经定义好的关系语义和业务关系，推导最终结果。
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  zus-api (用户接口层)                                            │
-│  ├── controller/     # REST API 控制器                          │
-│  ├── facade/         # RPC Facade 实现                          │
-│  ├── request/        # 请求 VO                                  │
-│  ├── response/       # 响应 VO                                  │
-│  └── permission/     # 权限切面                                  │
-│                                                                 │
-│  职责: 处理请求 | 参数校验 | VO转换 | 调用应用服务 | 异常包装          │
-└─────────────────────────────────────────────────────────────────┘
+它适合这些场景：
 
-┌─────────────────────────────────────────────────────────────────┐
-│  zus-service (应用层)                                            │
-│  ├── application/    # 应用服务接口和实现                          │
-│  ├── dto/                                                       │
-│  │   ├── command/    # 命令对象 (CQRS)                            │
-│  │   ├── query/      # 查询对象 (CQRS)                            │
-│  │   └── response/   # 响应 DTO                                  │
-│  ├── assembler/      # 对象转换器                                 │
-│  └── listener/       # 事件监听器                                 │
-│                                                                 │
-│  职责: 用例编排 | 事务管理 | 事件发布 | 输入契约校验 | 不包含业务规则    │
-└─────────────────────────────────────────────────────────────────┘
+- 文档、网盘、知识库、项目管理这类层级资源系统。
+- 多人协作系统，例如 workspace、organization、team、group。
+- 权限需要继承、传播、排除或组合的系统。
+- 传统 RBAC 已经开始出现大量特殊角色、例外规则和硬编码判断的系统。
+- 需要把 ACL、RBAC 和一部分属性条件组合到同一套授权语义里的系统。
 
-┌─────────────────────────────────────────────────────────────────┐
-│  zus-domain (领域层) ★核心                                        │
-│  ├── aggregate/      # 聚合根 (封装业务行为，维护不变量)             │
-│  ├── entity/         # 领域实体 (有唯一标识)                       │
-│  ├── valueobject/    # 值对象 (不可变，基于值相等)                  │
-│  ├── service/        # 领域服务 (纯业务逻辑)                       │
-│  ├── repository/     # Repository 接口定义                       │
-│  ├── port/           # 端口接口 (外部服务抽象)                     │
-│  ├── event/          # 领域事件 (跨聚合最终一致性)                  │
-│  └── factory/        # 工厂                                      │
-│                                                                 │
-│  ★ 不依赖任何技术框架，可独立测试                                    │
-└─────────────────────────────────────────────────────────────────┘
+它不适合这些场景：
 
-┌─────────────────────────────────────────────────────────────────┐
-│  zus-infrastructure (基础设施层)                                  │
-│  ├── persistence/mysql/                                         │
-│  │   ├── repository/adapter/  # 领域 Repository 适配器            │
-│  │   ├── repository/impl/     # 持久化 Repository                │
-│  │   ├── entity/              # PO (持久化对象)                   │
-│  │   ├── mapper/              # MyBatis Mapper                  │
-│  │   └── converter/           # PO ↔ 领域实体转换                 │
-│  ├── cache/                   # 缓存实现                          │
-│  └── external/                # 外部服务适配器                     │
-│                                                                 │
-│  ★ 实现领域层定义的接口 (依赖倒置原则)                                │
-└─────────────────────────────────────────────────────────────────┘
+- 权限非常简单，只需要判断用户是否拥有固定角色。
+- 系统没有资源层级、组织关系、协作关系或传播关系。
+- 权限规则完全是一次性业务判断，不需要抽象成可复用授权模型。
 
-┌─────────────────────────────────────────────────────────────────┐
-│  zus-client (二方包/SDK)                                         │
-│  ├── service/        # RPC 接口定义 (IXxxFacade)                 │
-│  └── entity/dto/     # 数据传输对象                               │
-│                                                                 │
-│  ★ 只包含接口定义，不包含实现，独立版本发布                            │
-│  ★ 供其他微服务依赖调用                                            │
-└─────────────────────────────────────────────────────────────────┘
+## 一个直观的 DSL 例子
+
+下面是一个简化版的关系模型，用来表达“用户组成员可以获得文件夹和文档权限，文档可以从上级文件夹继承 viewer 权限”：
+
+```dsl
+model
+  schema 1.1
+
+type user
+
+type group
+  relations
+    define member: [user]
+
+type folder
+  relations
+    define parent: [folder]
+    define owner: [user]
+    define editor: [user, group#member] or owner
+    define viewer: [user, group#member] or editor or viewer from parent
+
+type document
+  relations
+    define parent: [folder]
+    define owner: [user]
+    define editor: [user, group#member] or owner
+    define viewer: [user, group#member] or editor or viewer from parent
+    define blocked: [user]
+    define restricted_viewer: viewer but not blocked
 ```
 
+这个 DSL 表达了几件事：
 
-## 参数校验策略
+- `group#member` 表示一个用户组里的所有成员。
+- `editor: ... or owner` 表示 owner 也天然具备 editor 权限。
+- `viewer from parent` 表示可以沿着 parent 关系向上继承 viewer。
+- `viewer but not blocked` 表示先证明 viewer 成立，再排除 blocked 主体。
 
-项目采用 **“双重拦截”** 的参数校验机制：
+它的重点不是语法本身，而是让权限规则可以被写成可推理的关系表达式。
 
-1.  **API 层校验 (zus-api)**
-    *   **对象**：入参 VO（Request）。
-    *   **职责**：过滤非法的 HTTP 请求，处理基本的 null 检查或 VO 映射前的格式约束。
-2.  **Service 层校验 (zus-service)**
-    *   **对象**：Command / Query 对象。
-    *   **设计原则**：**防御式编程** 与 **契约中心化**。
-    *   **核心意图**：
-        *   **自我保护**：Service 不仅服务于 Controller，还可能被 MQ、Job 等调用。在入口 Command/Query 上添加 JSR303 注解可以确保无论调用方是谁，输入数据都必须符合业务契约。
-        *   **一次定义，到处生效**：避免在多个 Controller 中重复编写同样的校验逻辑。
-    *   **实现方式**：可通过 `ValidationUtil` 编程式触发，或后续扩展 AOP 切面通过 `@Validated` 自动拦截。
+## 关系推理示例一：从上级文件夹继承权限
 
-## 核心设计原则
+假设业务中有这样的资源层级：
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                       DDD 核心原则                               │
-├─────────────────────────────────────────────────────────────────┤
-│  1. 依赖倒置: 领域层定义接口，基础设施层实现接口                       │
-│  2. 聚合边界: 通过聚合根访问聚合内实体，保证一致性                     │
-│  3. 领域纯粹: 领域层不依赖技术框架，可独立测试                        │
-│  4. 分层解耦: 各层职责明确，通过接口通信                             │
-│  5. 最终一致: 跨聚合操作通过领域事件实现最终一致性                     │
-└─────────────────────────────────────────────────────────────────┘
+```text
+folder:root
+  └── folder:finance
+        └── folder:budget
+              └── document:roadmap
 ```
 
+用户 `alice` 被授予了根目录的查看权限：
+
+```text
+alice 是 folder:root 的 viewer
+```
+
+系统同时知道：
+
+```text
+folder:finance 的 parent 是 folder:root
+folder:budget 的 parent 是 folder:finance
+document:roadmap 的 parent 是 folder:budget
+```
+
+当业务系统询问：
+
+```text
+alice 能否查看 document:roadmap？
+```
+
+ZUS 的推理过程可以理解为：
+
+```text
+document:roadmap#viewer
+需要证明 document:roadmap 的 viewer
+
+document:roadmap 没有直接授予 alice viewer
+于是查看它的 parent，也就是 folder:budget
+
+folder:budget 没有直接授予 alice viewer
+继续查看它的 parent，也就是 folder:finance
+
+folder:finance 没有直接授予 alice viewer
+继续查看它的 parent，也就是 folder:root
+
+folder:root#viewer 命中 alice
+因此 alice 可以查看 document:roadmap
+```
+
+这个例子说明，ReBAC 并不是只看当前对象上有没有一条直接授权，而是会沿着业务关系继续证明。
+
+## 关系推理示例二：通过用户组获得权限
+
+假设有一个平台团队：
+
+```text
+group:platform
+```
+
+用户 `erin` 是这个团队的成员：
+
+```text
+erin 是 group:platform 的 member
+```
+
+某个文档把 viewer 授给了这个团队的所有成员：
+
+```text
+group:platform#member 是 document:roadmap 的 viewer
+```
+
+当业务系统询问：
+
+```text
+erin 能否查看 document:roadmap？
+```
+
+ZUS 的推理过程可以理解为：
+
+```text
+document:roadmap#viewer
+命中一个 userset：group:platform#member
+
+于是问题变成：
+erin 是否属于 group:platform#member？
+
+group:platform#member 命中 erin
+因此 erin 可以查看 document:roadmap
+```
+
+这就是 ReBAC 里非常重要的一类推理：授权对象不一定直接指向某个用户，也可以指向“一组由关系定义出来的主体”。
+
+## 关系推理示例三：角色也可以被关系化
+
+ReBAC 并不排斥 RBAC。相反，角色可以被表达成一种关系。
+
+例如业务中有一个项目角色：
+
+```text
+role:project_admin
+```
+
+用户 `bob` 被分配到了这个角色：
+
+```text
+bob 是 role:project_admin 的 assignee
+```
+
+项目把管理员权限授给这个角色：
+
+```text
+role:project_admin#assignee 是 project:apollo 的 admin
+```
+
+当业务系统询问：
+
+```text
+bob 是否是 project:apollo 的 admin？
+```
+
+推理过程是：
+
+```text
+project:apollo#admin
+命中 role:project_admin#assignee
+
+继续证明：
+bob 是否属于 role:project_admin#assignee？
+
+role:project_admin#assignee 命中 bob
+因此 bob 是 project:apollo 的 admin
+```
+
+这也是为什么 ReBAC 可以承载 RBAC：角色不再是一个孤立字段，而是关系图中的一个对象。
+
+## 关系推理示例四：组合关系与排除关系
+
+有些权限不是单一路径能表达的，而是需要组合。
+
+例如：
+
+```text
+document:roadmap#restricted_viewer
+表示：
+  是 viewer
+  但不是 blocked
+```
+
+当业务系统询问：
+
+```text
+mallory 是否是 document:roadmap 的 restricted_viewer？
+```
+
+如果系统发现：
+
+```text
+mallory 是 document:roadmap 的 viewer
+mallory 也是 document:roadmap 的 blocked
+```
+
+那么最终结果应该是：
+
+```text
+false
+```
+
+因为 `restricted_viewer` 要求 viewer 成立，同时 blocked 不成立。
+
+这个例子说明，ReBAC 不只是“向上找父级”，它还可以表达并集、交集、排除和跨对象传播等关系组合。
+
+## 这套模型解决的核心痛点
+
+ZUS 解决的是复杂权限系统里最容易失控的几个问题：
+
+1. 权限逻辑分散在多个服务、多个 SQL、多个 if/else 中，难以维护。
+2. 角色数量不断膨胀，最后变成 `project_admin_v2_temp_external` 这类不可理解的特殊角色。
+3. 资源层级、组织层级、团队成员关系和协作关系混在一起，没有统一表达方式。
+4. 业务想问“用户有没有权限”，系统却只能回答“表里有没有某条记录”。
+5. 权限继承、用户组授权、角色授权、例外排除等规则无法组合。
+
+ReBAC 的价值在于，它把这些问题统一转换成关系证明问题：
+
+```text
+给定 subject、object、relation，是否存在一条满足规则的授权路径？
+```
+
+## 和传统权限模型的关系
+
+ZUS 不是简单替代 ACL、RBAC 或 ABAC，而是把它们放到同一套关系语义下。
+
+ACL 可以理解为最直接的关系：
+
+```text
+user:alice 是 document:roadmap 的 viewer
+```
+
+RBAC 可以理解为通过角色对象传播：
+
+```text
+user:bob -> role:admin#assignee -> project:apollo#admin
+```
+
+ABAC 可以理解为在关系成立后再叠加上下文约束：
+
+```text
+用户与资源存在关系，并且请求满足某些动态条件
+```
+
+ReBAC 的重点不是否定这些模型，而是提供一个更统一的底座，让它们可以组合，而不是互相割裂。
+
+## 进一步阅读
+
+如果你想继续深入 ReBAC 的理论、工程落地和行业实现，可以阅读：
+
+- [关系型授权专题合集](docs/rebac/README.md)
+
+如果你要了解代码结构、模块边界和 coding agent 开发规则，请阅读：
+
+- [Agent 工作指南](AGENTS.md)

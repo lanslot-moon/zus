@@ -11,6 +11,7 @@ import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -40,18 +41,20 @@ public class CompiledAuthorizationModelCompiler implements ICompiledModelCompile
     @Override
     public CompiledAuthorizationModel compile(AuthorizationModelAggregate aggregate) {
         Objects.requireNonNull(aggregate, "aggregate must not be null");
-        return new CompiledAuthorizationModel(compileRelations(aggregate), compileConditions(aggregate));
+        Map<String, CompiledRelation> compiledRelationMap = compileRelations(aggregate.getTypeDefinitions());
+        Map<Long, ConditionDefinition> conditionDefinitionMap = compileConditions(aggregate.getConditionDefinitions());
+        return new CompiledAuthorizationModel(compiledRelationMap, conditionDefinitionMap);
     }
 
     /**
      * 编译授权模型聚合中的所有关系
      *
-     * @param aggregate 授权模型聚合对象，包含所有类型定义
+     * @param typeDefinitionList 授权模型类型定义对象
      * @return 返回一个有序的Map，键为关系名称，值为编译后的关系对象
      */
-    private Map<String, CompiledRelation> compileRelations(AuthorizationModelAggregate aggregate) {
+    private Map<String, CompiledRelation> compileRelations(List<TypeDefinition> typeDefinitionList) {
         Map<String, CompiledRelation> relations = new LinkedHashMap<>();
-        for (TypeDefinition typeDefinition : aggregate.getTypeDefinitions()) {
+        for (TypeDefinition typeDefinition : typeDefinitionList) {
             compileTypeRelations(typeDefinition, relations);
         }
         return relations;
@@ -104,12 +107,12 @@ public class CompiledAuthorizationModelCompiler implements ICompiledModelCompile
      * <p>
      * 将授权模型聚合中的条件定义转换为以ID为键的映射表，便于后续快速查找。
      *
-     * @param aggregate 授权模型聚合对象，包含需要编译的条件定义集合
+     * @param conditionDefinitionList 授权模型条件定义对象
      * @return 包含所有条件定义的映射表，键为条件定义ID，值为对应的条件定义对象
      */
-    private Map<Long, ConditionDefinition> compileConditions(AuthorizationModelAggregate aggregate) {
+    private Map<Long, ConditionDefinition> compileConditions(List<ConditionDefinition> conditionDefinitionList) {
         Map<Long, ConditionDefinition> conditions = new LinkedHashMap<>();
-        for (ConditionDefinition definition : aggregate.getConditionDefinitions()) {
+        for (ConditionDefinition definition : conditionDefinitionList) {
             conditions.put(definition.getId(), definition);
         }
         return conditions;

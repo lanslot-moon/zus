@@ -6,6 +6,8 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,23 +26,45 @@ class FgaDebugPageStaticResourceTest {
      * @throws IOException 读取 classpath 资源失败时抛出
      */
     @Test
-    @DisplayName("fga-debug/index.html 存在并包含 Store、Model、Tuple、Check 入口")
+    @DisplayName("index.html 存在并引用 rebac-web 构建产物")
     void debugPage_existsAndContainsCoreDebugActions() throws IOException {
-        ClassPathResource resource = new ClassPathResource("static/fga-debug/index.html");
+        ClassPathResource resource = new ClassPathResource("static/index.html");
 
         assertThat(resource.exists()).isTrue();
         String html = resource.getContentAsString(StandardCharsets.UTF_8);
 
         assertThat(html)
-                .contains("ZUS FGA 调试台")
-                .contains("创建 Store")
-                .contains("构建 Model")
-                .contains("写入关系 Tuple")
-                .contains("Check 与 Explain")
-                .contains("http://localhost:8091")
-                .contains("function applyDefaultBaseUrl()")
-                .contains("function normalizeBaseUrl(rawBaseUrl)")
-                .contains("function writeModel()")
-                .contains("function checkPermission()");
+                .contains("ZUS Storage ReBAC")
+                .contains("id=\"root\"")
+                .contains("type=\"module\"")
+                .contains("/assets/index-");
+
+        ClassPathResource script = new ClassPathResource("static/" + findAssetPath(html, "js"));
+        assertThat(script.exists()).isTrue();
+        String javascript = script.getContentAsString(StandardCharsets.UTF_8);
+
+        assertThat(javascript)
+                .contains("存储空间")
+                .contains("模型版本")
+                .contains("关系建模")
+                .contains("授权管理")
+                .contains("/fga/stores");
+
+        ClassPathResource stylesheet = new ClassPathResource("static/" + findAssetPath(html, "css"));
+        assertThat(stylesheet.exists()).isTrue();
+    }
+
+    /**
+     * 从 Vite 入口 HTML 中解析构建后的资源路径。
+     *
+     * @param html      入口 HTML
+     * @param extension 资源扩展名
+     * @return classpath static 下的资源相对路径
+     */
+    private static String findAssetPath(String html, String extension) {
+        Pattern pattern = Pattern.compile("/(assets/index-[^\"]+\\." + extension + ")");
+        Matcher matcher = pattern.matcher(html);
+        assertThat(matcher.find()).isTrue();
+        return matcher.group(1);
     }
 }
