@@ -43,4 +43,9 @@ node_modules/
 
 ### Cursor
 .cursor/
+.claude
 .codex-local-build
+
+
+### Log ###
+/logs
