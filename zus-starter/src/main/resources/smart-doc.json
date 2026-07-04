@@ -1,0 +1,25 @@
+{
+  "serverUrl": "http://localhost:8091",
+  "outPath": "target/apidocs",
+  "projectName": "ZUS",
+  "allInOne": true,
+  "createDebugPage": true,
+  "style": "xt256",
+  "language": "CHINESE",
+  "packageFilters": "org.kitona.zus.api.controller",
+  "md5EncryptedHtmlName": false,
+  "inlineEnum": true,
+  "requestFieldToUnderline": false,
+  "responseFieldToUnderline": false,
+  "sortByTitle": true,
+  "requestExample": true,
+  "responseExample": true,
+  "revisionLogs": [
+    {
+      "version": "1.0.0",
+      "revisionTime": "2026-07-01",
+      "status": "release",
+      "remarks": "初始 API 文档"
+    }
+  ]
+}

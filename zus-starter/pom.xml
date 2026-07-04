@@ -42,6 +42,19 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>com.github.shalousun</groupId>
+                <artifactId>smart-doc-maven-plugin</artifactId>
+                <version>${smart-doc-maven-plugin.version}</version>
+                <configuration>
+                    <configFile>${project.basedir}/src/main/resources/smart-doc.json</configFile>
+                    <includes>
+                        <!-- 只加载本项目模块源码，提升构建效率 -->
+                        <include>org.kitona:.*</include>
+                    </includes>
+                </configuration>
+            </plugin>
+
+            <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>${spring-boot.version}</version>

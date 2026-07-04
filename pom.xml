@@ -37,6 +37,7 @@
         <maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
         <p3c-pmd.version>2.1.1</p3c-pmd.version>
         <pmd.minimum-tokens>100</pmd.minimum-tokens>
+        <smart-doc.version>3.1.2</smart-doc.version>
         <cel.version>0.11.1</cel.version>
         <el.version>4.0.2</el.version>
         <quality.failOnViolation>true</quality.failOnViolation>
@@ -58,6 +59,8 @@
         <!--AST语法树-->
         <antlr4.version>4.13.2</antlr4.version>
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
+        <!--Smart-Doc API文档生成-->
+        <smart-doc-maven-plugin.version>2.7.7</smart-doc-maven-plugin.version>
     </properties>
 
     <modules>

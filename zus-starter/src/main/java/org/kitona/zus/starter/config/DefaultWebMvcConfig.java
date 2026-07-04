@@ -1,11 +1,13 @@
 package org.kitona.zus.starter.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.LocaleResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.servlet.i18n.AcceptHeaderLocaleResolver;
+
+import java.util.Locale;
 
 @Configuration
 public class DefaultWebMvcConfig extends WebMvcConfigurationSupport {
@@ -32,22 +34,16 @@ public class DefaultWebMvcConfig extends WebMvcConfigurationSupport {
     }
 
     /**
-     * 暴露 starter 内置静态资源。
+     * 覆盖父类的默认 {@link LocaleResolver}，改为基于 HTTP Accept-Language 头。
      *
-     * <p>当前类继承 {@link WebMvcConfigurationSupport} 后，Spring Boot 默认静态资源映射不会自动生效，
-     * 因此需要显式把 classpath 下的 {@code static/} 映射出来。
+     * <p>新增语言只需在 {@code i18n/} 目录下放入对应的
+     * {@code messages_<locale>.properties} 文件。
+     * 未指定时回退到简体中文。
      */
     @Override
-    protected void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/");
-    }
-
-    /**
-     * 将根路径转发到内置 ReBAC 控制台首页。
-     */
-    @Override
-    protected void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("forward:/index.html");
+    public LocaleResolver localeResolver() {
+        AcceptHeaderLocaleResolver resolver = new AcceptHeaderLocaleResolver();
+        resolver.setDefaultLocale(Locale.SIMPLIFIED_CHINESE);
+        return resolver;
     }
 }
