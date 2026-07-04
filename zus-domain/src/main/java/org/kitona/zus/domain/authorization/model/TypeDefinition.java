@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.ToString;
 import org.kitona.zus.common.exception.IError;
 import org.kitona.zus.common.exception.SystemException;
-import org.kitona.zus.domain.authorization.model.RelationDefinition;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,7 +50,7 @@ public class TypeDefinition {
      * 通过 {@link #getRelations()} 对外返回不可变视图，防止外部修改。
      */
     @Getter(AccessLevel.NONE)
-    private Map<String, RelationDefinition> relations;
+    private Map<String, RelationDefinition> relations = new HashMap<>();
 
     /**
      * 返回关系定义的只读视图。
@@ -64,7 +63,6 @@ public class TypeDefinition {
      * 私有构造函数，强制调用方通过工厂方法创建或重建实体。
      */
     private TypeDefinition() {
-        this.relations = new HashMap<>();
         this.sortOrder = 0;
     }
 

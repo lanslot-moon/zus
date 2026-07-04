@@ -272,6 +272,11 @@ public sealed interface EvaluationExplainReason
         NO_RELATION_DEFINITION(EvaluationNodeType.RELATION, false, "模型中没有定义 {target} 对应的 relation，当前分支无法继续证明。"),
 
         /**
+         * 模型静态图中不存在从当前 subject 类型到目标 relation 的路径。
+         */
+        MODEL_PATH_NOT_EXISTS(EvaluationNodeType.RELATION, false, "模型中不存在从当前 subject 类型到 {target} 的授权路径，无需查询关系事实。"),
+
+        /**
          * 目标对象在授权事实层没有任何有效 tuple。
          */
         OBJECT_FACT_NOT_FOUND(EvaluationNodeType.RELATION, false, "目标对象 {target} 在当前一致性版本下没有任何有效授权事实，无法进入关系证明。"),

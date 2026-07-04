@@ -1,5 +1,6 @@
 package org.kitona.zus.domain.authorization.evaluation.compiled;
 
+import org.kitona.zus.domain.authorization.evaluation.graph.AuthorizationModelGraph;
 import org.kitona.zus.domain.authorization.model.ConditionDefinition;
 
 import java.util.Collections;
@@ -7,17 +8,16 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * 已编译授权模型。
+ * 已编译授权模型——重写规则 AST 与静态拓扑图的编译产物。
  *
  * @param relations  关系定义，key=type#relation
  * @param conditions 条件定义，key=conditionDefinitionId
+ * @param graph      静态授权模型图，提供 pathExists 和环检测
  */
 public record CompiledAuthorizationModel(Map<String, CompiledRelation> relations,
-                                         Map<Long, ConditionDefinition> conditions) {
+                                         Map<Long, ConditionDefinition> conditions,
+                                         AuthorizationModelGraph graph) {
 
-    /**
-     * 构造不可变的编译模型视图，避免运行时修改编译结果。
-     */
     public CompiledAuthorizationModel {
         relations = relations == null ? Collections.emptyMap() : Collections.unmodifiableMap(relations);
         conditions = conditions == null ? Collections.emptyMap() : Collections.unmodifiableMap(conditions);

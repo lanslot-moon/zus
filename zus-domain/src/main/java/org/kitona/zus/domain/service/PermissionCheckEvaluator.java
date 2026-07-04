@@ -131,6 +131,13 @@ public final class PermissionCheckEvaluator {
         traceRecorder.enter(runtime, EvaluationNodeType.RELATION, subject, object, relation);
         // 使用递归评估模板执行实际的评估逻辑
         boolean result = recursiveEvaluationTemplate.execute(runtime, memoKey, depth, () -> {
+            // 检查路径存在性,纯内存BFS
+            if (!runtime.model().graph().pathExists(subject, relation, object.getType())) {
+                log.info("PermissionCheckEvaluator evaluateRelation path not exists: subject={}, object={}, relation={}", subject, object, relation);
+                traceRecorder.mark(runtime, false, BusinessEvidenceReason.MODEL_PATH_NOT_EXISTS);
+                return false;
+            }
+
             // 在模型中查找关系定义
             Optional<CompiledRelation> relationOpt = runtime.model().findRelation(object.getType(), relation);
             if (relationOpt.isEmpty()) {

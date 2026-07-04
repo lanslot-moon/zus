@@ -6,6 +6,8 @@ import org.kitona.zus.domain.authorization.model.RelationDefinition;
 import org.kitona.zus.domain.authorization.model.TypeDefinition;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
 import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledRelation;
+import org.kitona.zus.domain.authorization.evaluation.graph.AuthorizationModelGraph;
+import org.kitona.zus.domain.authorization.evaluation.graph.AuthorizationModelGraphBuilder;
 import org.kitona.zus.domain.authorization.evaluation.nodes.RewriteNode;
 import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.springframework.stereotype.Component;
@@ -43,7 +45,8 @@ public class CompiledAuthorizationModelCompiler implements ICompiledModelCompile
         Objects.requireNonNull(aggregate, "aggregate must not be null");
         Map<String, CompiledRelation> compiledRelationMap = compileRelations(aggregate.getTypeDefinitions());
         Map<Long, ConditionDefinition> conditionDefinitionMap = compileConditions(aggregate.getConditionDefinitions());
-        return new CompiledAuthorizationModel(compiledRelationMap, conditionDefinitionMap);
+        return new CompiledAuthorizationModel(compiledRelationMap, conditionDefinitionMap,
+                new AuthorizationModelGraph(AuthorizationModelGraphBuilder.build(compiledRelationMap)));
     }
 
     /**

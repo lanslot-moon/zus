@@ -59,6 +59,7 @@
         <!--AST语法树-->
         <antlr4.version>4.13.2</antlr4.version>
         <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
+        <jgrapht.version>1.5.2</jgrapht.version>
         <!--Smart-Doc API文档生成-->
         <smart-doc-maven-plugin.version>2.7.7</smart-doc-maven-plugin.version>
     </properties>
@@ -223,6 +224,12 @@
                 <groupId>dev.cel</groupId>
                 <artifactId>cel</artifactId>
                 <version>${cel.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jgrapht</groupId>
+                <artifactId>jgrapht-core</artifactId>
+                <version>${jgrapht.version}</version>
             </dependency>
 
 
