@@ -4,8 +4,10 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.kitona.zus.common.exception.IError;
+import org.kitona.zus.common.exception.SystemException;
 import org.kitona.zus.common.utils.JacksonUtil;
 import org.kitona.zus.common.utils.ValidationUtil;
+import org.kitona.zus.domain.authorization.evaluation.graph.AuthorizationModelGraph;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelAggregate;
 import org.kitona.zus.domain.authorization.model.AuthorizationModelId;
 import org.kitona.zus.domain.read.view.AuthorizationModelView;
@@ -15,6 +17,8 @@ import org.kitona.zus.domain.read.port.IStoreQueryPort;
 import org.kitona.zus.domain.repository.IAuthorizationModelDomainRepository;
 import org.kitona.zus.domain.repository.IStoreDomainRepository;
 import org.kitona.zus.domain.read.page.CursorPageResult;
+import org.kitona.zus.domain.authorization.evaluation.compiled.CompiledAuthorizationModel;
+import org.kitona.zus.domain.port.ICompiledModelCompiler;
 import org.kitona.zus.domain.port.IModelSnapshotRenderer;
 import org.kitona.zus.domain.authorization.store.StoreAggregate;
 import org.kitona.zus.service.application.IAuthorizationModelApplicationService;
@@ -65,6 +69,9 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
 
     @Resource
     private IModelSnapshotRenderer modelSnapshotRenderer;
+
+    @Resource
+    private ICompiledModelCompiler compiledModelCompiler;
 
     /**
      * 创建授权模型草稿。
@@ -186,6 +193,12 @@ public class AuthorizationModelApplicationService implements IAuthorizationModel
         }
         ensureStoreActive(storeId);
         AuthorizationModelAggregate model = loadModelOrThrow(storeId, modelId);
+
+        CompiledAuthorizationModel compiled = compiledModelCompiler.compile(model);
+        AuthorizationModelGraph.CycleReport cycles = compiled.graph().findCycles();
+        if (cycles.hasCompileTimeCycles()) {
+            throw new SystemException("授权模型存在编译期环（纯关系引用构成的死循环），请检查模型定义后重试:\n" + cycles);
+        }
 
         model.publish(modelSnapshotRenderer.render(model));
         modelDomainRepository.save(model);
